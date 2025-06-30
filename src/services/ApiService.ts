@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 interface ApiResponse<T> {
@@ -252,11 +251,53 @@ class ApiService {
         {
           id: '1',
           name: 'Classic Safari Adventure',
-          description: '7-day safari experience in Maasai Mara',
+          package_name: 'Classic Safari Adventure',
+          description: '7-day safari experience in Maasai Mara with wildlife viewing and cultural experiences',
           duration: 7,
+          min_duration: 5,
+          max_duration: 10,
           price: 1500,
+          estimated_cost_per_person_per_day: 215,
           currency: 'USD',
+          budget_tier: 'mid-range',
+          min_group_size: 2,
+          max_group_size: 8,
+          included_locations: [
+            'Maasai Mara National Reserve',
+            'Lake Nakuru',
+            'Amboseli National Park'
+          ],
+          included_activities: [
+            'Game Drives',
+            'Cultural Village Visit',
+            'Hot Air Balloon Safari'
+          ],
           created_at: '2024-01-10T00:00:00Z'
+        },
+        {
+          id: '2',
+          name: 'Luxury Mount Kenya Trek',
+          package_name: 'Luxury Mount Kenya Trek',
+          description: '5-day mountain trekking adventure with luxury camping',
+          duration: 5,
+          min_duration: 3,
+          max_duration: 7,
+          price: 2200,
+          estimated_cost_per_person_per_day: 440,
+          currency: 'USD',
+          budget_tier: 'luxury',
+          min_group_size: 1,
+          max_group_size: 6,
+          included_locations: [
+            'Mount Kenya National Park',
+            'Nanyuki Town'
+          ],
+          included_activities: [
+            'Mountain Trekking',
+            'Rock Climbing',
+            'Wildlife Spotting'
+          ],
+          created_at: '2024-01-12T00:00:00Z'
         }
       ]
     };
