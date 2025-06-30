@@ -3,12 +3,15 @@ import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { DurationStep } from '@/components/preferences/steps/DurationStep';
 import { BudgetStep } from '@/components/preferences/steps/BudgetStep';
 import { InterestsStep } from '@/components/preferences/steps/InterestsStep';
 import { GroupSizeStep } from '@/components/preferences/steps/GroupSizeStep';
 import { TravelPaceStep } from '@/components/preferences/steps/TravelPaceStep';
+import { TravelScheduleForm } from '@/components/preferences/steps/TravelScheduleForm';
 
 interface ManualLeadFormProps {
   form: UseFormReturn<any>;
@@ -73,6 +76,155 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
                 <FormLabel>Country</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter country of residence" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </CardContent>
+      </Card>
+
+      {/* Travel Schedule */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Travel Schedule</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <TravelScheduleForm form={form} />
+        </CardContent>
+      </Card>
+
+      {/* Travel Logistics */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Travel Logistics</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <FormField
+            control={form.control}
+            name="travel.portOfEntry"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Port of Entry for International Travel</FormLabel>
+                <FormControl>
+                  <Input placeholder="e.g., Jomo Kenyatta International Airport (NBO)" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="travel.airportPickup"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Airport Pickup Required
+                  </FormLabel>
+                  <p className="text-sm text-muted-foreground">
+                    Check if you need airport pickup service
+                  </p>
+                </div>
+              </FormItem>
+            )}
+          />
+
+          {form.watch('travel.airportPickup') && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="travel.pickupTime"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pickup Time</FormLabel>
+                    <FormControl>
+                      <Input type="time" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="travel.pickupLocation"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Pickup Location</FormLabel>
+                    <FormControl>
+                      <Input placeholder="e.g., Terminal 1A, Gate 5" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Dietary Requirements */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dietary Requirements & Meal Preferences</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <FormField
+            control={form.control}
+            name="dietary.mealWishes"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Meal Wishes & Preferences</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="e.g., Vegetarian, Halal, local cuisine preferences..."
+                    rows={3}
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dietary.allergies"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Food Allergies & Restrictions</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="e.g., Nut allergies, gluten intolerance, lactose intolerance..."
+                    rows={3}
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="dietary.specialRequirements"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Special Dietary Requirements</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Any other special dietary needs or medical requirements..."
+                    rows={2}
+                    {...field} 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

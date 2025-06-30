@@ -13,7 +13,7 @@ import { ManualLeadForm } from '@/components/leads/ManualLeadForm';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 
-// Form schema matching the backend CreateLeadRequest
+// Form schema matching the backend CreateLeadRequest with new fields
 const manualLeadSchema = z.object({
   traveler: z.object({
     name: z.string().min(1, 'Traveler name is required'),
@@ -27,6 +27,22 @@ const manualLeadSchema = z.object({
     interests: z.array(z.string()).min(1, 'At least one interest must be selected'),
     groupSize: z.number().min(1, 'Group size must be at least 1').max(20, 'Group size cannot exceed 20'),
     travelPace: z.enum(['relaxed', 'moderate', 'active']),
+  }),
+  schedule: z.object({
+    startDate: z.date().optional(),
+    endDate: z.date().optional(),
+    flexible: z.boolean().default(true),
+  }),
+  travel: z.object({
+    portOfEntry: z.string().optional(),
+    airportPickup: z.boolean().default(false),
+    pickupTime: z.string().optional(),
+    pickupLocation: z.string().optional(),
+  }),
+  dietary: z.object({
+    mealWishes: z.string().optional(),
+    allergies: z.string().optional(),
+    specialRequirements: z.string().optional(),
   }),
 });
 
@@ -51,6 +67,20 @@ const NewLead = () => {
         interests: [],
         groupSize: 2,
         travelPace: 'moderate',
+      },
+      schedule: {
+        flexible: true,
+      },
+      travel: {
+        portOfEntry: '',
+        airportPickup: false,
+        pickupTime: '',
+        pickupLocation: '',
+      },
+      dietary: {
+        mealWishes: '',
+        allergies: '',
+        specialRequirements: '',
       },
     },
   });

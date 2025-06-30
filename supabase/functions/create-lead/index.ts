@@ -19,14 +19,13 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
     );
 
-    const { traveler, preferences } = await req.json();
+    const { traveler, preferences, schedule, travel, dietary } = await req.json();
 
-    // For now, we'll create a simple itinerary structure
-    // In a real implementation, this would call an AI service
+    // Enhanced mock itinerary with new features
     const mockItinerary = {
       id: crypto.randomUUID(),
       title: `${preferences.duration}-Day Safari Adventure`,
-      overview: `A ${preferences.duration}-day safari experience tailored for ${preferences.groupSize} travelers`,
+      overview: `A comprehensive ${preferences.duration}-day safari experience tailored for ${preferences.groupSize} travelers with personalized logistics and dietary considerations`,
       totalDuration: preferences.duration,
       estimatedCost: {
         amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
@@ -39,25 +38,60 @@ serve(async (req) => {
           other: 0.0
         }
       },
+      schedule: {
+        startDate: schedule?.startDate || null,
+        endDate: schedule?.endDate || null,
+        flexible: schedule?.flexible || true
+      },
+      travel: {
+        portOfEntry: travel?.portOfEntry || 'TBD',
+        airportPickup: travel?.airportPickup || false,
+        pickupDetails: travel?.airportPickup ? {
+          time: travel?.pickupTime || 'TBD',
+          location: travel?.pickupLocation || 'TBD'
+        } : null
+      },
+      dietary: {
+        mealWishes: dietary?.mealWishes || null,
+        allergies: dietary?.allergies || null,
+        specialRequirements: dietary?.specialRequirements || null
+      },
       days: Array.from({ length: preferences.duration }, (_, i) => ({
         day: i + 1,
-        location: 'Safari Location',
+        location: i === 0 ? (travel?.portOfEntry || 'Safari Location') : 'Safari Location',
         accommodation: {
           name: 'Safari Lodge',
           type: preferences.budgetRange,
           rating: 4.5
         },
         activities: [{
-          name: 'Game Drive',
-          duration: '3-4 hours',
-          description: 'Wildlife viewing experience',
-          cost: 150,
+          name: i === 0 ? 'Arrival & Transfer' : 'Game Drive',
+          duration: i === 0 ? '2-3 hours' : '3-4 hours',
+          description: i === 0 ? 'Airport pickup and transfer to lodge' : 'Wildlife viewing experience',
+          cost: i === 0 ? 50 : 150,
           type: 'safari'
         }],
-        meals: ['Breakfast', 'Lunch', 'Dinner'],
+        meals: dietary?.mealWishes ? 
+          ['Breakfast (Dietary accommodated)', 'Lunch (Dietary accommodated)', 'Dinner (Dietary accommodated)'] :
+          ['Breakfast', 'Lunch', 'Dinner'],
         transport: 'Safari Vehicle',
-        notes: 'Day activity notes'
+        notes: i === 0 && travel?.airportPickup ? 
+          `Airport pickup scheduled at ${travel.pickupTime || 'TBD'} from ${travel.pickupLocation || 'TBD'}` :
+          'Day activity notes',
+        pickup_details: i === 0 && travel?.airportPickup ? {
+          time: travel.pickupTime || 'TBD',
+          location: travel.pickupLocation || 'TBD'
+        } : null,
+        travel_notes: i === 0 ? `Entry point: ${travel?.portOfEntry || 'TBD'}` : null
       }))
+    };
+
+    // Create enhanced preferences object
+    const enhancedPreferences = {
+      ...preferences,
+      schedule,
+      travel,
+      dietary
     };
 
     // Insert the lead into Supabase
@@ -68,7 +102,7 @@ serve(async (req) => {
         traveler_email: traveler.email,
         traveler_phone: traveler.phone || null,
         traveler_country: traveler.country || null,
-        preferences: preferences,
+        preferences: enhancedPreferences,
         itinerary: mockItinerary,
         status: 'new'
       })
@@ -87,7 +121,7 @@ serve(async (req) => {
           status: data.status,
           assigned_operator: null
         },
-        message: 'Lead created successfully'
+        message: 'Lead created successfully with enhanced itinerary'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

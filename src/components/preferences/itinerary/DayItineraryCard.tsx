@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Camera, Bed, CheckCircle } from 'lucide-react';
+import { MapPin, Camera, Bed, CheckCircle, Clock, Utensils, Plane } from 'lucide-react';
 
 interface DayItineraryCardProps {
   day: {
@@ -11,6 +11,12 @@ interface DayItineraryCardProps {
     theme: string;
     activities: string[];
     accommodation_suggestion: string;
+    meals?: string[];
+    travel_notes?: string;
+    pickup_details?: {
+      time: string;
+      location: string;
+    };
   };
 }
 
@@ -57,6 +63,57 @@ export const DayItineraryCard: React.FC<DayItineraryCardProps> = ({ day }) => {
             </p>
           </div>
         </div>
+
+        {/* Meals */}
+        {day.meals && day.meals.length > 0 && (
+          <div className="mt-6">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <Utensils className="w-4 h-4 mr-2" />
+              Meals Included
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {day.meals.map((meal, mealIndex) => (
+                <Badge key={mealIndex} variant="outline" className="bg-amber-50 text-amber-800">
+                  {meal}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Pickup Details */}
+        {day.pickup_details && (
+          <div className="mt-6">
+            <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
+              <Plane className="w-4 h-4 mr-2" />
+              Pickup Schedule
+            </h4>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center">
+                  <Clock className="w-4 h-4 mr-1 text-blue-600" />
+                  <span className="font-medium">Time:</span>
+                  <span className="ml-1">{day.pickup_details.time}</span>
+                </div>
+                <div className="flex items-center">
+                  <MapPin className="w-4 h-4 mr-1 text-blue-600" />
+                  <span className="font-medium">Location:</span>
+                  <span className="ml-1">{day.pickup_details.location}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Travel Notes */}
+        {day.travel_notes && (
+          <div className="mt-6">
+            <h4 className="font-semibold text-gray-900 mb-3">Travel Notes</h4>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800">{day.travel_notes}</p>
+            </div>
+          </div>
+        )}
         
         {/* Placeholder for location image */}
         <div className="mt-6">
