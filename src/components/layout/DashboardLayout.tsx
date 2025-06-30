@@ -1,6 +1,7 @@
 
 import { ReactNode } from 'react';
-import { Bell, LogOut, Menu, User } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bell, LogOut, Menu, User, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -32,8 +33,16 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               <span className="ml-2 text-sm text-gray-500">B2B Dashboard</span>
             </div>
 
-            {/* User Menu */}
+            {/* Navigation & User Menu */}
             <div className="flex items-center space-x-4">
+              {/* Link to B2C Interface */}
+              <Link to="/">
+                <Button variant="ghost" size="sm" className="flex items-center space-x-1">
+                  <Home className="h-4 w-4" />
+                  <span className="hidden sm:block">SafariGuide AI</span>
+                </Button>
+              </Link>
+
               {/* Notifications */}
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
