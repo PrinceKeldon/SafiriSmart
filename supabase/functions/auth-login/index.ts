@@ -16,6 +16,19 @@ serve(async (req) => {
   try {
     const { email, password } = await req.json()
 
+    if (!email || !password) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Email and password are required'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -28,6 +41,7 @@ serve(async (req) => {
     })
 
     if (authError) {
+      console.error('Auth error:', authError)
       return new Response(
         JSON.stringify({
           success: false,
@@ -40,7 +54,7 @@ serve(async (req) => {
       )
     }
 
-    if (!authData.user) {
+    if (!authData.user || !authData.session) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -62,6 +76,7 @@ serve(async (req) => {
       .single()
 
     if (operatorError || !operator) {
+      console.error('Operator lookup error:', operatorError)
       return new Response(
         JSON.stringify({
           success: false,

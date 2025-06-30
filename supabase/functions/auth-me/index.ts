@@ -40,6 +40,7 @@ serve(async (req) => {
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
 
     if (userError || !user) {
+      console.error('Token validation error:', userError)
       return new Response(
         JSON.stringify({
           success: false,
@@ -61,6 +62,7 @@ serve(async (req) => {
       .single()
 
     if (operatorError || !operator) {
+      console.error('Operator lookup error:', operatorError)
       return new Response(
         JSON.stringify({
           success: false,
