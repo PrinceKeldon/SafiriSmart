@@ -24,8 +24,9 @@ class ApiService {
   private getToken: () => string | null;
 
   constructor() {
-    // Use environment variable or fallback to localhost for development
-    this.baseUrl = import.meta.env.VITE_B2B_BACKEND_URL || 'http://localhost:8001';
+    // Use Supabase Edge Functions as fallback when backend URL contains supabase
+    const backendUrl = import.meta.env.VITE_B2B_BACKEND_URL || 'https://gjhuxgjheaywfwrpctah.supabase.co/functions/v1';
+    this.baseUrl = backendUrl;
     this.getToken = () => localStorage.getItem('auth_token');
   }
 
@@ -34,6 +35,24 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<T> {
     const token = this.getToken();
+    
+    // Check if we're using Supabase Edge Functions
+    const isSupabaseFunction = this.baseUrl.includes('supabase.co/functions');
+    let url: string;
+    
+    if (isSupabaseFunction) {
+      // Map API endpoints to Supabase Edge Functions
+      if (endpoint === '/api/auth/login') {
+        url = `${this.baseUrl}/auth-login`;
+      } else if (endpoint === '/api/auth/me') {
+        url = `${this.baseUrl}/auth-me`;
+      } else {
+        // For other endpoints, still try the original backend
+        url = `${this.baseUrl}${endpoint}`;
+      }
+    } else {
+      url = `${this.baseUrl}${endpoint}`;
+    }
     
     const config: RequestInit = {
       ...options,
@@ -44,7 +63,7 @@ class ApiService {
       },
     };
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, config);
+    const response = await fetch(url, config);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
