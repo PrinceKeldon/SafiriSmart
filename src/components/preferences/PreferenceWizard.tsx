@@ -7,7 +7,7 @@ import { WizardProgress } from './WizardProgress';
 import { WizardNavigation } from './WizardNavigation';
 import { WizardSteps } from './WizardSteps';
 import { LoadingState } from './LoadingState';
-import { generateMockItinerary } from './ItineraryGenerator';
+import { generateItinerary } from './ItineraryGenerator';
 import { 
   TravelPreferences, 
   TourOutput, 
@@ -20,6 +20,7 @@ export const PreferenceWizard = () => {
   const [preferences, setPreferences] = useState<TravelPreferences>(initialPreferences);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<TourOutput | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const form = useForm({
     defaultValues: preferences
@@ -74,12 +75,14 @@ export const PreferenceWizard = () => {
   const handleComplete = async () => {
     console.log('Collected Travel Preferences:', preferences);
     setIsGenerating(true);
+    setError(null);
     
     try {
-      const itinerary = await generateMockItinerary(preferences);
+      const itinerary = await generateItinerary(preferences);
       setGeneratedItinerary(itinerary);
     } catch (error) {
       console.error('Error generating itinerary:', error);
+      setError(error instanceof Error ? error.message : 'Failed to generate itinerary');
     } finally {
       setIsGenerating(false);
     }
@@ -87,12 +90,35 @@ export const PreferenceWizard = () => {
 
   const handleBackToPreferences = () => {
     setGeneratedItinerary(null);
+    setError(null);
     setCurrentStep(1);
   };
 
   // Show loading state while generating
   if (isGenerating) {
     return <LoadingState />;
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-red-600">Error Generating Itinerary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={handleBackToPreferences}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Try Again
+            </button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Show itinerary if generated
