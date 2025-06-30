@@ -85,7 +85,7 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="demo@safariexperts.com"
+                  placeholder="Enter your email"
                   {...register('email')}
                   className={errors.email ? 'border-red-500' : ''}
                 />
@@ -99,7 +99,7 @@ const Login = () => {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="password123"
+                  placeholder="Enter your password"
                   {...register('password')}
                   className={errors.password ? 'border-red-500' : ''}
                 />
@@ -123,15 +123,6 @@ const Login = () => {
                 )}
               </Button>
             </form>
-
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-              <h4 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials</h4>
-              <div className="text-sm text-blue-800">
-                <p><strong>Email:</strong> demo@safariexperts.com</p>
-                <p><strong>Password:</strong> password123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

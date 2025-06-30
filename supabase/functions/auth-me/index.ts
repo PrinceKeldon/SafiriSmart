@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,41 +31,67 @@ serve(async (req) => {
 
     const token = authHeader.replace('Bearer ', '')
     
-    // For demo purposes, validate the mock token
-    if (token.startsWith('mock_')) {
-      const mockOperator = {
-        id: '1',
-        name: 'Safari Experts Demo',
-        email: 'demo@safariexperts.com',
-        company: 'Safari Experts Ltd',
-        specializations: ['Wildlife Safari', 'Cultural Tours', 'Photography Tours'],
-        is_active: true
-      }
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Verify the JWT token
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
+
+    if (userError || !user) {
       return new Response(
         JSON.stringify({
-          success: true,
-          data: mockOperator
+          success: false,
+          message: 'Invalid token'
         }),
         {
+          status: 401,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
     }
 
-    // Invalid token
+    // Get operator details from database
+    const { data: operator, error: operatorError } = await supabase
+      .from('operators')
+      .select('*')
+      .eq('email', user.email)
+      .eq('is_active', true)
+      .single()
+
+    if (operatorError || !operator) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'User is not authorized as an operator'
+        }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     return new Response(
       JSON.stringify({
-        success: false,
-        message: 'Invalid token'
+        success: true,
+        data: {
+          id: operator.id,
+          name: operator.name,
+          email: operator.email,
+          company: operator.company,
+          specializations: operator.specializations || [],
+          is_active: operator.is_active
+        }
       }),
       {
-        status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
     )
 
   } catch (error) {
+    console.error('Auth verification error:', error)
     return new Response(
       JSON.stringify({
         success: false,
