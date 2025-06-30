@@ -34,6 +34,28 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Check if user exists in operators table first
+    const { data: operator, error: operatorError } = await supabase
+      .from('operators')
+      .select('*')
+      .eq('email', email)
+      .eq('is_active', true)
+      .single()
+
+    if (operatorError || !operator) {
+      console.error('Operator lookup error:', operatorError)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Invalid email or password'
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     // Authenticate user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
@@ -62,28 +84,6 @@ serve(async (req) => {
         }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
-    // Check if user is an operator in the database
-    const { data: operator, error: operatorError } = await supabase
-      .from('operators')
-      .select('*')
-      .eq('email', email)
-      .eq('is_active', true)
-      .single()
-
-    if (operatorError || !operator) {
-      console.error('Operator lookup error:', operatorError)
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'User is not authorized as an operator'
-        }),
-        {
-          status: 403,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
