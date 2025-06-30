@@ -16,6 +16,7 @@ interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string, name: string, company: string, specializations?: string[]) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   isAdmin: () => boolean;
@@ -103,6 +104,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const signup = async (email: string, password: string, name: string, company: string, specializations: string[] = []) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('operator-signup', {
+        body: {
+          email,
+          password,
+          name,
+          company,
+          specializations
+        }
+      });
+
+      if (error) {
+        console.error('Signup error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (!data.success) {
+        return { success: false, error: data.message || 'Signup failed' };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Signup failed. Please try again.' 
+      };
+    }
+  };
+
   const login = async (email: string, password: string) => {
     try {
       // Check if operator exists and is active first
@@ -161,6 +193,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     login,
+    signup,
     logout,
     isLoading,
     isAdmin,
