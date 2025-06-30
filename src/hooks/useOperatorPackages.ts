@@ -1,25 +1,17 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OperatorPackage, OperatorPackageCreate, OperatorPackageUpdate } from '@/types/operator';
-
-const API_BASE_URL = 'http://localhost:8001';
+import { apiService } from '@/services/ApiService';
 
 export const useOperatorPackages = () => {
   return useQuery({
     queryKey: ['operator-packages'],
     queryFn: async (): Promise<OperatorPackage[]> => {
-      const response = await fetch(`${API_BASE_URL}/api/operator/packages`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch packages');
+      const response = await apiService.getOperatorPackages();
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to fetch packages');
       }
-      
-      return response.json();
+      return response.data;
     },
   });
 };
@@ -29,20 +21,11 @@ export const useCreateOperatorPackage = () => {
   
   return useMutation({
     mutationFn: async (data: OperatorPackageCreate): Promise<OperatorPackage> => {
-      const response = await fetch(`${API_BASE_URL}/api/operator/packages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to create package');
+      const response = await apiService.createOperatorPackage(data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to create package');
       }
-      
-      return response.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operator-packages'] });
@@ -55,20 +38,11 @@ export const useUpdateOperatorPackage = () => {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: OperatorPackageUpdate }): Promise<OperatorPackage> => {
-      const response = await fetch(`${API_BASE_URL}/api/operator/packages/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to update package');
+      const response = await apiService.updateOperatorPackage(id, data);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to update package');
       }
-      
-      return response.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operator-packages'] });
@@ -81,16 +55,9 @@ export const useDeleteOperatorPackage = () => {
   
   return useMutation({
     mutationFn: async (id: string): Promise<void> => {
-      const response = await fetch(`${API_BASE_URL}/api/operator/packages/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to delete package');
+      const response = await apiService.deleteOperatorPackage(id);
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to delete package');
       }
     },
     onSuccess: () => {

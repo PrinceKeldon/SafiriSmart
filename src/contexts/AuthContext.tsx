@@ -1,11 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiService } from '@/services/ApiService';
 
 interface User {
   id: string;
   name: string;
   email: string;
   company: string;
+  specializations: string[];
 }
 
 interface AuthContextType {
@@ -35,51 +37,68 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing token on mount
+  // Check for existing token on mount and validate it
   useEffect(() => {
     const storedToken = localStorage.getItem('auth_token');
     if (storedToken) {
-      // TODO: Verify token with backend when backend is deployed
-      // For now, use mock data if token exists
       setToken(storedToken);
-      setUser({
-        id: '1',
-        name: 'Demo Operator',
-        email: 'demo@safariexperts.com',
-        company: 'Safari Experts Ltd'
-      });
+      // Validate token by fetching current user
+      validateToken(storedToken);
+    } else {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
+
+  const validateToken = async (authToken: string) => {
+    try {
+      const response = await apiService.getCurrentOperator();
+      if (response.success) {
+        setUser({
+          id: response.data.id,
+          name: response.data.name,
+          email: response.data.email,
+          company: response.data.company,
+          specializations: response.data.specializations || []
+        });
+      } else {
+        // Token is invalid, clear it
+        logout();
+      }
+    } catch (error) {
+      console.error('Token validation failed:', error);
+      // Token is invalid, clear it
+      logout();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     try {
-      // TODO: Replace with actual backend API call
-      // const response = await fetch('/api/auth/login', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email, password })
-      // });
+      const response = await apiService.login(email, password);
       
-      // Mock successful login for demo@safariexperts.com / password123
-      if (email === 'demo@safariexperts.com' && password === 'password123') {
-        const mockToken = 'mock_jwt_token_' + Date.now();
-        const mockUser = {
-          id: '1',
-          name: 'Demo Operator',
-          email: 'demo@safariexperts.com',
-          company: 'Safari Experts Ltd'
-        };
+      if (response.success) {
+        const { access_token, operator } = response.data;
         
-        setToken(mockToken);
-        setUser(mockUser);
-        localStorage.setItem('auth_token', mockToken);
+        setToken(access_token);
+        setUser({
+          id: operator.id,
+          name: operator.name,
+          email: operator.email,
+          company: operator.company,
+          specializations: operator.specializations || []
+        });
+        localStorage.setItem('auth_token', access_token);
         return { success: true };
+      } else {
+        return { success: false, error: response.message || 'Login failed' };
       }
-
-      return { success: false, error: 'Invalid email or password' };
     } catch (error) {
-      return { success: false, error: 'Login failed. Please try again.' };
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Login failed. Please try again.' 
+      };
     }
   };
 
