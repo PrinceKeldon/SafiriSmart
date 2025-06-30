@@ -2,7 +2,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, BarChart3, Users, PlusCircle, Building } from 'lucide-react';
+import { User, LogOut, BarChart3, PlusCircle, Building, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface DashboardLayoutProps {
@@ -15,6 +21,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const isProfileActive = () => {
+    return location.pathname.startsWith('/dashboard/profile');
   };
 
   return (
@@ -48,17 +58,35 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <PlusCircle className="w-4 h-4 inline-block mr-2" />
                   New Lead
                 </Link>
-                <Link
-                  to="/dashboard/profile"
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive('/dashboard/profile')
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Building className="w-4 h-4 inline-block mr-2" />
-                  Company Profile
-                </Link>
+                
+                {/* Profile Dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className={`px-3 py-2 rounded-md text-sm font-medium ${
+                        isProfileActive()
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'text-gray-600 hover:text-gray-900'
+                      }`}
+                    >
+                      <Building className="w-4 h-4 mr-2" />
+                      Profile
+                      <ChevronDown className="w-4 h-4 ml-1" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg">
+                    <DropdownMenuItem asChild>
+                      <Link
+                        to="/dashboard/profile"
+                        className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
+                      >
+                        <Building className="w-4 h-4 mr-2" />
+                        Company Profile
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </nav>
             </div>
             
