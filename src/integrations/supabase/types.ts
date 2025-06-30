@@ -106,37 +106,73 @@ export type Database = {
       }
       operators: {
         Row: {
+          address: string | null
+          business_permit_url: string | null
+          certificate_of_incorporation_url: string | null
+          city: string | null
           company: string
+          company_name: string | null
+          contact_person_name: string | null
+          contact_person_phone: string | null
+          country: string | null
           created_at: string | null
+          description: string | null
           email: string
           id: string
           is_active: boolean | null
+          kato_membership_url: string | null
           name: string
           password_hash: string
+          registration_number: string | null
           specializations: string[] | null
           updated_at: string | null
+          website_url: string | null
         }
         Insert: {
+          address?: string | null
+          business_permit_url?: string | null
+          certificate_of_incorporation_url?: string | null
+          city?: string | null
           company: string
+          company_name?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          country?: string | null
           created_at?: string | null
+          description?: string | null
           email: string
           id?: string
           is_active?: boolean | null
+          kato_membership_url?: string | null
           name: string
           password_hash: string
+          registration_number?: string | null
           specializations?: string[] | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Update: {
+          address?: string | null
+          business_permit_url?: string | null
+          certificate_of_incorporation_url?: string | null
+          city?: string | null
           company?: string
+          company_name?: string | null
+          contact_person_name?: string | null
+          contact_person_phone?: string | null
+          country?: string | null
           created_at?: string | null
+          description?: string | null
           email?: string
           id?: string
           is_active?: boolean | null
+          kato_membership_url?: string | null
           name?: string
           password_hash?: string
+          registration_number?: string | null
           specializations?: string[] | null
           updated_at?: string | null
+          website_url?: string | null
         }
         Relationships: []
       }

@@ -1,8 +1,7 @@
-
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from models import Operator, Lead, LeadNote
-from schemas import CreateLeadRequest, AddLeadNoteRequest, LeadStatus
+from schemas import CreateLeadRequest, AddLeadNoteRequest, LeadStatus, OperatorProfileUpdate
 from typing import List, Optional, Dict, Any
 import uuid
 
@@ -112,3 +111,23 @@ def get_lead_notes(db: Session, lead_id: uuid.UUID, operator_id: uuid.UUID) -> L
         return []
     
     return db.query(LeadNote).filter(LeadNote.lead_id == lead_id).order_by(LeadNote.created_at.desc()).all()
+
+# Operator Profile CRUD
+def get_operator_profile(db: Session, operator_id: uuid.UUID) -> Optional[Operator]:
+    """Get operator profile by ID"""
+    return db.query(Operator).filter(Operator.id == operator_id).first()
+
+def update_operator_profile(db: Session, operator_id: uuid.UUID, profile_data: OperatorProfileUpdate) -> Optional[Operator]:
+    """Update operator profile"""
+    operator = db.query(Operator).filter(Operator.id == operator_id).first()
+    if not operator:
+        return None
+    
+    # Update only the fields that are provided
+    update_data = profile_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(operator, field, value)
+    
+    db.commit()
+    db.refresh(operator)
+    return operator
