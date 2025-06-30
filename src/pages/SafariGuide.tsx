@@ -1,18 +1,26 @@
 
 import { PreferenceWizard } from '@/components/preferences/PreferenceWizard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import { ArrowLeft, Compass } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SafariGuide = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white/90 backdrop-blur-sm shadow-sm border-b border-green-100">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-2">
-            <MapPin className="h-8 w-8 text-green-600" />
-            <h1 className="text-2xl font-bold text-gray-900">SafariGuide AI</h1>
+          <div className="flex items-center space-x-3">
+            <div className="relative">
+              <Compass className="h-8 w-8 text-green-600" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full"></div>
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                SafariGuide AI
+              </h1>
+              <p className="text-xs text-gray-600">Plan Your Perfect Safari</p>
+            </div>
           </div>
           <Link to="/">
             <Button variant="outline" size="sm" className="flex items-center gap-2">
