@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -172,10 +173,25 @@ export const PreferenceWizard = () => {
   // Sync form changes with preferences state
   useEffect(() => {
     const subscription = form.watch((value) => {
-      setPreferences(prev => ({
-        ...prev,
-        ...value
-      }));
+      if (value) {
+        setPreferences(prev => ({
+          ...prev,
+          ...value,
+          schedule: {
+            ...prev.schedule,
+            ...value.schedule,
+            flexible: value.schedule?.flexible ?? prev.schedule.flexible
+          },
+          travel: {
+            ...prev.travel,
+            ...value.travel
+          },
+          dietary: {
+            ...prev.dietary,
+            ...value.dietary
+          }
+        }));
+      }
     });
     return () => subscription.unsubscribe();
   }, [form]);
