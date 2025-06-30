@@ -1,7 +1,8 @@
+
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from models import Operator, Lead, LeadNote
-from schemas import CreateLeadRequest, AddLeadNoteRequest, LeadStatus, OperatorProfileUpdate
+from models import Operator, Lead, LeadNote, OperatorPackage
+from schemas import CreateLeadRequest, AddLeadNoteRequest, LeadStatus, OperatorProfileUpdate, OperatorPackageCreate, OperatorPackageUpdate
 from typing import List, Optional, Dict, Any
 import uuid
 
@@ -131,3 +132,71 @@ def update_operator_profile(db: Session, operator_id: uuid.UUID, profile_data: O
     db.commit()
     db.refresh(operator)
     return operator
+
+# Operator Package CRUD
+def create_operator_package(db: Session, operator_id: uuid.UUID, package_data: OperatorPackageCreate) -> OperatorPackage:
+    """Create a new operator package"""
+    package = OperatorPackage(
+        operator_id=operator_id,
+        **package_data.dict()
+    )
+    
+    db.add(package)
+    db.commit()
+    db.refresh(package)
+    return package
+
+def get_operator_packages(db: Session, operator_id: uuid.UUID) -> List[OperatorPackage]:
+    """Get all packages for an operator"""
+    return db.query(OperatorPackage).filter(OperatorPackage.operator_id == operator_id).all()
+
+def get_operator_package_by_id(db: Session, package_id: uuid.UUID, operator_id: uuid.UUID) -> Optional[OperatorPackage]:
+    """Get a specific operator package"""
+    return db.query(OperatorPackage).filter(
+        OperatorPackage.id == package_id,
+        OperatorPackage.operator_id == operator_id
+    ).first()
+
+def update_operator_package(db: Session, package_id: uuid.UUID, operator_id: uuid.UUID, package_data: OperatorPackageUpdate) -> Optional[OperatorPackage]:
+    """Update an operator package"""
+    package = get_operator_package_by_id(db, package_id, operator_id)
+    if not package:
+        return None
+    
+    # Update only the fields that are provided
+    update_data = package_data.dict(exclude_unset=True)
+    for field, value in update_data.items():
+        setattr(package, field, value)
+    
+    db.commit()
+    db.refresh(package)
+    return package
+
+def delete_operator_package(db: Session, package_id: uuid.UUID, operator_id: uuid.UUID) -> bool:
+    """Delete an operator package"""
+    package = get_operator_package_by_id(db, package_id, operator_id)
+    if not package:
+        return False
+    
+    db.delete(package)
+    db.commit()
+    return True
+
+def calculate_package_quote(package: OperatorPackage, lead_preferences: dict) -> Dict[str, Any]:
+    """Calculate a preliminary quote based on package and lead preferences"""
+    duration = lead_preferences.get('duration', 7)
+    group_size = lead_preferences.get('groupSize', 2)
+    
+    # Basic calculation: cost per person per day * duration * group size
+    total_cost = float(package.estimated_cost_per_person_per_day) * duration * group_size
+    
+    return {
+        'package_id': str(package.id),
+        'package_name': package.package_name,
+        'estimated_total_cost': total_cost,
+        'cost_per_person': float(package.estimated_cost_per_person_per_day) * duration,
+        'duration': duration,
+        'group_size': group_size,
+        'budget_tier': package.budget_tier,
+        'currency': 'USD'
+    }

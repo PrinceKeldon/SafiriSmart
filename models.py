@@ -1,5 +1,5 @@
 
-from sqlalchemy import Column, String, Boolean, DateTime, Text, DECIMAL, ForeignKey, UUID, ARRAY
+from sqlalchemy import Column, String, Boolean, DateTime, Text, DECIMAL, ForeignKey, UUID, ARRAY, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -24,6 +24,7 @@ class Operator(Base):
     # Relationships
     leads = relationship("Lead", back_populates="assigned_operator")
     notes = relationship("LeadNote", back_populates="created_by_operator")
+    packages = relationship("OperatorPackage", back_populates="operator", cascade="all, delete-orphan")
 
 class Lead(Base):
     __tablename__ = "leads"
@@ -65,3 +66,24 @@ class LeadNote(Base):
     # Relationships
     lead = relationship("Lead", back_populates="notes")
     created_by_operator = relationship("Operator", back_populates="notes")
+
+class OperatorPackage(Base):
+    __tablename__ = "operator_packages"
+    
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    operator_id = Column(PG_UUID(as_uuid=True), ForeignKey('operators.id', ondelete='CASCADE'), nullable=False)
+    package_name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    min_duration = Column(Integer, nullable=False)
+    max_duration = Column(Integer, nullable=False)
+    min_group_size = Column(Integer, nullable=False)
+    max_group_size = Column(Integer, nullable=False)
+    budget_tier = Column(String(20), nullable=False)
+    estimated_cost_per_person_per_day = Column(DECIMAL(10, 2), nullable=False)
+    included_locations = Column(JSONB, nullable=True, default='[]')
+    included_activities = Column(JSONB, nullable=True, default='[]')
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    operator = relationship("Operator", back_populates="packages")

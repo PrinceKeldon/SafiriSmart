@@ -10,6 +10,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NewLead from "./pages/NewLead";
 import Profile from "./pages/Profile";
+import Packages from "./pages/Packages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,14 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <NewLead />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/dashboard/packages"
+              element={
+                <PrivateRoute>
+                  <Packages />
                 </PrivateRoute>
               }
             />

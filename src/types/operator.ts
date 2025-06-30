@@ -36,3 +36,46 @@ export interface OperatorProfileUpdate {
   business_permit_url?: string;
   kato_membership_url?: string;
 }
+
+export interface OperatorPackage {
+  id: string;
+  operator_id: string;
+  package_name: string;
+  description?: string;
+  min_duration: number;
+  max_duration: number;
+  min_group_size: number;
+  max_group_size: number;
+  budget_tier: 'budget' | 'mid-range' | 'luxury';
+  estimated_cost_per_person_per_day: number;
+  included_locations: string[];
+  included_activities: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OperatorPackageCreate {
+  package_name: string;
+  description?: string;
+  min_duration: number;
+  max_duration: number;
+  min_group_size: number;
+  max_group_size: number;
+  budget_tier: 'budget' | 'mid-range' | 'luxury';
+  estimated_cost_per_person_per_day: number;
+  included_locations: string[];
+  included_activities: string[];
+}
+
+export interface OperatorPackageUpdate {
+  package_name?: string;
+  description?: string;
+  min_duration?: number;
+  max_duration?: number;
+  min_group_size?: number;
+  max_group_size?: number;
+  budget_tier?: 'budget' | 'mid-range' | 'luxury';
+  estimated_cost_per_person_per_day?: number;
+  included_locations?: string[];
+  included_activities?: string[];
+}

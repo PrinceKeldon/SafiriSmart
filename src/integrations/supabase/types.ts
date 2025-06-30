@@ -104,6 +104,65 @@ export type Database = {
           },
         ]
       }
+      operator_packages: {
+        Row: {
+          budget_tier: string
+          created_at: string
+          description: string | null
+          estimated_cost_per_person_per_day: number
+          id: string
+          included_activities: Json | null
+          included_locations: Json | null
+          max_duration: number
+          max_group_size: number
+          min_duration: number
+          min_group_size: number
+          operator_id: string
+          package_name: string
+          updated_at: string
+        }
+        Insert: {
+          budget_tier: string
+          created_at?: string
+          description?: string | null
+          estimated_cost_per_person_per_day: number
+          id?: string
+          included_activities?: Json | null
+          included_locations?: Json | null
+          max_duration: number
+          max_group_size: number
+          min_duration: number
+          min_group_size: number
+          operator_id: string
+          package_name: string
+          updated_at?: string
+        }
+        Update: {
+          budget_tier?: string
+          created_at?: string
+          description?: string | null
+          estimated_cost_per_person_per_day?: number
+          id?: string
+          included_activities?: Json | null
+          included_locations?: Json | null
+          max_duration?: number
+          max_group_size?: number
+          min_duration?: number
+          min_group_size?: number
+          operator_id?: string
+          package_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operator_packages_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operators: {
         Row: {
           address: string | null
