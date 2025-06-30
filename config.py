@@ -13,11 +13,21 @@ class Settings:
     ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
     
-    # Email
+    # Email Configuration
+    # SendGrid (Recommended)
+    SENDGRID_API_KEY: str = os.getenv("SENDGRID_API_KEY", "")
+    SENDGRID_FROM_EMAIL: str = os.getenv("SENDGRID_FROM_EMAIL", "notifications@tourmaster.ai")
+    SENDGRID_FROM_NAME: str = os.getenv("SENDGRID_FROM_NAME", "TourMaster AI")
+    
+    # SMTP Fallback Configuration
     EMAIL_HOST: str = os.getenv("EMAIL_HOST", "smtp.gmail.com")
     EMAIL_PORT: int = int(os.getenv("EMAIL_PORT", "587"))
     EMAIL_USER: str = os.getenv("EMAIL_USER", "notifications@yourcompany.com")
     EMAIL_PASSWORD: str = os.getenv("EMAIL_PASSWORD", "app-password")
+    EMAIL_USE_TLS: bool = os.getenv("EMAIL_USE_TLS", "true").lower() == "true"
+    
+    # Email Mode (development/production)
+    EMAIL_MODE: str = os.getenv("EMAIL_MODE", "production")
     
     # AI Core Service
     AI_CORE_SERVICE_URL: str = os.getenv("AI_CORE_SERVICE_URL", "http://localhost:8000")
