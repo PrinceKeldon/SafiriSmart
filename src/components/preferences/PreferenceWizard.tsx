@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +7,7 @@ import { BudgetStep } from './steps/BudgetStep';
 import { InterestsStep } from './steps/InterestsStep';
 import { GroupSizeStep } from './steps/GroupSizeStep';
 import { TravelPaceStep } from './steps/TravelPaceStep';
+import { ItineraryDisplay } from './ItineraryDisplay';
 
 export interface TravelPreferences {
   duration: number;
@@ -15,6 +15,21 @@ export interface TravelPreferences {
   interests: string[];
   groupSize: number;
   travelPace: 'relaxed' | 'moderate' | 'active';
+}
+
+export interface TourOutput {
+  tour_name: string;
+  summary: string;
+  itinerary_details: {
+    day_number: number;
+    theme: string;
+    location: string;
+    activities: string[];
+    accommodation_suggestion: string;
+  }[];
+  inclusions_suggestions: string[];
+  exclusions_suggestions: string[];
+  important_notes: string[];
 }
 
 const initialPreferences: TravelPreferences = {
@@ -33,9 +48,67 @@ const steps = [
   { id: 5, title: 'Travel Pace', description: 'What\'s your preferred pace?' },
 ];
 
+// Mock AI Core Service simulation
+const generateMockItinerary = (preferences: TravelPreferences): Promise<TourOutput> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const mockItinerary: TourOutput = {
+        tour_name: `${preferences.duration}-Day Ultimate Kenya Safari Adventure`,
+        summary: `Experience the best of Kenya's wildlife and landscapes with this carefully crafted ${preferences.duration}-day safari. Perfect for ${preferences.groupSize} travelers seeking a ${preferences.travelPace} pace adventure with ${preferences.budgetRange} accommodations.`,
+        itinerary_details: Array.from({ length: preferences.duration }, (_, index) => ({
+          day_number: index + 1,
+          theme: index === 0 ? 'Arrival & Masai Mara' : 
+                 index === 1 ? 'Masai Mara Full Day' :
+                 index === 2 ? 'Lake Nakuru Adventure' :
+                 index === preferences.duration - 1 ? 'Departure' :
+                 `Wildlife & Culture Day ${index + 1}`,
+          location: index === 0 ? 'Nairobi to Masai Mara' :
+                   index === 1 ? 'Masai Mara National Reserve' :
+                   index === 2 ? 'Lake Nakuru National Park' :
+                   index === preferences.duration - 1 ? 'Nairobi' :
+                   'Amboseli National Park',
+          activities: preferences.interests.includes('Wildlife Safari') ? 
+            ['Game Drive', 'Wildlife Photography', 'Bush Breakfast'] :
+            ['Nature Walk', 'Cultural Visit', 'Scenic Drive'],
+          accommodation_suggestion: preferences.budgetRange === 'luxury' ? 
+            'Luxury Safari Lodge with Private Balcony' :
+            preferences.budgetRange === 'mid-range' ?
+            'Comfortable Safari Camp with Ensuite Facilities' :
+            'Budget-Friendly Safari Lodge'
+        })),
+        inclusions_suggestions: [
+          'All park entrance fees',
+          'Professional safari guide',
+          'Game drives as per itinerary',
+          'Accommodation as specified',
+          'All meals during safari',
+          'Transportation in 4WD safari vehicle'
+        ],
+        exclusions_suggestions: [
+          'International flights',
+          'Visa fees',
+          'Personal expenses',
+          'Alcoholic beverages',
+          'Travel insurance',
+          'Tips and gratuities'
+        ],
+        important_notes: [
+          'Best time to travel is during dry seasons (June-October, December-March)',
+          'Comfortable walking shoes and neutral-colored clothing recommended',
+          'Binoculars and camera equipment advised for wildlife viewing',
+          'Yellow fever vaccination may be required depending on your country of origin'
+        ]
+      };
+      resolve(mockItinerary);
+    }, 2000); // 2-second delay to simulate API call
+  });
+};
+
 export const PreferenceWizard = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [preferences, setPreferences] = useState<TravelPreferences>(initialPreferences);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedItinerary, setGeneratedItinerary] = useState<TourOutput | null>(null);
 
   const updatePreferences = (updates: Partial<TravelPreferences>) => {
     setPreferences(prev => ({ ...prev, ...updates }));
@@ -53,10 +126,49 @@ export const PreferenceWizard = () => {
     }
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     console.log('Collected Travel Preferences:', preferences);
-    // TODO: Integrate with AI Itinerary Generation
+    setIsGenerating(true);
+    
+    try {
+      const itinerary = await generateMockItinerary(preferences);
+      setGeneratedItinerary(itinerary);
+    } catch (error) {
+      console.error('Error generating itinerary:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
+
+  const handleBackToPreferences = () => {
+    setGeneratedItinerary(null);
+    setCurrentStep(1);
+  };
+
+  // Show loading state while generating
+  if (isGenerating) {
+    return (
+      <div className="max-w-2xl mx-auto p-6">
+        <Card className="text-center py-12">
+          <CardContent>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <h3 className="text-lg font-semibold mb-2">Creating Your Perfect Safari...</h3>
+            <p className="text-gray-600">Our AI is crafting a personalized itinerary based on your preferences</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Show itinerary if generated
+  if (generatedItinerary) {
+    return (
+      <ItineraryDisplay 
+        itinerary={generatedItinerary} 
+        onBackToPreferences={handleBackToPreferences}
+      />
+    );
+  }
 
   const renderCurrentStep = () => {
     switch (currentStep) {
@@ -160,7 +272,7 @@ export const PreferenceWizard = () => {
 
         {currentStep === steps.length ? (
           <Button onClick={handleComplete} className="flex items-center">
-            Complete Planning
+            Generate My Safari
             <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
