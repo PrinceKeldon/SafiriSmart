@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -170,8 +169,23 @@ export const PreferenceWizard = () => {
     defaultValues: preferences
   });
 
+  // Sync form changes with preferences state
+  useEffect(() => {
+    const subscription = form.watch((value) => {
+      setPreferences(prev => ({
+        ...prev,
+        ...value
+      }));
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   const updatePreferences = (updates: Partial<TravelPreferences>) => {
     setPreferences(prev => ({ ...prev, ...updates }));
+    // Also update the form values
+    Object.keys(updates).forEach(key => {
+      form.setValue(key as keyof TravelPreferences, updates[key as keyof TravelPreferences]);
+    });
   };
 
   const nextStep = () => {
@@ -277,12 +291,7 @@ export const PreferenceWizard = () => {
         );
       case 7:
         return (
-          <div className="space-y-6">
-            <TravelScheduleForm 
-              form={form} 
-              onScheduleChange={(schedule) => updatePreferences({ schedule })}
-            />
-          </div>
+          <TravelScheduleForm form={form} />
         );
       case 8:
         return (

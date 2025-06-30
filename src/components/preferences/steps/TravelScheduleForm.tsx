@@ -21,6 +21,12 @@ export const TravelScheduleForm: React.FC<TravelScheduleFormProps> = ({ form }) 
 
   return (
     <div className="space-y-6">
+      <div className="text-center mb-6">
+        <CalendarDays className="w-12 h-12 text-primary mx-auto mb-3" />
+        <h3 className="text-lg font-semibold">Travel Schedule</h3>
+        <p className="text-gray-600">When would you like to travel?</p>
+      </div>
+
       <FormField
         control={form.control}
         name="schedule.flexible"
