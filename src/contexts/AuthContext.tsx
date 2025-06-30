@@ -1,8 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiService } from '@/services/ApiService';
+import { supabase } from '@/integrations/supabase/client';
+import { User, Session } from '@supabase/supabase-js';
 
-interface User {
+interface AuthUser {
   id: string;
   name: string;
   email: string;
@@ -12,10 +13,10 @@ interface User {
 }
 
 interface AuthContextType {
-  user: User | null;
-  token: string | null;
+  user: AuthUser | null;
+  session: Session | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   isAdmin: () => boolean;
 }
@@ -35,68 +36,104 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check for existing token on mount and validate it
+  // Set up auth state listener and check for existing session
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    if (storedToken) {
-      setToken(storedToken);
-      // Validate token by fetching current user
-      validateToken(storedToken);
-    } else {
-      setIsLoading(false);
-    }
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email);
+        setSession(session);
+        
+        if (session?.user) {
+          // Fetch operator details from the operators table
+          setTimeout(async () => {
+            await fetchOperatorDetails(session.user.email!);
+          }, 0);
+        } else {
+          setUser(null);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      if (session?.user) {
+        fetchOperatorDetails(session.user.email!);
+      } else {
+        setIsLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const validateToken = async (authToken: string) => {
+  const fetchOperatorDetails = async (email: string) => {
     try {
-      const response = await apiService.getCurrentOperator();
-      if (response.success) {
-        setUser({
-          id: response.data.id,
-          name: response.data.name,
-          email: response.data.email,
-          company: response.data.company,
-          role: response.data.role,
-          specializations: response.data.specializations || []
-        });
-      } else {
-        // Token is invalid, clear it
-        logout();
+      const { data: operator, error } = await supabase
+        .from('operators')
+        .select('*')
+        .eq('email', email)
+        .eq('is_active', true)
+        .single();
+
+      if (error || !operator) {
+        console.error('Failed to fetch operator details:', error);
+        setUser(null);
+        return;
       }
+
+      setUser({
+        id: operator.id,
+        name: operator.name,
+        email: operator.email,
+        company: operator.company,
+        role: operator.role,
+        specializations: operator.specializations || []
+      });
     } catch (error) {
-      console.error('Token validation failed:', error);
-      // Token is invalid, clear it
-      logout();
-    } finally {
-      setIsLoading(false);
+      console.error('Error fetching operator details:', error);
+      setUser(null);
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await apiService.login(email, password);
-      
-      if (response.success) {
-        const { access_token, operator } = response.data;
-        
-        setToken(access_token);
-        setUser({
-          id: operator.id,
-          name: operator.name,
-          email: operator.email,
-          company: operator.company,
-          role: operator.role,
-          specializations: operator.specializations || []
-        });
-        localStorage.setItem('auth_token', access_token);
-        return { success: true };
-      } else {
-        return { success: false, error: response.message || 'Login failed' };
+      // Check if operator exists and is active first
+      const { data: operator, error: operatorError } = await supabase
+        .from('operators')
+        .select('*')
+        .eq('email', email)
+        .eq('is_active', true)
+        .single();
+
+      if (operatorError || !operator) {
+        return { success: false, error: 'Invalid email or password' };
       }
+
+      // Sign in with Supabase Auth
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        console.error('Login error:', error);
+        return { success: false, error: error.message };
+      }
+
+      if (!data.user || !data.session) {
+        return { success: false, error: 'Authentication failed' };
+      }
+
+      // User and session will be set by the auth state change listener
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
       return { 
@@ -106,10 +143,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('auth_token');
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   const isAdmin = () => {
@@ -118,7 +159,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const value = {
     user,
-    token,
+    session,
     login,
     logout,
     isLoading,

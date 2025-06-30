@@ -64,7 +64,7 @@ const App = () => (
             <Route
               path="/admin"
               element={
-                <PrivateRoute>
+                <PrivateRoute requireAdmin>
                   <AdminDashboard />
                 </PrivateRoute>
               }

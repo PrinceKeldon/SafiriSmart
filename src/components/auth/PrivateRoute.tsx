@@ -6,10 +6,11 @@ import { Loader2 } from 'lucide-react';
 
 interface PrivateRouteProps {
   children: ReactNode;
+  requireAdmin?: boolean;
 }
 
-export const PrivateRoute = ({ children }: PrivateRouteProps) => {
-  const { user, isLoading } = useAuth();
+export const PrivateRoute = ({ children, requireAdmin = false }: PrivateRouteProps) => {
+  const { user, isLoading, isAdmin } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
@@ -23,6 +24,11 @@ export const PrivateRoute = ({ children }: PrivateRouteProps) => {
   if (!user) {
     // Redirect to login page with return url
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (requireAdmin && !isAdmin()) {
+    // Redirect to dashboard if user is not admin but route requires admin
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <>{children}</>;
