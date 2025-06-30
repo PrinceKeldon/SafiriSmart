@@ -8,7 +8,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import DashboardLayout from '@/components/layout/DashboardLayout';
 import { ManualLeadForm } from '@/components/leads/ManualLeadForm';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
