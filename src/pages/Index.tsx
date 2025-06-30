@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,7 @@ const Index = () => {
                 Plan your perfect Kenya safari adventure
               </p>
             </div>
-            <Link to="/dashboard">
+            <Link to="/login">
               <Button variant="outline" size="sm">
                 Tour Operator Login
               </Button>
