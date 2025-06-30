@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus } from 'lucide-react';
@@ -17,6 +18,7 @@ import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
 import { mockLeads } from '@/data/mockData';
 import { Lead } from '@/types/api';
 import { Link } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -101,6 +103,48 @@ const Dashboard = () => {
         } : null
       );
     }
+  };
+
+  const handleDeleteLead = async (leadId: string) => {
+    // Simulate API call
+    console.log(`Deleting lead ${leadId}`);
+    
+    setLeads(prevLeads => prevLeads.filter(lead => lead.id !== leadId));
+    
+    // Close modal if the deleted lead was selected
+    if (selectedLead?.id === leadId) {
+      setSelectedLead(null);
+      setIsDetailModalOpen(false);
+    }
+  };
+
+  const handleUpdateItinerary = async (leadId: string, updatedItinerary: any) => {
+    // Simulate API call
+    console.log(`Updating itinerary for lead ${leadId}:`, updatedItinerary);
+    
+    setLeads(prevLeads =>
+      prevLeads.map(lead =>
+        lead.id === leadId
+          ? { ...lead, itinerary: updatedItinerary, updatedAt: new Date().toISOString() }
+          : lead
+      )
+    );
+    
+    // Update selected lead if it's the one being updated
+    if (selectedLead?.id === leadId) {
+      setSelectedLead(prev => 
+        prev ? { ...prev, itinerary: updatedItinerary } : null
+      );
+    }
+  };
+
+  const handleSendItinerary = async (leadId: string) => {
+    // Simulate API call
+    console.log(`Sending itinerary for lead ${leadId}`);
+    
+    // In a real implementation, this would call the backend API
+    // For now, we'll just show a success message
+    return Promise.resolve();
   };
 
   return (
@@ -210,6 +254,9 @@ const Dashboard = () => {
           }}
           onUpdateStatus={handleUpdateStatus}
           onAddNote={handleAddNote}
+          onDeleteLead={handleDeleteLead}
+          onUpdateItinerary={handleUpdateItinerary}
+          onSendItinerary={handleSendItinerary}
         />
       </div>
     </DashboardLayout>

@@ -2,7 +2,7 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Optional
+from typing import Optional, Dict, Any
 import os
 from dotenv import load_dotenv
 import logging
@@ -56,6 +56,78 @@ class EmailService:
             logger.error(f"Error sending new lead notification: {str(e)}")
             return False
     
+    def send_itinerary_email(self, traveler_email: str, traveler_name: str, itinerary: Dict[str, Any], operator_name: str, company_name: str) -> bool:
+        """Send itinerary to traveler"""
+        try:
+            subject = f"Your Safari Itinerary: {itinerary.get('title', 'Safari Adventure')}"
+            
+            # Build itinerary HTML
+            itinerary_html = self._build_itinerary_html(itinerary)
+            
+            body = f"""
+            Dear {traveler_name},
+
+            We're excited to share your personalized safari itinerary!
+
+            {itinerary_html}
+
+            If you have any questions or would like to make modifications, please don't hesitate to contact us.
+
+            Best regards,
+            {operator_name}
+            {company_name}
+            """
+            
+            return self._send_email(traveler_email, subject, body)
+        
+        except Exception as e:
+            logger.error(f"Error sending itinerary email: {str(e)}")
+            return False
+    
+    def _build_itinerary_html(self, itinerary: Dict[str, Any]) -> str:
+        """Build HTML representation of itinerary"""
+        try:
+            html = f"""
+            <h2>{itinerary.get('title', 'Safari Adventure')}</h2>
+            <p>{itinerary.get('overview', '')}</p>
+            
+            <h3>Trip Overview</h3>
+            <ul>
+                <li>Duration: {itinerary.get('totalDuration', 'N/A')} days</li>
+                <li>Estimated Cost: {itinerary.get('estimatedCost', {}).get('amount', 'N/A')} {itinerary.get('estimatedCost', {}).get('currency', 'USD')}</li>
+            </ul>
+            
+            <h3>Daily Itinerary</h3>
+            """
+            
+            for day in itinerary.get('days', []):
+                html += f"""
+                <h4>Day {day.get('day', 'N/A')} - {day.get('location', 'Location')}</h4>
+                <p><strong>Accommodation:</strong> {day.get('accommodation', {}).get('name', 'N/A')}</p>
+                <p><strong>Activities:</strong></p>
+                <ul>
+                """
+                
+                for activity in day.get('activities', []):
+                    html += f"<li>{activity.get('name', 'Activity')} - {activity.get('description', '')}</li>"
+                
+                html += f"""
+                </ul>
+                <p><strong>Meals:</strong> {', '.join(day.get('meals', []))}</p>
+                <p><strong>Transport:</strong> {day.get('transport', 'N/A')}</p>
+                """
+                
+                if day.get('notes'):
+                    html += f"<p><strong>Notes:</strong> {day.get('notes')}</p>"
+                
+                html += "<hr>"
+            
+            return html
+        
+        except Exception as e:
+            logger.error(f"Error building itinerary HTML: {str(e)}")
+            return "Itinerary details unavailable"
+    
     def _send_email(self, to_email: str, subject: str, body: str) -> bool:
         """Internal method to send email"""
         try:
@@ -73,7 +145,7 @@ class EmailService:
             msg['To'] = to_email
             msg['Subject'] = subject
             
-            msg.attach(MIMEText(body, 'plain'))
+            msg.attach(MIMEText(body, 'html'))
             
             server = smtplib.SMTP(self.host, self.port)
             server.starttls()

@@ -203,6 +203,133 @@ async def get_lead_detail(
             detail=f"Error fetching lead detail: {str(e)}"
         )
 
+@router.put("/{lead_id}")
+async def update_lead(
+    lead_id: str,
+    request: dict,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Update lead data including itinerary"""
+    try:
+        lead = get_lead_by_id(db, lead_id, current_operator.id)
+        if not lead:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        # Update itinerary if provided
+        if 'itinerary' in request:
+            lead.itinerary = request['itinerary']
+        
+        # Update other fields if provided
+        if 'preferences' in request:
+            lead.preferences = request['preferences']
+        
+        db.commit()
+        db.refresh(lead)
+        
+        return {
+            "success": True,
+            "data": {
+                "lead_id": str(lead.id),
+                "updated_at": lead.updated_at.isoformat()
+            },
+            "message": "Lead updated successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating lead: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating lead: {str(e)}"
+        )
+
+@router.delete("/{lead_id}")
+async def delete_lead(
+    lead_id: str,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Delete a lead"""
+    try:
+        lead = get_lead_by_id(db, lead_id, current_operator.id)
+        if not lead:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        db.delete(lead)
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Lead deleted successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting lead: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting lead: {str(e)}"
+        )
+
+@router.post("/{lead_id}/send-itinerary")
+async def send_itinerary(
+    lead_id: str,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Send itinerary to traveler via email"""
+    try:
+        lead = get_lead_by_id(db, lead_id, current_operator.id)
+        if not lead:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        if not lead.itinerary:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Lead has no itinerary to send"
+            )
+        
+        # Send itinerary email
+        email_sent = email_service.send_itinerary_email(
+            lead.traveler_email,
+            lead.traveler_name,
+            lead.itinerary,
+            current_operator.name,
+            current_operator.company
+        )
+        
+        if not email_sent:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to send itinerary email"
+            )
+        
+        return {
+            "success": True,
+            "message": "Itinerary sent successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending itinerary: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error sending itinerary: {str(e)}"
+        )
+
 @router.put("/{lead_id}/status", response_model=UpdateLeadStatusResponse)
 async def update_lead_status_endpoint(
     lead_id: str,
