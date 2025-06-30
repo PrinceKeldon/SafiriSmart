@@ -1,15 +1,27 @@
 
 import React from 'react';
+import { Link } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-gray-600">Welcome to TourMaster AI!</p>
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+            <p className="text-gray-600">Welcome to TourMaster AI!</p>
+          </div>
+          
+          <Link to="/new-lead">
+            <Button size="lg" className="flex items-center space-x-2 text-base font-bold">
+              <Plus className="h-5 w-5" />
+              <span>New Lead</span>
+            </Button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

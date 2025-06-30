@@ -3,7 +3,6 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
-  Users, 
   Package, 
   UserCircle, 
   Shield,
@@ -19,12 +18,6 @@ const Navigation = () => {
       label: 'Dashboard',
       icon: LayoutDashboard,
       active: location.pathname === '/dashboard'
-    },
-    {
-      href: '/new-lead',
-      label: 'New Lead',
-      icon: Users,
-      active: location.pathname === '/new-lead'
     },
     {
       href: '/packages',
