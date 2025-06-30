@@ -1,4 +1,6 @@
 
+import { OperatorPackage } from '@/types/operator';
+
 export interface PackageFormData {
   package_name: string;
   description?: string;
