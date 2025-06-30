@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { User, LogOut, BarChart3, Building, ChevronDown, Package } from 'lucide-react';
+import { User, LogOut, BarChart3, Building, ChevronDown, Package, Shield } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +16,7 @@ interface DashboardLayoutProps {
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-  const { logout, user } = useAuth();
+  const { logout, user, isAdmin } = useAuth();
   const location = useLocation();
 
   const isActive = (path: string) => {
@@ -24,7 +24,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
   };
 
   const isProfileActive = () => {
-    return location.pathname.startsWith('/dashboard/profile');
+    return location.pathname.startsWith('/profile');
   };
 
   return (
@@ -49,9 +49,9 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </Link>
 
                 <Link
-                  to="/dashboard/packages"
+                  to="/packages"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${
-                    isActive('/dashboard/packages')
+                    isActive('/packages')
                       ? 'bg-blue-100 text-blue-700'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
@@ -59,6 +59,21 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <Package className="w-4 h-4 inline-block mr-2" />
                   Packages
                 </Link>
+
+                {/* Admin Dashboard - Only visible to admins */}
+                {isAdmin() && (
+                  <Link
+                    to="/admin"
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive('/admin')
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900'
+                    }`}
+                  >
+                    <Shield className="w-4 h-4 inline-block mr-2" />
+                    Admin
+                  </Link>
+                )}
                 
                 {/* Profile Dropdown */}
                 <DropdownMenu>
@@ -79,7 +94,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                   <DropdownMenuContent align="start" className="w-48 bg-white border shadow-lg">
                     <DropdownMenuItem asChild>
                       <Link
-                        to="/dashboard/profile"
+                        to="/profile"
                         className="flex items-center px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full"
                       >
                         <Building className="w-4 h-4 mr-2" />
@@ -95,6 +110,11 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
               <div className="flex items-center space-x-2 text-sm text-gray-600">
                 <User className="w-4 h-4" />
                 <span>{user?.email}</span>
+                {user?.role === 'admin' && (
+                  <span className="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                    Admin
+                  </span>
+                )}
               </div>
               <Button
                 variant="ghost"

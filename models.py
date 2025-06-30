@@ -1,4 +1,3 @@
-
 from sqlalchemy import Column, String, Boolean, DateTime, Text, DECIMAL, ForeignKey, UUID, ARRAY, Integer
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
@@ -16,6 +15,7 @@ class Operator(Base):
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     company = Column(String(255), nullable=False)
+    role = Column(String(20), nullable=False, default='operator')
     specializations = Column(ARRAY(Text), nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

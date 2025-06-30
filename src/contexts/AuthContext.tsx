@@ -7,6 +7,7 @@ interface User {
   name: string;
   email: string;
   company: string;
+  role: string;
   specializations: string[];
 }
 
@@ -16,6 +17,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoading: boolean;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -58,6 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           name: response.data.name,
           email: response.data.email,
           company: response.data.company,
+          role: response.data.role,
           specializations: response.data.specializations || []
         });
       } else {
@@ -86,6 +89,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           name: operator.name,
           email: operator.email,
           company: operator.company,
+          role: operator.role,
           specializations: operator.specializations || []
         });
         localStorage.setItem('auth_token', access_token);
@@ -108,12 +112,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     localStorage.removeItem('auth_token');
   };
 
+  const isAdmin = () => {
+    return user?.role === 'admin';
+  };
+
   const value = {
     user,
     token,
     login,
     logout,
     isLoading,
+    isAdmin,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

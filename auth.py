@@ -76,3 +76,17 @@ def get_current_operator(
         raise credentials_exception
     
     return operator
+
+def get_current_admin_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+) -> Operator:
+    operator = get_current_operator(credentials, db)
+    
+    if operator.role != 'admin':
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    
+    return operator

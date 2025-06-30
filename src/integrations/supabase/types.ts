@@ -183,6 +183,7 @@ export type Database = {
           name: string
           password_hash: string
           registration_number: string | null
+          role: string
           specializations: string[] | null
           updated_at: string | null
           website_url: string | null
@@ -206,6 +207,7 @@ export type Database = {
           name: string
           password_hash: string
           registration_number?: string | null
+          role?: string
           specializations?: string[] | null
           updated_at?: string | null
           website_url?: string | null
@@ -229,6 +231,7 @@ export type Database = {
           name?: string
           password_hash?: string
           registration_number?: string | null
+          role?: string
           specializations?: string[] | null
           updated_at?: string | null
           website_url?: string | null

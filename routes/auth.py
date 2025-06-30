@@ -33,7 +33,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         
         access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         access_token = create_access_token(
-            data={"sub": operator.email}, expires_delta=access_token_expires
+            data={"sub": operator.email, "role": operator.role}, expires_delta=access_token_expires
         )
         
         return LoginResponse(
@@ -47,6 +47,7 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
                     "name": operator.name,
                     "email": operator.email,
                     "company": operator.company,
+                    "role": operator.role,
                     "specializations": operator.specializations or []
                 }
             }
@@ -69,6 +70,7 @@ async def get_current_user(current_operator: Operator = Depends(get_current_oper
         name=current_operator.name,
         email=current_operator.email,
         company=current_operator.company,
+        role=current_operator.role,
         specializations=current_operator.specializations or [],
         is_active=current_operator.is_active
     )

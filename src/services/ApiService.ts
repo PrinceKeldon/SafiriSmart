@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ApiResponse<T> {
@@ -17,6 +16,17 @@ interface PaginatedResponse<T> {
     total: number;
     total_pages: number;
   };
+}
+
+interface Operator {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  role: string;
+  specializations: string[];
+  is_active: boolean;
+  created_at?: string;
 }
 
 class ApiService {
@@ -46,6 +56,8 @@ class ApiService {
         url = `${this.baseUrl}/auth-login`;
       } else if (endpoint === '/api/auth/me') {
         url = `${this.baseUrl}/auth-me`;
+      } else if (endpoint.startsWith('/api/admin/operators')) {
+        url = `${this.baseUrl}/admin-operators`;
       } else {
         // For other endpoints, still try the original backend
         url = `${this.baseUrl}${endpoint}`;
@@ -83,6 +95,7 @@ class ApiService {
       name: string;
       email: string;
       company: string;
+      role: string;
       specializations: string[];
     };
   }>> {
@@ -97,10 +110,28 @@ class ApiService {
     name: string;
     email: string;
     company: string;
+    role: string;
     specializations: string[];
     is_active: boolean;
   }>> {
     return this.makeRequest('/api/auth/me');
+  }
+
+  // Admin Operations
+  async getOperators(): Promise<ApiResponse<Operator[]>> {
+    return this.makeRequest('/api/admin/operators');
+  }
+
+  async createOperator(operatorData: {
+    name: string;
+    email: string;
+    company: string;
+    specializations?: string[];
+  }): Promise<ApiResponse<Operator & { temporary_password?: string }>> {
+    return this.makeRequest('/api/admin/operators', {
+      method: 'POST',
+      body: JSON.stringify(operatorData),
+    });
   }
 
   // Leads

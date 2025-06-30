@@ -101,6 +101,7 @@ serve(async (req) => {
             name: operator.name,
             email: operator.email,
             company: operator.company,
+            role: operator.role,
             specializations: operator.specializations || []
           }
         }

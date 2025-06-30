@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import NewLead from "./pages/NewLead";
 import Packages from "./pages/Packages";
 import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/AdminDashboard";
 import EnvConfig from "./pages/EnvConfig";
 import SafariGuide from "./pages/SafariGuide";
 import NotFound from "./pages/NotFound";
@@ -57,6 +58,14 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Profile />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute>
+                  <AdminDashboard />
                 </PrivateRoute>
               }
             />
