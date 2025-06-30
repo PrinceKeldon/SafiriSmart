@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, Title } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ManualLeadForm } from '@/components/leads/ManualLeadForm';
@@ -120,7 +120,7 @@ const NewLead = () => {
         {/* Form */}
         <Card className="max-w-4xl">
           <CardHeader>
-            <Title>Lead Information</Title>
+            <CardTitle>Lead Information</CardTitle>
           </CardHeader>
           <CardContent>
             <Form {...form}>
