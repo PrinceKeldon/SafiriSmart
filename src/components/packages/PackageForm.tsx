@@ -23,6 +23,11 @@ interface PackageFormProps {
   package?: OperatorPackage | null;
 }
 
+interface FormData extends OperatorPackageCreate {
+  included_locations: { value: string }[];
+  included_activities: { value: string }[];
+}
+
 const POPULAR_LOCATIONS = [
   'Masai Mara', 'Serengeti', 'Amboseli', 'Tsavo East', 'Tsavo West',
   'Lake Nakuru', 'Samburu', 'Diani Beach', 'Watamu', 'Malindi',
@@ -40,7 +45,7 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
   const updatePackage = useUpdateOperatorPackage();
   const isEditing = !!editPackage;
 
-  const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<OperatorPackageCreate>({
+  const { register, handleSubmit, control, reset, setValue, watch, formState: { errors } } = useForm<FormData>({
     defaultValues: {
       package_name: '',
       description: '',
@@ -76,8 +81,8 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
         max_group_size: editPackage.max_group_size,
         budget_tier: editPackage.budget_tier as 'budget' | 'mid-range' | 'luxury',
         estimated_cost_per_person_per_day: editPackage.estimated_cost_per_person_per_day,
-        included_locations: editPackage.included_locations,
-        included_activities: editPackage.included_activities,
+        included_locations: editPackage.included_locations.map(loc => ({ value: loc })),
+        included_activities: editPackage.included_activities.map(act => ({ value: act })),
       });
     } else {
       reset({
@@ -95,13 +100,19 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
     }
   }, [editPackage, reset]);
 
-  const onSubmit = async (data: OperatorPackageCreate) => {
+  const onSubmit = async (data: FormData) => {
     try {
+      const packageData: OperatorPackageCreate = {
+        ...data,
+        included_locations: data.included_locations.map(loc => loc.value).filter(Boolean),
+        included_activities: data.included_activities.map(act => act.value).filter(Boolean),
+      };
+
       if (isEditing && editPackage) {
-        await updatePackage.mutateAsync({ id: editPackage.id, data });
+        await updatePackage.mutateAsync({ id: editPackage.id, data: packageData });
         toast.success('Package updated successfully');
       } else {
-        await createPackage.mutateAsync(data);
+        await createPackage.mutateAsync(packageData);
         toast.success('Package created successfully');
       }
       onClose();
@@ -246,7 +257,7 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
               {locationFields.map((field, index) => (
                 <div key={field.id} className="flex gap-2">
                   <Input
-                    {...register(`included_locations.${index}` as const)}
+                    {...register(`included_locations.${index}.value` as const)}
                     placeholder="Enter location"
                     list="popular-locations"
                   />
@@ -264,7 +275,7 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendLocation('')}
+                onClick={() => appendLocation({ value: '' })}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Location
@@ -284,7 +295,7 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
               {activityFields.map((field, index) => (
                 <div key={field.id} className="flex gap-2">
                   <Input
-                    {...register(`included_activities.${index}` as const)}
+                    {...register(`included_activities.${index}.value` as const)}
                     placeholder="Enter activity"
                     list="popular-activities"
                   />
@@ -302,7 +313,7 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => appendActivity('')}
+                onClick={() => appendActivity({ value: '' })}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Activity
