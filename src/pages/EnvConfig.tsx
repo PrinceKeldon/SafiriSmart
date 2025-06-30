@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -6,7 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Copy, Save, AlertCircle, FileText, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Copy, Save, AlertCircle, FileText, RefreshCw, CheckCircle } from 'lucide-react';
 
 interface EnvConfig {
   OPENAI_API_KEY: string;
@@ -107,21 +106,21 @@ DEPLOY_REGION=us-central1
 `.trim();
 
     setGeneratedEnv(envContent);
-    toast.success('Environment file generated! You can now update your .env file below.');
+    toast.success('Environment file generated! Click "Save Configuration" to apply it.');
+  };
+
+  const saveConfiguration = () => {
+    if (generatedEnv) {
+      setCurrentEnv(generatedEnv);
+      toast.success('Configuration saved! Your .env file has been updated with the new values.');
+    } else {
+      toast.error('Please generate the environment file first.');
+    }
   };
 
   const copyToClipboard = (content: string) => {
     navigator.clipboard.writeText(content);
     toast.success('Content copied to clipboard!');
-  };
-
-  const updateCurrentEnv = () => {
-    if (generatedEnv) {
-      setCurrentEnv(generatedEnv);
-      toast.success('Current .env file updated with generated content!');
-    } else {
-      toast.error('Please generate the environment file first.');
-    }
   };
 
   const isFormValid = config.OPENAI_API_KEY && config.GOOGLE_CLOUD_PROJECT;
@@ -261,6 +260,16 @@ DEPLOY_REGION=us-central1
               <Save className="h-4 w-4" />
               Generate Environment File
             </Button>
+            {generatedEnv && (
+              <Button 
+                onClick={saveConfiguration}
+                variant="default"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Save Configuration
+              </Button>
+            )}
           </div>
         </div>
 
@@ -287,17 +296,6 @@ DEPLOY_REGION=us-central1
                     <Copy className="h-4 w-4" />
                     Copy Current
                   </Button>
-                  {generatedEnv && (
-                    <Button 
-                      variant="default" 
-                      size="sm" 
-                      onClick={updateCurrentEnv}
-                      className="flex items-center gap-2"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Update with Generated
-                    </Button>
-                  )}
                 </div>
                 <Textarea
                   value={currentEnv}
@@ -313,25 +311,25 @@ DEPLOY_REGION=us-central1
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  Generated .env File
+                  Generated Configuration Preview
                   <Button variant="outline" size="sm" onClick={() => copyToClipboard(generatedEnv)}>
                     <Copy className="h-4 w-4 mr-2" />
                     Copy Generated
                   </Button>
                 </CardTitle>
                 <CardDescription>
-                  Generated content with your API keys
+                  Preview of the configuration with your API keys
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <Textarea
                   value={generatedEnv}
                   readOnly
-                  className="font-mono text-sm min-h-[400px] bg-gray-50"
+                  className="font-mono text-sm min-h-[300px] bg-gray-50"
                 />
-                <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    <strong>Ready to apply:</strong> Click "Update with Generated" above to replace your current .env content with this generated version.
+                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-sm text-blue-800">
+                    <strong>Ready to save:</strong> Click the "Save Configuration" button above to automatically apply this configuration to your .env file.
                   </p>
                 </div>
               </CardContent>
