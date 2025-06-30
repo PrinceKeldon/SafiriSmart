@@ -1,504 +1,448 @@
 
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional, Literal
-from datetime import datetime
-import random
-from enum import Enum
+from fastapi import FastAPI, HTTPException, Depends, status, Query
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import HTTPBearer
+from sqlalchemy.orm import Session
+from datetime import timedelta
+import math
+import logging
+
+# Local imports
+from database import get_db, create_tables
+from models import Operator, Lead, LeadNote
+from schemas import *
+from auth import authenticate_operator, create_access_token, get_current_operator, get_password_hash
+from crud import *
+from email_service import email_service
+from ai_service import ai_service
+from config import settings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="SafariGuide AI - Core AI Service",
-    description="Intelligent itinerary generation for Kenya safari experiences",
+    title="TourMaster AI - B2B Backend",
+    description="Backend API for tour operators to manage safari leads and bookings",
     version="1.0.0"
 )
 
-# Pydantic Models for Input (matching frontend TravelPreferences)
-class TravelPreferences(BaseModel):
-    duration: int = Field(..., ge=1, le=21, description="Trip duration in days")
-    budgetRange: Literal['budget', 'mid-range', 'luxury'] = Field(..., description="Budget preference level")
-    interests: List[str] = Field(..., description="List of traveler interests")
-    groupSize: int = Field(..., ge=1, le=20, description="Number of travelers")
-    travelPace: Literal['relaxed', 'moderate', 'active'] = Field(..., description="Preferred travel pace")
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Pydantic Models for Output (matching frontend TourOutput)
-class ItineraryDay(BaseModel):
-    day_number: int
-    theme: str
-    location: str
-    activities: List[str]
-    accommodation_suggestion: str
+# Create database tables on startup
+@app.on_event("startup")
+async def startup_event():
+    create_tables()
+    logger.info("Database tables created successfully")
 
-class TourOutput(BaseModel):
-    tour_name: str
-    summary: str
-    itinerary_details: List[ItineraryDay]
-    inclusions_suggestions: List[str]
-    exclusions_suggestions: List[str]
-    important_notes: List[str]
-
-# Knowledge Base for Intelligent Itinerary Generation
-class KenyaDestinations:
-    SAFARI_LOCATIONS = {
-        'masai_mara': {
-            'name': 'Masai Mara National Reserve',
-            'strengths': ['wildlife-safari', 'photography', 'cultural'],
-            'activities': ['Game Drive', 'Hot Air Balloon Safari', 'Masai Village Visit', 'Wildlife Photography', 'Bush Breakfast'],
-            'themes': ['Big Five Safari', 'Great Migration Experience', 'Cultural Immersion']
-        },
-        'amboseli': {
-            'name': 'Amboseli National Park',
-            'strengths': ['wildlife-safari', 'photography', 'adventure'],
-            'activities': ['Elephant Watching', 'Kilimanjaro Views', 'Game Drive', 'Nature Walk', 'Bird Watching'],
-            'themes': ['Elephant Paradise', 'Kilimanjaro Views', 'Wildlife Photography']
-        },
-        'tsavo': {
-            'name': 'Tsavo National Parks',
-            'strengths': ['wildlife-safari', 'adventure', 'conservation'],
-            'activities': ['Red Elephant Spotting', 'Lugard Falls Visit', 'Rock Climbing', 'Game Drive'],
-            'themes': ['Red Elephants Adventure', 'Wilderness Exploration', 'Conservation Experience']
-        },
-        'samburu': {
-            'name': 'Samburu National Reserve',
-            'strengths': ['wildlife-safari', 'cultural', 'conservation'],
-            'activities': ['Special Five Game Drive', 'Samburu Cultural Visit', 'River Safari', 'Leopard Tracking'],
-            'themes': ['Special Five Safari', 'Northern Kenya Culture', 'Leopard Territory']
-        },
-        'lake_nakuru': {
-            'name': 'Lake Nakuru National Park',
-            'strengths': ['bird-watching', 'wildlife-safari', 'photography'],
-            'activities': ['Flamingo Viewing', 'Rhino Tracking', 'Game Drive', 'Bird Photography'],
-            'themes': ['Pink Flamingo Spectacle', 'Rhino Sanctuary', 'Bird Paradise']
-        }
-    }
-    
-    COASTAL_LOCATIONS = {
-        'diani': {
-            'name': 'Diani Beach',
-            'strengths': ['beach', 'luxury-travel', 'adventure'],
-            'activities': ['Beach Relaxation', 'Dhow Sailing', 'Snorkeling', 'Kite Surfing', 'Colobus Monkey Sanctuary'],
-            'themes': ['Tropical Paradise', 'Water Sports', 'Marine Life']
-        },
-        'watamu': {
-            'name': 'Watamu Marine Park',
-            'strengths': ['beach', 'conservation', 'bird-watching'],
-            'activities': ['Turtle Watching', 'Snorkeling', 'Deep Sea Fishing', 'Mangrove Tour'],
-            'themes': ['Marine Conservation', 'Coral Gardens', 'Turtle Sanctuary']
-        }
-    }
-    
-    CULTURAL_LOCATIONS = {
-        'nairobi': {
-            'name': 'Nairobi',
-            'strengths': ['cultural', 'conservation', 'photography'],
-            'activities': ['David Sheldrick Elephant Orphanage', 'Giraffe Centre', 'Karen Blixen Museum', 'Nairobi National Park'],
-            'themes': ['Urban Safari', 'Conservation Centers', 'Colonial History']
-        },
-        'lamu': {
-            'name': 'Lamu Island',
-            'strengths': ['cultural', 'beach', 'luxury-travel'],
-            'activities': ['Swahili Architecture Tour', 'Dhow Building', 'Traditional Donkey Rides', 'Sunset Dhow Cruise'],
-            'themes': ['Swahili Heritage', 'Island Culture', 'Historical Journey']
-        }
-    }
-
-class AccommodationManager:
-    BUDGET_ACCOMMODATIONS = {
-        'safari': 'Comfortable Safari Camp with Shared Facilities',
-        'beach': 'Beach Guesthouse with Ocean Views',
-        'city': 'Budget Hotel in City Center',
-        'cultural': 'Traditional Guesthouse'
-    }
-    
-    MID_RANGE_ACCOMMODATIONS = {
-        'safari': 'Safari Lodge with Ensuite Facilities and Game Viewing Deck',
-        'beach': 'Beachfront Resort with Pool and Restaurant',
-        'city': 'Boutique Hotel with Modern Amenities',
-        'cultural': 'Heritage Hotel with Cultural Experiences'
-    }
-    
-    LUXURY_ACCOMMODATIONS = {
-        'safari': 'Luxury Safari Lodge with Private Balcony and Butler Service',
-        'beach': 'Exclusive Beach Resort with Private Villa and Spa',
-        'city': 'Five-Star Hotel with Concierge Services',
-        'cultural': 'Luxury Cultural Lodge with Personalized Experiences'
-    }
-
-class ItineraryGenerator:
-    def __init__(self):
-        self.destinations = KenyaDestinations()
-        self.accommodation_manager = AccommodationManager()
-    
-    def analyze_interests(self, interests: List[str]) -> Dict[str, float]:
-        """Analyze user interests and return weighted preferences"""
-        interest_weights = {
-            'safari': 0.0,
-            'beach': 0.0,
-            'cultural': 0.0,
-            'adventure': 0.0,
-            'conservation': 0.0,
-            'photography': 0.0
-        }
-        
-        for interest in interests:
-            if 'wildlife' in interest.lower() or 'safari' in interest.lower():
-                interest_weights['safari'] += 1.0
-            if 'beach' in interest.lower() or 'coast' in interest.lower():
-                interest_weights['beach'] += 1.0
-            if 'cultural' in interest.lower():
-                interest_weights['cultural'] += 1.0
-            if 'adventure' in interest.lower():
-                interest_weights['adventure'] += 0.8
-            if 'conservation' in interest.lower():
-                interest_weights['conservation'] += 0.8
-            if 'photography' in interest.lower():
-                interest_weights['photography'] += 0.6
-        
-        return interest_weights
-    
-    def select_destinations(self, interests: List[str], duration: int, pace: str) -> List[Dict]:
-        """Intelligently select destinations based on interests and duration"""
-        interest_weights = self.analyze_interests(interests)
-        selected_destinations = []
-        
-        # Always start with Nairobi for arrival
-        selected_destinations.append({
-            'location': 'nairobi',
-            'data': self.destinations.CULTURAL_LOCATIONS['nairobi'],
-            'days': 1
-        })
-        
-        remaining_days = duration - 2  # Reserve 1 day for arrival, 1 for departure
-        
-        # Prioritize destinations based on interests
-        if interest_weights['safari'] > 0:
-            # Add primary safari destination
-            if duration >= 5:
-                selected_destinations.append({
-                    'location': 'masai_mara',
-                    'data': self.destinations.SAFARI_LOCATIONS['masai_mara'],
-                    'days': min(3, remaining_days // 2)
-                })
-                remaining_days -= min(3, remaining_days // 2)
-            
-            # Add secondary safari destination for longer trips
-            if duration >= 10 and remaining_days >= 2:
-                selected_destinations.append({
-                    'location': 'amboseli',
-                    'data': self.destinations.SAFARI_LOCATIONS['amboseli'],
-                    'days': min(2, remaining_days // 2)
-                })
-                remaining_days -= min(2, remaining_days // 2)
-        
-        # Add beach destination if interested
-        if interest_weights['beach'] > 0 and remaining_days >= 2:
-            beach_days = min(3, remaining_days)
-            selected_destinations.append({
-                'location': 'diani',
-                'data': self.destinations.COASTAL_LOCATIONS['diani'],
-                'days': beach_days
-            })
-            remaining_days -= beach_days
-        
-        # Add cultural destinations
-        if interest_weights['cultural'] > 0.5 and remaining_days >= 2:
-            cultural_days = min(2, remaining_days)
-            selected_destinations.append({
-                'location': 'lamu',
-                'data': self.destinations.CULTURAL_LOCATIONS['lamu'],
-                'days': cultural_days
-            })
-            remaining_days -= cultural_days
-        
-        # Add conservation-focused destination
-        if interest_weights['conservation'] > 0.5 and remaining_days >= 2:
-            selected_destinations.append({
-                'location': 'samburu',
-                'data': self.destinations.SAFARI_LOCATIONS['samburu'],
-                'days': min(2, remaining_days)
-            })
-        
-        # Add departure day in Nairobi
-        selected_destinations.append({
-            'location': 'nairobi_departure',
-            'data': self.destinations.CULTURAL_LOCATIONS['nairobi'],
-            'days': 1
-        })
-        
-        return selected_destinations
-    
-    def generate_activities(self, location_data: Dict, pace: str, group_size: int, interests: List[str]) -> List[str]:
-        """Generate activities based on pace, group size, and interests"""
-        available_activities = location_data['activities']
-        
-        # Adjust number of activities based on pace
-        if pace == 'relaxed':
-            activity_count = min(2, len(available_activities))
-        elif pace == 'moderate':
-            activity_count = min(3, len(available_activities))
-        else:  # active
-            activity_count = min(4, len(available_activities))
-        
-        # Prioritize activities based on interests
-        prioritized_activities = []
-        for interest in interests:
-            for activity in available_activities:
-                if any(keyword in activity.lower() for keyword in interest.lower().split()) and activity not in prioritized_activities:
-                    prioritized_activities.append(activity)
-        
-        # Add remaining activities
-        for activity in available_activities:
-            if activity not in prioritized_activities:
-                prioritized_activities.append(activity)
-        
-        # Adjust for group size
-        if group_size > 6:
-            # Add group-friendly activities
-            group_activities = ['Group Game Drive', 'Community Visit', 'Group Bush Breakfast']
-            for activity in group_activities:
-                if activity not in prioritized_activities:
-                    prioritized_activities.insert(0, activity)
-        
-        return prioritized_activities[:activity_count]
-    
-    def get_accommodation(self, budget_level: str, location_type: str) -> str:
-        """Get appropriate accommodation based on budget and location"""
-        if budget_level == 'budget':
-            return self.accommodation_manager.BUDGET_ACCOMMODATIONS.get(location_type, 'Comfortable Lodge')
-        elif budget_level == 'mid-range':
-            return self.accommodation_manager.MID_RANGE_ACCOMMODATIONS.get(location_type, 'Quality Safari Lodge')
-        else:  # luxury
-            return self.accommodation_manager.LUXURY_ACCOMMODATIONS.get(location_type, 'Luxury Safari Lodge')
-    
-    def generate_itinerary(self, preferences: TravelPreferences) -> TourOutput:
-        """Generate complete itinerary based on preferences"""
-        destinations = self.select_destinations(preferences.interests, preferences.duration, preferences.travelPace)
-        
-        itinerary_days = []
-        current_day = 1
-        
-        for dest in destinations:
-            location_data = dest['data']
-            days_at_location = dest['days']
-            
-            for day_at_location in range(days_at_location):
-                # Determine location type for accommodation
-                if 'safari' in location_data['strengths'] or 'wildlife' in location_data['strengths']:
-                    location_type = 'safari'
-                elif 'beach' in location_data['strengths']:
-                    location_type = 'beach'
-                elif 'cultural' in location_data['strengths']:
-                    location_type = 'cultural'
-                else:
-                    location_type = 'safari'
-                
-                # Generate theme based on day and location
-                if current_day == 1:
-                    theme = f"Arrival & {location_data['name']} Introduction"
-                elif current_day == preferences.duration:
-                    theme = "Departure & Safari Memories"
-                elif day_at_location == 0:
-                    theme = f"{location_data['themes'][0]} - Arrival"
-                else:
-                    theme_index = min(day_at_location, len(location_data['themes']) - 1)
-                    theme = location_data['themes'][theme_index]
-                
-                # Generate activities
-                activities = self.generate_activities(
-                    location_data, 
-                    preferences.travelPace, 
-                    preferences.groupSize, 
-                    preferences.interests
-                )
-                
-                # Get accommodation
-                accommodation = self.get_accommodation(preferences.budgetRange, location_type)
-                
-                itinerary_days.append(ItineraryDay(
-                    day_number=current_day,
-                    theme=theme,
-                    location=location_data['name'],
-                    activities=activities,
-                    accommodation_suggestion=accommodation
-                ))
-                
-                current_day += 1
-        
-        # Generate tour name
-        tour_name = self.generate_tour_name(preferences)
-        
-        # Generate summary
-        summary = self.generate_summary(preferences, destinations)
-        
-        # Generate inclusions and exclusions
-        inclusions = self.generate_inclusions(preferences)
-        exclusions = self.generate_exclusions()
-        
-        # Generate important notes
-        important_notes = self.generate_important_notes(preferences, destinations)
-        
-        return TourOutput(
-            tour_name=tour_name,
-            summary=summary,
-            itinerary_details=itinerary_days,
-            inclusions_suggestions=inclusions,
-            exclusions_suggestions=exclusions,
-            important_notes=important_notes
-        )
-    
-    def generate_tour_name(self, preferences: TravelPreferences) -> str:
-        """Generate dynamic tour name based on preferences"""
-        duration_text = f"{preferences.duration}-Day"
-        
-        if 'wildlife-safari' in preferences.interests or 'photography' in preferences.interests:
-            if preferences.budgetRange == 'luxury':
-                return f"{duration_text} Ultimate Luxury Kenya Safari"
-            elif preferences.budgetRange == 'budget':
-                return f"{duration_text} Essential Kenya Safari Adventure"
-            else:
-                return f"{duration_text} Classic Kenya Safari Experience"
-        elif 'beach' in preferences.interests:
-            return f"{duration_text} Kenya Safari & Beach Paradise"
-        elif 'cultural' in preferences.interests:
-            return f"{duration_text} Cultural Kenya Safari Journey"
-        else:
-            return f"{duration_text} Kenya Discovery Adventure"
-    
-    def generate_summary(self, preferences: TravelPreferences, destinations: List[Dict]) -> str:
-        """Generate dynamic summary based on itinerary"""
-        pace_text = {
-            'relaxed': 'leisurely',
-            'moderate': 'well-balanced',
-            'active': 'action-packed'
-        }
-        
-        budget_text = {
-            'budget': 'comfortable',
-            'mid-range': 'quality',
-            'luxury': 'luxury'
-        }
-        
-        location_names = [dest['data']['name'] for dest in destinations[1:-1]]  # Exclude arrival/departure
-        locations_text = ', '.join(location_names)
-        
-        return f"Experience the best of Kenya with this carefully crafted {preferences.duration}-day safari visiting {locations_text}. Perfect for {preferences.groupSize} travelers seeking a {pace_text[preferences.travelPace]} adventure with {budget_text[preferences.budgetRange]} accommodations and personalized experiences."
-    
-    def generate_inclusions(self, preferences: TravelPreferences) -> List[str]:
-        """Generate inclusions based on preferences"""
-        base_inclusions = [
-            "All park entrance fees and conservancy fees",
-            "Professional safari guide throughout the trip",
-            "Game drives as per itinerary",
-            "Accommodation as specified in itinerary",
-            "All meals during safari (breakfast, lunch, dinner)",
-            "Transportation in 4WD safari vehicle with pop-up roof"
-        ]
-        
-        if preferences.budgetRange == 'luxury':
-            base_inclusions.extend([
-                "Private safari vehicle and guide",
-                "Premium accommodation with full board",
-                "Sundowner drinks in the bush",
-                "Airport transfers in luxury vehicle"
-            ])
-        elif preferences.budgetRange == 'mid-range':
-            base_inclusions.extend([
-                "Semi-private safari vehicle (max 6 guests)",
-                "Quality accommodation with ensuite facilities",
-                "Airport transfers included"
-            ])
-        
-        if preferences.groupSize > 6:
-            base_inclusions.append("Group coordination and logistics support")
-        
-        return base_inclusions
-    
-    def generate_exclusions(self) -> List[str]:
-        """Generate standard exclusions"""
-        return [
-            "International flights to/from Kenya",
-            "Visa fees and travel documents",
-            "Personal expenses and souvenirs",
-            "Alcoholic beverages (unless specified)",
-            "Travel insurance (strongly recommended)",
-            "Tips and gratuities for guides and staff",
-            "Optional activities not mentioned in itinerary",
-            "Laundry services"
-        ]
-    
-    def generate_important_notes(self, preferences: TravelPreferences, destinations: List[Dict]) -> List[str]:
-        """Generate important notes based on itinerary"""
-        notes = [
-            "Best time to visit Kenya is during dry seasons (June-October, December-March)",
-            "Comfortable walking shoes and neutral-colored clothing recommended for game drives",
-            "Binoculars and camera equipment with extra batteries advised",
-            "Yellow fever vaccination required if arriving from endemic areas"
-        ]
-        
-        # Add destination-specific notes
-        for dest in destinations:
-            if dest['location'] == 'masai_mara':
-                notes.append("Great Migration typically occurs July-October in Masai Mara")
-            elif dest['location'] == 'diani':
-                notes.append("Beach activities depend on weather and tide conditions")
-            elif dest['location'] == 'amboseli':
-                notes.append("Clear Kilimanjaro views are best in early morning and late afternoon")
-        
-        if preferences.groupSize > 8:
-            notes.append("Large groups may require multiple safari vehicles for optimal game viewing")
-        
-        if preferences.travelPace == 'active':
-            notes.append("Active itinerary includes early morning starts (5:30-6:00 AM)")
-        
-        return notes
-
-# Initialize the itinerary generator
-itinerary_generator = ItineraryGenerator()
-
-@app.post("/generate_itinerary", response_model=TourOutput)
-async def generate_itinerary(preferences: TravelPreferences):
-    """
-    Generate intelligent Kenya safari itinerary based on travel preferences
-    """
+# Authentication Endpoints
+@app.post("/api/auth/login", response_model=LoginResponse)
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
+    """Authenticate tour operator and return JWT token"""
     try:
-        # Validate preferences
-        if preferences.duration < 1 or preferences.duration > 21:
-            raise HTTPException(status_code=400, detail="Duration must be between 1 and 21 days")
+        operator = authenticate_operator(db, request.email, request.password)
+        if not operator:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password"
+            )
         
-        if preferences.groupSize < 1 or preferences.groupSize > 20:
-            raise HTTPException(status_code=400, detail="Group size must be between 1 and 20 people")
+        if not operator.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Account is inactive"
+            )
         
-        if not preferences.interests:
-            raise HTTPException(status_code=400, detail="At least one interest must be specified")
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": operator.email}, expires_delta=access_token_expires
+        )
         
-        # Generate the itinerary
-        tour_output = itinerary_generator.generate_itinerary(preferences)
+        return LoginResponse(
+            success=True,
+            data={
+                "access_token": access_token,
+                "token_type": "bearer",
+                "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+                "operator": {
+                    "id": str(operator.id),
+                    "name": operator.name,
+                    "email": operator.email,
+                    "company": operator.company,
+                    "specializations": operator.specializations or []
+                }
+            }
+        )
         
-        return tour_output
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Login error: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during login"
+        )
+
+@app.get("/api/auth/me", response_model=OperatorResponse)
+async def get_current_user(current_operator: Operator = Depends(get_current_operator)):
+    """Get current authenticated operator details"""
+    return OperatorResponse(
+        id=current_operator.id,
+        name=current_operator.name,
+        email=current_operator.email,
+        company=current_operator.company,
+        specializations=current_operator.specializations or [],
+        is_active=current_operator.is_active
+    )
+
+# Lead Management Endpoints
+@app.post("/api/leads", response_model=CreateLeadResponse)
+async def create_new_lead(request: CreateLeadRequest, db: Session = Depends(get_db)):
+    """Create new lead from B2C SafariGuide AI or direct operator entry"""
+    try:
+        itinerary = request.itinerary
+        
+        # Generate itinerary if not provided
+        if not itinerary:
+            logger.info("Generating itinerary via AI Core Service")
+            itinerary = await ai_service.generate_itinerary(request.preferences)
+            
+            if not itinerary:
+                logger.warning("Failed to generate itinerary, proceeding without it")
+        
+        # Create the lead
+        lead = create_lead(db, request, itinerary)
+        
+        # Send email notification to assigned operator
+        if lead.assigned_operator:
+            lead_data = {
+                "traveler_name": lead.traveler_name,
+                "traveler_email": lead.traveler_email,
+                "traveler_phone": lead.traveler_phone,
+                "traveler_country": lead.traveler_country,
+                "preferences": lead.preferences
+            }
+            
+            email_sent = email_service.send_new_lead_notification(
+                lead.assigned_operator.email,
+                lead.assigned_operator.name,
+                lead_data
+            )
+            
+            if not email_sent:
+                logger.warning(f"Failed to send email notification for lead {lead.id}")
+        
+        return CreateLeadResponse(
+            success=True,
+            data={
+                "lead_id": str(lead.id),
+                "status": lead.status,
+                "assigned_operator": {
+                    "id": str(lead.assigned_operator.id),
+                    "name": lead.assigned_operator.name,
+                    "email": lead.assigned_operator.email
+                } if lead.assigned_operator else None
+            },
+            message="Lead created and assigned successfully"
+        )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error generating itinerary: {str(e)}")
+        logger.error(f"Error creating lead: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error creating lead: {str(e)}"
+        )
 
+@app.get("/api/leads", response_model=LeadListResponse)
+async def get_leads(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    status: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Get paginated leads for authenticated operator"""
+    try:
+        leads, total = get_leads_for_operator(
+            db, current_operator.id, status, search, page, limit
+        )
+        
+        lead_responses = []
+        for lead in leads:
+            lead_responses.append(LeadResponse(
+                id=lead.id,
+                status=LeadStatus(lead.status),
+                traveler=TravelerInfo(
+                    name=lead.traveler_name,
+                    email=lead.traveler_email,
+                    phone=lead.traveler_phone,
+                    country=lead.traveler_country
+                ),
+                preferences=lead.preferences,
+                itinerary=lead.itinerary,
+                quoted_price=float(lead.quoted_price) if lead.quoted_price else None,
+                quoted_currency=lead.quoted_currency,
+                created_at=lead.created_at,
+                updated_at=lead.updated_at,
+                assigned_operator=OperatorResponse(
+                    id=lead.assigned_operator.id,
+                    name=lead.assigned_operator.name,
+                    email=lead.assigned_operator.email,
+                    company=lead.assigned_operator.company,
+                    specializations=lead.assigned_operator.specializations or [],
+                    is_active=lead.assigned_operator.is_active
+                ) if lead.assigned_operator else None
+            ))
+        
+        total_pages = math.ceil(total / limit)
+        
+        return LeadListResponse(
+            success=True,
+            data=lead_responses,
+            pagination={
+                "page": page,
+                "limit": limit,
+                "total": total,
+                "total_pages": total_pages
+            }
+        )
+        
+    except Exception as e:
+        logger.error(f"Error fetching leads: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching leads: {str(e)}"
+        )
+
+@app.get("/api/leads/{lead_id}", response_model=LeadDetailResponse)
+async def get_lead_detail(
+    lead_id: str,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Get specific lead details with notes"""
+    try:
+        lead = get_lead_by_id(db, lead_id, current_operator.id)
+        if not lead:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        # Get lead notes
+        notes = get_lead_notes(db, lead_id, current_operator.id)
+        note_responses = []
+        for note in notes:
+            note_responses.append(LeadNoteResponse(
+                id=note.id,
+                note=note.note,
+                created_by=OperatorResponse(
+                    id=note.created_by_operator.id,
+                    name=note.created_by_operator.name,
+                    email=note.created_by_operator.email,
+                    company=note.created_by_operator.company,
+                    specializations=note.created_by_operator.specializations or [],
+                    is_active=note.created_by_operator.is_active
+                ),
+                created_at=note.created_at
+            ))
+        
+        return LeadDetailResponse(
+            id=lead.id,
+            status=LeadStatus(lead.status),
+            traveler=TravelerInfo(
+                name=lead.traveler_name,
+                email=lead.traveler_email,
+                phone=lead.traveler_phone,
+                country=lead.traveler_country
+            ),
+            preferences=lead.preferences,
+            itinerary=lead.itinerary,
+            quoted_price=float(lead.quoted_price) if lead.quoted_price else None,
+            quoted_currency=lead.quoted_currency,
+            created_at=lead.created_at,
+            updated_at=lead.updated_at,
+            assigned_operator=OperatorResponse(
+                id=lead.assigned_operator.id,
+                name=lead.assigned_operator.name,
+                email=lead.assigned_operator.email,
+                company=lead.assigned_operator.company,
+                specializations=lead.assigned_operator.specializations or [],
+                is_active=lead.assigned_operator.is_active
+            ) if lead.assigned_operator else None,
+            notes=note_responses
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching lead detail: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching lead detail: {str(e)}"
+        )
+
+@app.put("/api/leads/{lead_id}/status", response_model=UpdateLeadStatusResponse)
+async def update_lead_status_endpoint(
+    lead_id: str,
+    request: UpdateLeadStatusRequest,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Update lead status"""
+    try:
+        old_lead = get_lead_by_id(db, lead_id, current_operator.id)
+        if not old_lead:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        old_status = old_lead.status
+        updated_lead = update_lead_status(db, lead_id, request.status, current_operator.id)
+        
+        if not updated_lead:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update lead status"
+            )
+        
+        return UpdateLeadStatusResponse(
+            success=True,
+            data={
+                "lead_id": str(updated_lead.id),
+                "old_status": old_status,
+                "new_status": updated_lead.status,
+                "updated_at": updated_lead.updated_at.isoformat()
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating lead status: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating lead status: {str(e)}"
+        )
+
+@app.post("/api/leads/{lead_id}/notes")
+async def add_lead_note_endpoint(
+    lead_id: str,
+    request: AddLeadNoteRequest,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Add note to lead"""
+    try:
+        note = add_lead_note(db, lead_id, request, current_operator.id)
+        if not note:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        return {
+            "success": True,
+            "data": {
+                "note_id": str(note.id),
+                "note": note.note,
+                "created_at": note.created_at.isoformat()
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error adding lead note: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error adding lead note: {str(e)}"
+        )
+
+@app.put("/api/leads/{lead_id}/quote")
+async def update_lead_quote_endpoint(
+    lead_id: str,
+    request: AddLeadQuoteRequest,
+    current_operator: Operator = Depends(get_current_operator),
+    db: Session = Depends(get_db)
+):
+    """Add quote to lead"""
+    try:
+        updated_lead = update_lead_quote(
+            db, lead_id, request.quoted_price, request.quoted_currency, current_operator.id
+        )
+        
+        if not updated_lead:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Lead not found"
+            )
+        
+        # Add a note if provided
+        if request.note:
+            note_request = AddLeadNoteRequest(note=request.note)
+            add_lead_note(db, lead_id, note_request, current_operator.id)
+        
+        return {
+            "success": True,
+            "data": {
+                "lead_id": str(updated_lead.id),
+                "quoted_price": float(updated_lead.quoted_price),
+                "quoted_currency": updated_lead.quoted_currency,
+                "updated_at": updated_lead.updated_at.isoformat()
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating lead quote: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating lead quote: {str(e)}"
+        )
+
+# Health Check Endpoints
 @app.get("/")
 async def root():
-    """Health check endpoint"""
+    """Root endpoint"""
     return {
-        "message": "SafariGuide AI - Core AI Service",
+        "message": "TourMaster AI - B2B Backend",
         "status": "operational",
         "version": "1.0.0"
     }
 
 @app.get("/health")
 async def health_check():
-    """Detailed health check"""
+    """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "Core AI Service",
+        "service": "TourMaster AI B2B Backend",
         "endpoints": {
-            "generate_itinerary": "POST /generate_itinerary",
-            "health": "GET /health"
+            "auth": {
+                "login": "POST /api/auth/login",
+                "me": "GET /api/auth/me"
+            },
+            "leads": {
+                "create": "POST /api/leads",
+                "list": "GET /api/leads",
+                "detail": "GET /api/leads/{id}",
+                "update_status": "PUT /api/leads/{id}/status",
+                "add_note": "POST /api/leads/{id}/notes",
+                "add_quote": "PUT /api/leads/{id}/quote"
+            }
         }
     }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8001)

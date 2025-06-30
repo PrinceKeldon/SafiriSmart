@@ -1,73 +1,132 @@
-# Welcome to your Lovable project
 
-## Project info
+# TourMaster AI - B2B Backend
 
-**URL**: https://lovable.dev/projects/7d89be96-a1c9-4219-a297-2e39f2872a7b
+A comprehensive FastAPI backend for managing safari tour leads and bookings, designed for tour operators.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **JWT Authentication**: Secure login system for tour operators
+- **Lead Management**: Create, view, update, and manage safari leads
+- **AI Integration**: Automatic itinerary generation via Core AI Service
+- **Email Notifications**: Automated notifications for new leads
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **API Documentation**: Auto-generated OpenAPI/Swagger docs
 
-**Use Lovable**
+## Setup Instructions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/7d89be96-a1c9-4219-a297-2e39f2872a7b) and start prompting.
+### 1. Install Dependencies
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+pip install -r requirements.txt
 ```
 
-**Edit a file directly in GitHub**
+### 2. Database Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Set up PostgreSQL database and update the connection string in `.env`:
 
-**Use GitHub Codespaces**
+```bash
+# Copy example environment file
+cp .env.example .env
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Edit .env with your database credentials
+DATABASE_URL=postgresql://username:password@localhost:5432/tourmaster_b2b
+```
 
-## What technologies are used for this project?
+### 3. Environment Variables
 
-This project is built with:
+Configure the following in your `.env` file:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- `DATABASE_URL`: PostgreSQL connection string
+- `SECRET_KEY`: JWT secret key
+- `EMAIL_*`: Email service configuration
+- `AI_CORE_SERVICE_URL`: URL to the AI Core Service
 
-## How can I deploy this project?
+### 4. Initialize Database
 
-Simply open [Lovable](https://lovable.dev/projects/7d89be96-a1c9-4219-a297-2e39f2872a7b) and click on Share -> Publish.
+```bash
+python create_sample_data.py
+```
 
-## Can I connect a custom domain to my Lovable project?
+This creates the database tables and a sample operator account:
+- Email: `demo@safariexperts.com`
+- Password: `password123`
 
-Yes, you can!
+### 5. Run the Application
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+```bash
+python main.py
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+Or using uvicorn directly:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port 8001 --reload
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/login` - Operator login
+- `GET /api/auth/me` - Get current operator details
+
+### Lead Management
+- `POST /api/leads` - Create new lead
+- `GET /api/leads` - List leads (paginated, filtered)
+- `GET /api/leads/{id}` - Get lead details
+- `PUT /api/leads/{id}/status` - Update lead status
+- `POST /api/leads/{id}/notes` - Add note to lead
+- `PUT /api/leads/{id}/quote` - Add quote to lead
+
+### Health Checks
+- `GET /` - Root endpoint
+- `GET /health` - Health check
+
+## API Documentation
+
+Once running, visit:
+- Swagger UI: `http://localhost:8001/docs`
+- ReDoc: `http://localhost:8001/redoc`
+
+## Architecture
+
+```
+├── main.py              # FastAPI application and endpoints
+├── models.py            # SQLAlchemy database models
+├── schemas.py           # Pydantic request/response schemas
+├── database.py          # Database configuration and connection
+├── auth.py              # JWT authentication utilities
+├── crud.py              # Database operations
+├── email_service.py     # Email notification service
+├── ai_service.py        # AI Core Service integration
+├── config.py            # Application configuration
+└── create_sample_data.py # Database initialization script
+```
+
+## Integration with AI Core Service
+
+The backend automatically calls the AI Core Service to generate itineraries when:
+1. A new lead is created without an existing itinerary
+2. The AI service is available at the configured URL
+
+## Security Features
+
+- JWT-based authentication
+- Password hashing with bcrypt
+- Input validation with Pydantic
+- SQL injection prevention with SQLAlchemy ORM
+- CORS configuration for frontend integration
+
+## Development
+
+For development with auto-reload:
+
+```bash
+uvicorn main:app --reload --host 0.0.0.0 --port 8001
+```
+
+## Production Deployment
+
+1. Set up PostgreSQL database
+2. Configure environment variables
+3. Run database migrations
+4. Deploy with a production ASGI server like Gunicorn + Uvicorn
