@@ -1,0 +1,126 @@
+
+name: Deploy Tourism Concierge AI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio httpx
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v
+
+  build-and-deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push AI Core Service
+      uses: docker/build-push-action@v5
+      with:
+        context: ./ai-core-service
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/ai-core:latest
+
+    - name: Build and push B2B Backend
+      uses: docker/build-push-action@v5
+      with:
+        context: ./b2b-backend
+        push: true
+        tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/b2b-backend:latest
+
+    - name: Deploy to production
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          cd /opt/tourism-ai
+          docker-compose pull
+          docker-compose up -d
+          docker system prune -f
+
+  deploy-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        cd b2c-frontend
+        npm ci
+
+    - name: Build B2C Frontend
+      run: |
+        cd b2c-frontend
+        npm run build
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+    - name: Deploy to Vercel
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-args: '--prod'
+        working-directory: ./b2c-frontend
+
+    - name: Build B2B Dashboard
+      run: |
+        cd b2b-dashboard
+        npm ci
+        npm run build
+      env:
+        VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+        VITE_B2B_API_URL: ${{ secrets.VITE_B2B_API_URL }}
+
+    - name: Deploy B2B Dashboard
+      uses: amondnet/vercel-action@v25
+      with:
+        vercel-token: ${{ secrets.VERCEL_TOKEN }}
+        vercel-args: '--prod'
+        working-directory: ./b2b-dashboard
