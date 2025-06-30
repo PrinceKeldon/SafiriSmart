@@ -9,7 +9,137 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      lead_notes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string | null
+          note: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string | null
+          note: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string | null
+          note?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assigned_operator_id: string | null
+          created_at: string | null
+          id: string
+          itinerary: Json | null
+          preferences: Json
+          quoted_currency: string | null
+          quoted_price: number | null
+          status: string
+          traveler_country: string | null
+          traveler_email: string
+          traveler_name: string
+          traveler_phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_operator_id?: string | null
+          created_at?: string | null
+          id?: string
+          itinerary?: Json | null
+          preferences: Json
+          quoted_currency?: string | null
+          quoted_price?: number | null
+          status?: string
+          traveler_country?: string | null
+          traveler_email: string
+          traveler_name: string
+          traveler_phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_operator_id?: string | null
+          created_at?: string | null
+          id?: string
+          itinerary?: Json | null
+          preferences?: Json
+          quoted_currency?: string | null
+          quoted_price?: number | null
+          status?: string
+          traveler_country?: string | null
+          traveler_email?: string
+          traveler_name?: string
+          traveler_phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_assigned_operator_id_fkey"
+            columns: ["assigned_operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operators: {
+        Row: {
+          company: string
+          created_at: string | null
+          email: string
+          id: string
+          is_active: boolean | null
+          name: string
+          password_hash: string
+          specializations: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          company: string
+          created_at?: string | null
+          email: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          password_hash: string
+          specializations?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          company?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          password_hash?: string
+          specializations?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,0 +1,59 @@
+
+# Docker Compose for local development with Supabase integration
+version: '3.8'
+
+services:
+  # AI Core Service
+  ai-core-service:
+    build:
+      context: ../ai-core-service
+      dockerfile: ../docker/Dockerfile.ai-core
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - API_V1_STR=/api
+    volumes:
+      - ../ai-core-service:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # B2B Backend Service
+  b2b-backend:
+    build:
+      context: ../b2b-backend
+      dockerfile: ../docker/Dockerfile.b2b-backend
+    ports:
+      - "8001:8001"
+    environment:
+      # Supabase Configuration
+      - DATABASE_URL=postgresql://postgres:${SUPABASE_DB_PASSWORD}@db.gjhuxgjheaywfwrpctah.supabase.co:5432/postgres
+      - SUPABASE_URL=https://gjhuxgjheaywfwrpctah.supabase.co
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      
+      # Service Configuration
+      - AI_CORE_SERVICE_URL=http://ai-core-service:8000
+      - SECRET_KEY=${JWT_SECRET}
+      
+      # Email Configuration
+      - EMAIL_HOST=${SMTP_HOST}
+      - EMAIL_USER=${SMTP_USER}
+      - EMAIL_PASSWORD=${SMTP_PASSWORD}
+    depends_on:
+      - ai-core-service
+    volumes:
+      - ../b2b-backend:/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
