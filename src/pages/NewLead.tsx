@@ -10,8 +10,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ManualLeadForm } from '@/components/leads/ManualLeadForm';
-import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 // Form schema matching the backend CreateLeadRequest
 const manualLeadSchema = z.object({
@@ -34,7 +34,6 @@ type ManualLeadFormData = z.infer<typeof manualLeadSchema>;
 
 const NewLead = () => {
   const navigate = useNavigate();
-  const { token } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<ManualLeadFormData>({
@@ -57,38 +56,25 @@ const NewLead = () => {
   });
 
   const onSubmit = async (data: ManualLeadFormData) => {
-    if (!token) {
-      toast.error('Authentication required');
-      return;
-    }
-
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/leads', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
+      const { data: result, error } = await supabase.functions.invoke('create-lead', {
+        body: data
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to create lead');
+      if (error) {
+        throw error;
       }
 
-      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to create lead');
+      }
       
       toast.success('Lead created successfully!');
       
-      // Redirect to the newly created lead's detail page or back to dashboard
-      if (result.data?.lead_id) {
-        navigate(`/dashboard/leads/${result.data.lead_id}`);
-      } else {
-        navigate('/dashboard');
-      }
+      // Redirect back to dashboard
+      navigate('/dashboard');
       
     } catch (error) {
       console.error('Error creating lead:', error);
