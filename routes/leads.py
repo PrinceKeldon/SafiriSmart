@@ -1,7 +1,6 @@
 
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
-import math
 import logging
 from typing import Optional
 
@@ -10,8 +9,8 @@ from models import Operator, Lead, LeadNote
 from schemas import *
 from auth import get_current_operator
 from crud import *
-from email_service import email_service
-from ai_service import ai_service
+from routes.lead_operations import LeadOperations
+from routes.lead_responses import LeadResponseBuilder
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/leads", tags=["leads"])
@@ -20,37 +19,11 @@ router = APIRouter(prefix="/api/leads", tags=["leads"])
 async def create_new_lead(request: CreateLeadRequest, db: Session = Depends(get_db)):
     """Create new lead from B2C SafariGuide AI or direct operator entry"""
     try:
-        itinerary = request.itinerary
+        # Create lead with itinerary
+        lead = await LeadOperations.create_lead_with_itinerary(db, request)
         
-        # Generate itinerary if not provided
-        if not itinerary:
-            logger.info("Generating itinerary via AI Core Service")
-            itinerary = await ai_service.generate_itinerary(request.preferences)
-            
-            if not itinerary:
-                logger.warning("Failed to generate itinerary, proceeding without it")
-        
-        # Create the lead
-        lead = create_lead(db, request, itinerary)
-        
-        # Send email notification to assigned operator
-        if lead.assigned_operator:
-            lead_data = {
-                "traveler_name": lead.traveler_name,
-                "traveler_email": lead.traveler_email,
-                "traveler_phone": lead.traveler_phone,
-                "traveler_country": lead.traveler_country,
-                "preferences": lead.preferences
-            }
-            
-            email_sent = email_service.send_new_lead_notification(
-                lead.assigned_operator.email,
-                lead.assigned_operator.name,
-                lead_data
-            )
-            
-            if not email_sent:
-                logger.warning(f"Failed to send email notification for lead {lead.id}")
+        # Send email notification
+        LeadOperations.send_lead_notification(lead)
         
         return CreateLeadResponse(
             success=True,
@@ -88,45 +61,7 @@ async def get_leads(
             db, current_operator.id, status, search, page, limit
         )
         
-        lead_responses = []
-        for lead in leads:
-            lead_responses.append(LeadResponse(
-                id=lead.id,
-                status=LeadStatus(lead.status),
-                traveler=TravelerInfo(
-                    name=lead.traveler_name,
-                    email=lead.traveler_email,
-                    phone=lead.traveler_phone,
-                    country=lead.traveler_country
-                ),
-                preferences=lead.preferences,
-                itinerary=lead.itinerary,
-                quoted_price=float(lead.quoted_price) if lead.quoted_price else None,
-                quoted_currency=lead.quoted_currency,
-                created_at=lead.created_at,
-                updated_at=lead.updated_at,
-                assigned_operator=OperatorResponse(
-                    id=lead.assigned_operator.id,
-                    name=lead.assigned_operator.name,
-                    email=lead.assigned_operator.email,
-                    company=lead.assigned_operator.company,
-                    specializations=lead.assigned_operator.specializations or [],
-                    is_active=lead.assigned_operator.is_active
-                ) if lead.assigned_operator else None
-            ))
-        
-        total_pages = math.ceil(total / limit)
-        
-        return LeadListResponse(
-            success=True,
-            data=lead_responses,
-            pagination={
-                "page": page,
-                "limit": limit,
-                "total": total,
-                "total_pages": total_pages
-            }
-        )
+        return LeadResponseBuilder.build_lead_list_response(leads, total, page, limit)
         
     except Exception as e:
         logger.error(f"Error fetching leads: {str(e)}")
@@ -150,49 +85,8 @@ async def get_lead_detail(
                 detail="Lead not found"
             )
         
-        # Get lead notes
         notes = get_lead_notes(db, lead_id, current_operator.id)
-        note_responses = []
-        for note in notes:
-            note_responses.append(LeadNoteResponse(
-                id=note.id,
-                note=note.note,
-                created_by=OperatorResponse(
-                    id=note.created_by_operator.id,
-                    name=note.created_by_operator.name,
-                    email=note.created_by_operator.email,
-                    company=note.created_by_operator.company,
-                    specializations=note.created_by_operator.specializations or [],
-                    is_active=note.created_by_operator.is_active
-                ),
-                created_at=note.created_at
-            ))
-        
-        return LeadDetailResponse(
-            id=lead.id,
-            status=LeadStatus(lead.status),
-            traveler=TravelerInfo(
-                name=lead.traveler_name,
-                email=lead.traveler_email,
-                phone=lead.traveler_phone,
-                country=lead.traveler_country
-            ),
-            preferences=lead.preferences,
-            itinerary=lead.itinerary,
-            quoted_price=float(lead.quoted_price) if lead.quoted_price else None,
-            quoted_currency=lead.quoted_currency,
-            created_at=lead.created_at,
-            updated_at=lead.updated_at,
-            assigned_operator=OperatorResponse(
-                id=lead.assigned_operator.id,
-                name=lead.assigned_operator.name,
-                email=lead.assigned_operator.email,
-                company=lead.assigned_operator.company,
-                specializations=lead.assigned_operator.specializations or [],
-                is_active=lead.assigned_operator.is_active
-            ) if lead.assigned_operator else None,
-            notes=note_responses
-        )
+        return LeadResponseBuilder.build_lead_detail_response(lead, notes)
         
     except HTTPException:
         raise
@@ -302,13 +196,7 @@ async def send_itinerary(
             )
         
         # Send itinerary email
-        email_sent = email_service.send_itinerary_email(
-            lead.traveler_email,
-            lead.traveler_name,
-            lead.itinerary,
-            current_operator.name,
-            current_operator.company
-        )
+        email_sent = LeadOperations.send_itinerary_to_traveler(lead, current_operator)
         
         if not email_sent:
             raise HTTPException(
