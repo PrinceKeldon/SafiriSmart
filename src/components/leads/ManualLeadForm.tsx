@@ -11,6 +11,7 @@ import { BudgetStep } from '@/components/preferences/steps/BudgetStep';
 import { InterestsStep } from '@/components/preferences/steps/InterestsStep';
 import { GroupSizeStep } from '@/components/preferences/steps/GroupSizeStep';
 import { TravelPaceStep } from '@/components/preferences/steps/TravelPaceStep';
+import { LanguagesStep } from '@/components/preferences/steps/LanguagesStep';
 import { TravelScheduleForm } from '@/components/preferences/steps/TravelScheduleForm';
 
 interface ManualLeadFormProps {
@@ -329,6 +330,26 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
                 <FormItem>
                   <FormControl>
                     <TravelPaceStep
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          {/* Languages */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Preferred Languages</h3>
+            <FormField
+              control={form.control}
+              name="preferences.languages"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <LanguagesStep
                       value={field.value}
                       onChange={field.onChange}
                     />

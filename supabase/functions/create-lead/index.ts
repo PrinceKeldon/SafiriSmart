@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -21,11 +20,11 @@ serve(async (req) => {
 
     const { traveler, preferences, schedule, travel, dietary } = await req.json();
 
-    // Enhanced mock itinerary with new features
+    // Enhanced mock itinerary with new features including languages
     const mockItinerary = {
       id: crypto.randomUUID(),
       title: `${preferences.duration}-Day Safari Adventure`,
-      overview: `A comprehensive ${preferences.duration}-day safari experience tailored for ${preferences.groupSize} travelers with personalized logistics and dietary considerations`,
+      overview: `A comprehensive ${preferences.duration}-day safari experience tailored for ${preferences.groupSize} travelers with personalized logistics, dietary considerations, and ${preferences.languages ? preferences.languages.join(', ') : 'English'} speaking guide`,
       totalDuration: preferences.duration,
       estimatedCost: {
         amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
@@ -56,6 +55,7 @@ serve(async (req) => {
         allergies: dietary?.allergies || null,
         specialRequirements: dietary?.specialRequirements || null
       },
+      languages: preferences?.languages || ['English'],
       days: Array.from({ length: preferences.duration }, (_, i) => ({
         day: i + 1,
         location: i === 0 ? (travel?.portOfEntry || 'Safari Location') : 'Safari Location',
@@ -76,8 +76,8 @@ serve(async (req) => {
           ['Breakfast', 'Lunch', 'Dinner'],
         transport: 'Safari Vehicle',
         notes: i === 0 && travel?.airportPickup ? 
-          `Airport pickup scheduled at ${travel.pickupTime || 'TBD'} from ${travel.pickupLocation || 'TBD'}` :
-          'Day activity notes',
+          `Airport pickup scheduled at ${travel.pickupTime || 'TBD'} from ${travel.pickupLocation || 'TBD'}. Guide speaks ${preferences.languages ? preferences.languages.join(', ') : 'English'}` :
+          `Guide speaks ${preferences.languages ? preferences.languages.join(', ') : 'English'}`,
         pickup_details: i === 0 && travel?.airportPickup ? {
           time: travel.pickupTime || 'TBD',
           location: travel.pickupLocation || 'TBD'
@@ -86,12 +86,13 @@ serve(async (req) => {
       }))
     };
 
-    // Create enhanced preferences object
+    // Create enhanced preferences object including languages
     const enhancedPreferences = {
       ...preferences,
       schedule,
       travel,
-      dietary
+      dietary,
+      languages: preferences.languages || ['English']
     };
 
     // Insert the lead into Supabase

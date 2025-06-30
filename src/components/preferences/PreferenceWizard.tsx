@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +8,10 @@ import { BudgetStep } from './steps/BudgetStep';
 import { InterestsStep } from './steps/InterestsStep';
 import { GroupSizeStep } from './steps/GroupSizeStep';
 import { TravelPaceStep } from './steps/TravelPaceStep';
+import { LanguagesStep } from './steps/LanguagesStep';
+import { TravelScheduleForm } from './steps/TravelScheduleForm';
 import { ItineraryDisplay } from './ItineraryDisplay';
+import { useForm } from 'react-hook-form';
 
 export interface TravelPreferences {
   duration: number;
@@ -15,6 +19,23 @@ export interface TravelPreferences {
   interests: string[];
   groupSize: number;
   travelPace: 'relaxed' | 'moderate' | 'active';
+  languages: string[];
+  schedule: {
+    startDate?: Date;
+    endDate?: Date;
+    flexible: boolean;
+  };
+  travel: {
+    portOfEntry?: string;
+    airportPickup: boolean;
+    pickupTime?: string;
+    pickupLocation?: string;
+  };
+  dietary: {
+    mealWishes?: string;
+    allergies?: string;
+    specialRequirements?: string;
+  };
 }
 
 export interface TourOutput {
@@ -26,6 +47,12 @@ export interface TourOutput {
     location: string;
     activities: string[];
     accommodation_suggestion: string;
+    meals?: string[];
+    travel_notes?: string;
+    pickup_details?: {
+      time: string;
+      location: string;
+    };
   }[];
   inclusions_suggestions: string[];
   exclusions_suggestions: string[];
@@ -38,6 +65,21 @@ const initialPreferences: TravelPreferences = {
   interests: [],
   groupSize: 2,
   travelPace: 'moderate',
+  languages: ['English'],
+  schedule: {
+    flexible: true,
+  },
+  travel: {
+    portOfEntry: '',
+    airportPickup: false,
+    pickupTime: '',
+    pickupLocation: '',
+  },
+  dietary: {
+    mealWishes: '',
+    allergies: '',
+    specialRequirements: '',
+  },
 };
 
 const steps = [
@@ -46,6 +88,10 @@ const steps = [
   { id: 3, title: 'Interests', description: 'What interests you most?' },
   { id: 4, title: 'Group Size', description: 'How many travelers?' },
   { id: 5, title: 'Travel Pace', description: 'What\'s your preferred pace?' },
+  { id: 6, title: 'Languages', description: 'Which languages should your guide speak?' },
+  { id: 7, title: 'Schedule', description: 'When would you like to travel?' },
+  { id: 8, title: 'Travel Logistics', description: 'Airport and pickup details' },
+  { id: 9, title: 'Dietary', description: 'Any dietary requirements?' },
 ];
 
 // Mock AI Core Service simulation
@@ -54,7 +100,7 @@ const generateMockItinerary = (preferences: TravelPreferences): Promise<TourOutp
     setTimeout(() => {
       const mockItinerary: TourOutput = {
         tour_name: `${preferences.duration}-Day Ultimate Kenya Safari Adventure`,
-        summary: `Experience the best of Kenya's wildlife and landscapes with this carefully crafted ${preferences.duration}-day safari. Perfect for ${preferences.groupSize} travelers seeking a ${preferences.travelPace} pace adventure with ${preferences.budgetRange} accommodations.`,
+        summary: `Experience the best of Kenya's wildlife and landscapes with this carefully crafted ${preferences.duration}-day safari. Perfect for ${preferences.groupSize} travelers seeking a ${preferences.travelPace} pace adventure with ${preferences.budgetRange} accommodations. Guide speaks ${preferences.languages.join(', ')}.`,
         itinerary_details: Array.from({ length: preferences.duration }, (_, index) => ({
           day_number: index + 1,
           theme: index === 0 ? 'Arrival & Masai Mara' : 
@@ -74,7 +120,15 @@ const generateMockItinerary = (preferences: TravelPreferences): Promise<TourOutp
             'Luxury Safari Lodge with Private Balcony' :
             preferences.budgetRange === 'mid-range' ?
             'Comfortable Safari Camp with Ensuite Facilities' :
-            'Budget-Friendly Safari Lodge'
+            'Budget-Friendly Safari Lodge',
+          meals: preferences.dietary.mealWishes ? 
+            ['Breakfast (Dietary accommodated)', 'Lunch (Dietary accommodated)', 'Dinner (Dietary accommodated)'] :
+            ['Breakfast', 'Lunch', 'Dinner'],
+          travel_notes: index === 0 ? `Entry point: ${preferences.travel.portOfEntry || 'TBD'}` : undefined,
+          pickup_details: index === 0 && preferences.travel.airportPickup ? {
+            time: preferences.travel.pickupTime || 'TBD',
+            location: preferences.travel.pickupLocation || 'TBD'
+          } : undefined
         })),
         inclusions_suggestions: [
           'All park entrance fees',
@@ -82,7 +136,8 @@ const generateMockItinerary = (preferences: TravelPreferences): Promise<TourOutp
           'Game drives as per itinerary',
           'Accommodation as specified',
           'All meals during safari',
-          'Transportation in 4WD safari vehicle'
+          'Transportation in 4WD safari vehicle',
+          `Guide fluent in ${preferences.languages.join(', ')}`
         ],
         exclusions_suggestions: [
           'International flights',
@@ -96,11 +151,12 @@ const generateMockItinerary = (preferences: TravelPreferences): Promise<TourOutp
           'Best time to travel is during dry seasons (June-October, December-March)',
           'Comfortable walking shoes and neutral-colored clothing recommended',
           'Binoculars and camera equipment advised for wildlife viewing',
-          'Yellow fever vaccination may be required depending on your country of origin'
-        ]
+          'Yellow fever vaccination may be required depending on your country of origin',
+          preferences.dietary.allergies ? `Please inform guide of allergies: ${preferences.dietary.allergies}` : ''
+        ].filter(Boolean)
       };
       resolve(mockItinerary);
-    }, 2000); // 2-second delay to simulate API call
+    }, 2000);
   });
 };
 
@@ -109,6 +165,10 @@ export const PreferenceWizard = () => {
   const [preferences, setPreferences] = useState<TravelPreferences>(initialPreferences);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState<TourOutput | null>(null);
+
+  const form = useForm({
+    defaultValues: preferences
+  });
 
   const updatePreferences = (updates: Partial<TravelPreferences>) => {
     setPreferences(prev => ({ ...prev, ...updates }));
@@ -208,6 +268,126 @@ export const PreferenceWizard = () => {
             onChange={(travelPace) => updatePreferences({ travelPace })}
           />
         );
+      case 6:
+        return (
+          <LanguagesStep
+            value={preferences.languages}
+            onChange={(languages) => updatePreferences({ languages })}
+          />
+        );
+      case 7:
+        return (
+          <div className="space-y-6">
+            <TravelScheduleForm 
+              form={form} 
+              onScheduleChange={(schedule) => updatePreferences({ schedule })}
+            />
+          </div>
+        );
+      case 8:
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Travel Logistics</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Port of Entry</label>
+                <input
+                  type="text"
+                  className="w-full px-3 py-2 border rounded-md"
+                  placeholder="e.g., Jomo Kenyatta International Airport (NBO)"
+                  value={preferences.travel.portOfEntry}
+                  onChange={(e) => updatePreferences({
+                    travel: { ...preferences.travel, portOfEntry: e.target.value }
+                  })}
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="airportPickup"
+                  checked={preferences.travel.airportPickup}
+                  onChange={(e) => updatePreferences({
+                    travel: { ...preferences.travel, airportPickup: e.target.checked }
+                  })}
+                />
+                <label htmlFor="airportPickup" className="text-sm font-medium">
+                  Airport Pickup Required
+                </label>
+              </div>
+              {preferences.travel.airportPickup && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Pickup Time</label>
+                    <input
+                      type="time"
+                      className="w-full px-3 py-2 border rounded-md"
+                      value={preferences.travel.pickupTime}
+                      onChange={(e) => updatePreferences({
+                        travel: { ...preferences.travel, pickupTime: e.target.value }
+                      })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Pickup Location</label>
+                    <input
+                      type="text"
+                      className="w-full px-3 py-2 border rounded-md"
+                      placeholder="e.g., Terminal 1A, Gate 5"
+                      value={preferences.travel.pickupLocation}
+                      onChange={(e) => updatePreferences({
+                        travel: { ...preferences.travel, pickupLocation: e.target.value }
+                      })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      case 9:
+        return (
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Dietary Requirements</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Meal Wishes & Preferences</label>
+                <textarea
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={3}
+                  placeholder="e.g., Vegetarian, Halal, local cuisine preferences..."
+                  value={preferences.dietary.mealWishes}
+                  onChange={(e) => updatePreferences({
+                    dietary: { ...preferences.dietary, mealWishes: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Food Allergies & Restrictions</label>
+                <textarea
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={3}
+                  placeholder="e.g., Nut allergies, gluten intolerance, lactose intolerance..."
+                  value={preferences.dietary.allergies}
+                  onChange={(e) => updatePreferences({
+                    dietary: { ...preferences.dietary, allergies: e.target.value }
+                  })}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Special Dietary Requirements</label>
+                <textarea
+                  className="w-full px-3 py-2 border rounded-md"
+                  rows={2}
+                  placeholder="Any other special dietary needs or medical requirements..."
+                  value={preferences.dietary.specialRequirements}
+                  onChange={(e) => updatePreferences({
+                    dietary: { ...preferences.dietary, specialRequirements: e.target.value }
+                  })}
+                />
+              </div>
+            </div>
+          </div>
+        );
       default:
         return null;
     }
@@ -219,9 +399,9 @@ export const PreferenceWizard = () => {
     <div className="max-w-2xl mx-auto p-6">
       {/* Progress Indicator */}
       <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 overflow-x-auto">
           {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
+            <div key={step.id} className="flex items-center flex-shrink-0">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                   step.id <= currentStep
@@ -233,7 +413,7 @@ export const PreferenceWizard = () => {
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`w-12 h-1 mx-2 ${
+                  className={`w-8 h-1 mx-1 ${
                     step.id < currentStep ? 'bg-primary' : 'bg-gray-200'
                   }`}
                 />

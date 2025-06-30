@@ -27,6 +27,7 @@ const manualLeadSchema = z.object({
     interests: z.array(z.string()).min(1, 'At least one interest must be selected'),
     groupSize: z.number().min(1, 'Group size must be at least 1').max(20, 'Group size cannot exceed 20'),
     travelPace: z.enum(['relaxed', 'moderate', 'active']),
+    languages: z.array(z.string()).min(1, 'At least one language must be selected'),
   }),
   schedule: z.object({
     startDate: z.date().optional(),
@@ -67,6 +68,7 @@ const NewLead = () => {
         interests: [],
         groupSize: 2,
         travelPace: 'moderate',
+        languages: ['English'],
       },
       schedule: {
         flexible: true,
