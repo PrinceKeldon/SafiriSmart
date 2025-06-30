@@ -164,7 +164,8 @@ export const PreferenceWizard = () => {
   if (generatedItinerary) {
     return (
       <ItineraryDisplay 
-        itinerary={generatedItinerary} 
+        itinerary={generatedItinerary}
+        preferences={preferences}
         onBackToPreferences={handleBackToPreferences}
       />
     );

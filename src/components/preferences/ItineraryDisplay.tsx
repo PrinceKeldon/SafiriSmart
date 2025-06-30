@@ -1,9 +1,9 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   ArrowLeft, 
   MapPin, 
@@ -15,17 +15,50 @@ import {
   XCircle,
   AlertTriangle
 } from 'lucide-react';
-import { TourOutput } from './PreferenceWizard';
+import { TravelPreferences, TourOutput } from './PreferenceWizard';
+import { PriceEstimation } from './PriceEstimation';
+import { LeadCaptureForm } from './LeadCaptureForm';
+import { LeadConfirmation } from './LeadConfirmation';
 
 interface ItineraryDisplayProps {
   itinerary: TourOutput;
+  preferences: TravelPreferences;
   onBackToPreferences: () => void;
 }
 
 export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ 
   itinerary, 
+  preferences,
   onBackToPreferences 
 }) => {
+  const [showLeadForm, setShowLeadForm] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [leadFormType, setLeadFormType] = useState<'expert' | 'quote'>('expert');
+
+  const handleConnectExpert = () => {
+    setLeadFormType('expert');
+    setShowLeadForm(true);
+  };
+
+  const handleRequestQuote = () => {
+    setLeadFormType('quote');
+    setShowLeadForm(true);
+  };
+
+  const handleLeadSuccess = () => {
+    setShowLeadForm(false);
+    setShowConfirmation(true);
+  };
+
+  const handleStartOver = () => {
+    setShowConfirmation(false);
+    onBackToPreferences();
+  };
+
+  if (showConfirmation) {
+    return <LeadConfirmation onStartOver={handleStartOver} />;
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
@@ -48,6 +81,9 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Price Estimation */}
+      <PriceEstimation preferences={preferences} />
 
       {/* Itinerary Details */}
       <div className="space-y-6 mb-8">
@@ -186,11 +222,11 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
               Connect with our local experts to customize your itinerary and get detailed pricing.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="flex items-center">
+              <Button size="lg" className="flex items-center" onClick={handleConnectExpert}>
                 <Users className="w-5 h-5 mr-2" />
                 Connect with Local Expert
               </Button>
-              <Button size="lg" variant="outline" className="flex items-center">
+              <Button size="lg" variant="outline" className="flex items-center" onClick={handleRequestQuote}>
                 <Calendar className="w-5 h-5 mr-2" />
                 Request Detailed Quote
               </Button>
@@ -198,6 +234,23 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
           </div>
         </CardContent>
       </Card>
+
+      {/* Lead Capture Dialog */}
+      <Dialog open={showLeadForm} onOpenChange={setShowLeadForm}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {leadFormType === 'expert' ? 'Connect with Local Expert' : 'Request Detailed Quote'}
+            </DialogTitle>
+          </DialogHeader>
+          <LeadCaptureForm
+            preferences={preferences}
+            itinerary={itinerary}
+            onSuccess={handleLeadSuccess}
+            onCancel={() => setShowLeadForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
