@@ -1,9 +1,8 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { DollarSign, Info } from 'lucide-react';
-import { TravelPreferences } from './PreferenceWizard';
+import { DollarSign, Users, Calendar, Info } from 'lucide-react';
+import { TravelPreferences } from './WizardTypes';
 
 interface PriceEstimationProps {
   preferences: TravelPreferences;

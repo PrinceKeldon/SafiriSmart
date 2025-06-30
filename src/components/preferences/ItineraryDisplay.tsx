@@ -1,11 +1,8 @@
-
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Calendar } from 'lucide-react';
-import { TravelPreferences, TourOutput } from './PreferenceWizard';
-import { PriceEstimation } from './PriceEstimation';
-import { LeadCaptureForm } from './LeadCaptureForm';
-import { LeadConfirmation } from './LeadConfirmation';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Calendar, Users, MapPin, DollarSign } from 'lucide-react';
+import { TravelPreferences, TourOutput } from './WizardTypes';
 import { ItineraryHeader } from './itinerary/ItineraryHeader';
 import { DayItineraryCard } from './itinerary/DayItineraryCard';
 import { InclusionsExclusions } from './itinerary/InclusionsExclusions';
@@ -18,59 +15,27 @@ interface ItineraryDisplayProps {
   onBackToPreferences: () => void;
 }
 
-export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ 
-  itinerary, 
-  preferences,
-  onBackToPreferences 
-}) => {
-  const [showLeadForm, setShowLeadForm] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [leadFormType, setLeadFormType] = useState<'expert' | 'quote'>('expert');
-
-  const handleConnectExpert = () => {
-    setLeadFormType('expert');
-    setShowLeadForm(true);
-  };
-
-  const handleRequestQuote = () => {
-    setLeadFormType('quote');
-    setShowLeadForm(true);
-  };
-
-  const handleLeadSuccess = () => {
-    setShowLeadForm(false);
-    setShowConfirmation(true);
-  };
-
-  const handleStartOver = () => {
-    setShowConfirmation(false);
-    onBackToPreferences();
-  };
-
-  if (showConfirmation) {
-    return <LeadConfirmation onStartOver={handleStartOver} />;
-  }
-
+export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, preferences, onBackToPreferences }) => {
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <ItineraryHeader 
-        itinerary={itinerary}
-        onBackToPreferences={onBackToPreferences}
-      />
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+      <Button variant="outline" onClick={onBackToPreferences} className="w-full md:w-auto">
+        ← Back to Preferences
+      </Button>
 
-      <PriceEstimation preferences={preferences} />
+      <ItineraryHeader itinerary={itinerary} />
 
-      {/* Itinerary Details */}
-      <div className="space-y-6 mb-8">
-        <h2 className="text-2xl font-semibold text-gray-900 flex items-center">
-          <Calendar className="w-6 h-6 mr-2" />
-          Day-by-Day Itinerary
-        </h2>
-        
-        {itinerary.itinerary_details.map((day) => (
-          <DayItineraryCard key={day.day_number} day={day} />
-        ))}
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">{itinerary.tour_name}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-gray-600">{itinerary.summary}</p>
+        </CardContent>
+      </Card>
+
+      {itinerary.itinerary_details.map((day) => (
+        <DayItineraryCard key={day.day_number} day={day} />
+      ))}
 
       <InclusionsExclusions 
         inclusions={itinerary.inclusions_suggestions}
@@ -79,27 +44,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
 
       <ImportantNotes notes={itinerary.important_notes} />
 
-      <CallToAction 
-        onConnectExpert={handleConnectExpert}
-        onRequestQuote={handleRequestQuote}
-      />
-
-      {/* Lead Capture Dialog */}
-      <Dialog open={showLeadForm} onOpenChange={setShowLeadForm}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>
-              {leadFormType === 'expert' ? 'Connect with Local Expert' : 'Request Detailed Quote'}
-            </DialogTitle>
-          </DialogHeader>
-          <LeadCaptureForm
-            preferences={preferences}
-            itinerary={itinerary}
-            onSuccess={handleLeadSuccess}
-            onCancel={() => setShowLeadForm(false)}
-          />
-        </DialogContent>
-      </Dialog>
+      <CallToAction />
     </div>
   );
 };
