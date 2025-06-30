@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,13 +17,23 @@ interface ItineraryDisplayProps {
 }
 
 export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, preferences, onBackToPreferences }) => {
+  const handleConnectExpert = () => {
+    console.log('Connect with expert clicked');
+    // TODO: Implement expert connection functionality
+  };
+
+  const handleRequestQuote = () => {
+    console.log('Request quote clicked');
+    // TODO: Implement quote request functionality
+  };
+
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
       <Button variant="outline" onClick={onBackToPreferences} className="w-full md:w-auto">
         ← Back to Preferences
       </Button>
 
-      <ItineraryHeader itinerary={itinerary} />
+      <ItineraryHeader itinerary={itinerary} preferences={preferences} />
 
       <Card>
         <CardHeader>
@@ -44,7 +55,10 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, p
 
       <ImportantNotes notes={itinerary.important_notes} />
 
-      <CallToAction />
+      <CallToAction 
+        onConnectExpert={handleConnectExpert}
+        onRequestQuote={handleRequestQuote}
+      />
     </div>
   );
 };
