@@ -1,29 +1,17 @@
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
   Package, 
   UserCircle, 
-  Settings, 
-  LogOut,
+  Settings,
   Shield
 } from 'lucide-react';
 
 const Navigation = () => {
-  const { user, isAdmin, logout } = useAuth();
   const location = useLocation();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
-  };
-
-  if (!user) return null;
 
   const navigationItems = [
     {
@@ -49,18 +37,14 @@ const Navigation = () => {
       label: 'Profile',
       icon: UserCircle,
       active: location.pathname === '/profile'
-    }
-  ];
-
-  // Add admin link if user is admin
-  if (isAdmin()) {
-    navigationItems.push({
+    },
+    {
       href: '/admin',
       label: 'Admin',
       icon: Shield,
       active: location.pathname === '/admin'
-    });
-  }
+    }
+  ];
 
   return (
     <nav className="bg-white shadow-sm border-b">
@@ -91,17 +75,8 @@ const Navigation = () => {
 
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600">
-              {user.name} ({user.role})
+              Demo Mode (No Auth Required)
             </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span>Logout</span>
-            </Button>
           </div>
         </div>
       </div>

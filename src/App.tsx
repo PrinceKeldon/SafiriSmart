@@ -3,10 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { PrivateRoute } from "@/components/auth/PrivateRoute";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import NewLead from "./pages/NewLead";
 import Packages from "./pages/Packages";
@@ -21,58 +18,20 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <AuthProvider>
-        <Toaster />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/safari-guide" element={<SafariGuide />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/config" element={<EnvConfig />} />
-            <Route
-              path="/dashboard"
-              element={
-                <PrivateRoute>
-                  <Dashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/new-lead"
-              element={
-                <PrivateRoute>
-                  <NewLead />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/packages"
-              element={
-                <PrivateRoute>
-                  <Packages />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <PrivateRoute>
-                  <Profile />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/admin"
-              element={
-                <PrivateRoute requireAdmin>
-                  <AdminDashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
+      <Toaster />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/safari-guide" element={<SafariGuide />} />
+          <Route path="/config" element={<EnvConfig />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/new-lead" element={<NewLead />} />
+          <Route path="/packages" element={<Packages />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
