@@ -12,6 +12,7 @@ import NewLead from "./pages/NewLead";
 import Packages from "./pages/Packages";
 import Profile from "./pages/Profile";
 import EnvConfig from "./pages/EnvConfig";
+import SafariGuide from "./pages/SafariGuide";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/safari-guide" element={<SafariGuide />} />
             <Route path="/login" element={<Login />} />
             <Route path="/config" element={<EnvConfig />} />
             <Route
