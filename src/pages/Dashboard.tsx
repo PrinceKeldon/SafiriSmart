@@ -1,5 +1,5 @@
-
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Search, Filter, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ import { mockLeads } from '@/data/mockData';
 import { Lead } from '@/types/api';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -110,9 +111,9 @@ const Dashboard = () => {
             <h1 className="text-2xl font-bold text-gray-900">Lead Dashboard</h1>
             <p className="text-gray-600">Manage your tour booking leads</p>
           </div>
-          <Button>
+          <Button onClick={() => navigate('/dashboard/leads/new')}>
             <Plus className="h-4 w-4 mr-2" />
-            Manual Lead
+            Add New Lead
           </Button>
         </div>
 

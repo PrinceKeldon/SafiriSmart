@@ -1,0 +1,162 @@
+
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { ArrowLeft, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, Title } from '@/components/ui/card';
+import { Form } from '@/components/ui/form';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ManualLeadForm } from '@/components/leads/ManualLeadForm';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+// Form schema matching the backend CreateLeadRequest
+const manualLeadSchema = z.object({
+  traveler: z.object({
+    name: z.string().min(1, 'Traveler name is required'),
+    email: z.string().email('Valid email is required'),
+    phone: z.string().optional(),
+    country: z.string().optional(),
+  }),
+  preferences: z.object({
+    duration: z.number().min(1, 'Duration must be at least 1 day').max(21, 'Duration cannot exceed 21 days'),
+    budgetRange: z.enum(['budget', 'mid-range', 'luxury']),
+    interests: z.array(z.string()).min(1, 'At least one interest must be selected'),
+    groupSize: z.number().min(1, 'Group size must be at least 1').max(20, 'Group size cannot exceed 20'),
+    travelPace: z.enum(['relaxed', 'moderate', 'active']),
+  }),
+});
+
+type ManualLeadFormData = z.infer<typeof manualLeadSchema>;
+
+const NewLead = () => {
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<ManualLeadFormData>({
+    resolver: zodResolver(manualLeadSchema),
+    defaultValues: {
+      traveler: {
+        name: '',
+        email: '',
+        phone: '',
+        country: '',
+      },
+      preferences: {
+        duration: 7,
+        budgetRange: 'mid-range',
+        interests: [],
+        groupSize: 2,
+        travelPace: 'moderate',
+      },
+    },
+  });
+
+  const onSubmit = async (data: ManualLeadFormData) => {
+    if (!token) {
+      toast.error('Authentication required');
+      return;
+    }
+
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to create lead');
+      }
+
+      const result = await response.json();
+      
+      toast.success('Lead created successfully!');
+      
+      // Redirect to the newly created lead's detail page or back to dashboard
+      if (result.data?.lead_id) {
+        navigate(`/dashboard/leads/${result.data.lead_id}`);
+      } else {
+        navigate('/dashboard');
+      }
+      
+    } catch (error) {
+      console.error('Error creating lead:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create lead');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/dashboard')}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Create New Lead</h1>
+            <p className="text-gray-600">Add a manual lead and generate an AI-powered itinerary</p>
+          </div>
+        </div>
+
+        {/* Form */}
+        <Card className="max-w-4xl">
+          <CardHeader>
+            <Title>Lead Information</Title>
+          </CardHeader>
+          <CardContent>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <ManualLeadForm form={form} />
+                
+                <div className="flex justify-end space-x-4 pt-6 border-t">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate('/dashboard')}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Creating Lead...
+                      </>
+                    ) : (
+                      'Create Lead & Generate Itinerary'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
+  );
+};
+
+export default NewLead;
