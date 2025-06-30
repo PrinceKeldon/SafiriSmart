@@ -16,6 +16,7 @@ import { LeadCard } from '@/components/leads/LeadCard';
 import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
 import { mockLeads } from '@/data/mockData';
 import { Lead } from '@/types/api';
+import { Link } from 'react-router-dom';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -108,13 +109,15 @@ const Dashboard = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Lead Dashboard</h1>
-            <p className="text-gray-600">Manage your tour booking leads</p>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600">Manage your safari leads and bookings</p>
           </div>
-          <Button onClick={() => navigate('/dashboard/leads/new')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Lead
-          </Button>
+          <Link to="/dashboard/leads/new">
+            <Button>
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Lead
+            </Button>
+          </Link>
         </div>
 
         {/* Statistics */}

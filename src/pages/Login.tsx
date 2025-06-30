@@ -85,7 +85,7 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="demo@tourmaster.com"
+                  placeholder="demo@safariexperts.com"
                   {...register('email')}
                   className={errors.email ? 'border-red-500' : ''}
                 />
@@ -128,7 +128,7 @@ const Login = () => {
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <h4 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials</h4>
               <div className="text-sm text-blue-800">
-                <p><strong>Email:</strong> demo@tourmaster.com</p>
+                <p><strong>Email:</strong> demo@safariexperts.com</p>
                 <p><strong>Password:</strong> password123</p>
               </div>
             </div>
