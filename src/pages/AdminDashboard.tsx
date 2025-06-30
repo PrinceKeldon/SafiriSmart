@@ -1,30 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { apiService } from '@/services/ApiService';
-import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Users, Edit, Trash2, AlertCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { toast } from 'sonner';
-
-const createOperatorSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  company: z.string().min(2, 'Company name must be at least 2 characters'),
-  specializations: z.string().optional(),
-});
-
-type CreateOperatorFormData = z.infer<typeof createOperatorSchema>;
+import { Badge } from '@/components/ui/badge';
+import { Loader2, Plus, Edit, Trash2, Users } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
+import { apiService } from '@/services/ApiService';
+import { useNavigate } from 'react-router-dom';
 
 interface Operator {
   id: string;
@@ -38,283 +25,297 @@ interface Operator {
 }
 
 const AdminDashboard = () => {
-  const { isAdmin } = useAuth();
-  const [operators, setOperators] = useState<Operator[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, isAdmin } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [newOperator, setNewOperator] = useState({
+    name: '',
+    email: '',
+    company: '',
+    specializations: [] as string[]
+  });
   const [error, setError] = useState<string | null>(null);
-  const [tempPassword, setTempPassword] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<CreateOperatorFormData>({
-    resolver: zodResolver(createOperatorSchema),
+  // Redirect if not admin
+  React.useEffect(() => {
+    if (user && !isAdmin()) {
+      navigate('/dashboard');
+    }
+  }, [user, isAdmin, navigate]);
+
+  // Fetch operators
+  const { data: operators, isLoading, error: fetchError } = useQuery({
+    queryKey: ['admin-operators'],
+    queryFn: async () => {
+      const response = await apiService.getOperators();
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    enabled: !!user && isAdmin()
   });
 
-  useEffect(() => {
-    if (!isAdmin()) {
+  // Create operator mutation
+  const createOperatorMutation = useMutation({
+    mutationFn: async (operatorData: typeof newOperator) => {
+      const response = await apiService.createOperator(operatorData);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-operators'] });
+      setIsCreateDialogOpen(false);
+      setNewOperator({ name: '', email: '', company: '', specializations: [] });
+      setError(null);
+      
+      // Show temporary password if available
+      if ('temporary_password' in data) {
+        alert(`Operator created successfully!\nTemporary password: ${data.temporary_password}\nPlease share this with the operator securely.`);
+      }
+    },
+    onError: (error: Error) => {
+      setError(error.message);
+    }
+  });
+
+  const handleCreateOperator = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!newOperator.name || !newOperator.email || !newOperator.company) {
+      setError('Please fill in all required fields');
       return;
     }
-    fetchOperators();
-  }, [isAdmin]);
 
-  const fetchOperators = async () => {
-    try {
-      setIsLoading(true);
-      const response = await apiService.getOperators();
-      if (response.success) {
-        setOperators(response.data);
-      } else {
-        setError('Failed to fetch operators');
-      }
-    } catch (error) {
-      console.error('Error fetching operators:', error);
-      setError('Failed to fetch operators');
-    } finally {
-      setIsLoading(false);
-    }
+    createOperatorMutation.mutate(newOperator);
   };
 
-  const onSubmit = async (data: CreateOperatorFormData) => {
-    setIsSubmitting(true);
-    setError(null);
-    setTempPassword(null);
-
-    try {
-      const specializations = data.specializations 
-        ? data.specializations.split(',').map(s => s.trim()).filter(s => s.length > 0)
-        : [];
-
-      const response = await apiService.createOperator({
-        name: data.name,
-        email: data.email,
-        company: data.company,
-        specializations,
-      });
-
-      if (response.success) {
-        toast.success('Operator created successfully');
-        setTempPassword(response.data.temporary_password || null);
-        reset();
-        fetchOperators();
-      } else {
-        setError(response.message || 'Failed to create operator');
-      }
-    } catch (error) {
-      console.error('Error creating operator:', error);
-      setError(error instanceof Error ? error.message : 'Failed to create operator');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  if (!isAdmin()) {
+  if (!user || !isAdmin()) {
     return (
-      <DashboardLayout>
-        <div className="p-6">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              You don't have permission to access the admin dashboard.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </DashboardLayout>
+      <div className="min-h-screen flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <h2 className="text-lg font-semibold mb-2">Access Denied</h2>
+              <p className="text-gray-600">You need admin privileges to access this page.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage tour operator accounts</p>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="w-4 h-4 mr-2" />
-                Add New Operator
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Create New Operator</DialogTitle>
-                <DialogDescription>
-                  Add a new tour operator to the system.
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {error && (
-                  <Alert variant="destructive">
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
+        <p className="text-gray-600">Manage tour operators and system settings</p>
+      </div>
 
-                {tempPassword && (
-                  <Alert>
-                    <AlertDescription>
-                      <strong>Temporary Password:</strong> {tempPassword}
-                      <br />
-                      <small>Please share this password with the operator securely.</small>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter operator name"
-                    {...register('name')}
-                    className={errors.name ? 'border-red-500' : ''}
-                  />
-                  {errors.name && (
-                    <p className="text-sm text-red-600">{errors.name.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter email address"
-                    {...register('email')}
-                    className={errors.email ? 'border-red-500' : ''}
-                  />
-                  {errors.email && (
-                    <p className="text-sm text-red-600">{errors.email.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="company">Company</Label>
-                  <Input
-                    id="company"
-                    placeholder="Enter company name"
-                    {...register('company')}
-                    className={errors.company ? 'border-red-500' : ''}
-                  />
-                  {errors.company && (
-                    <p className="text-sm text-red-600">{errors.company.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="specializations">Specializations (comma-separated)</Label>
-                  <Input
-                    id="specializations"
-                    placeholder="e.g., Wildlife Safari, Cultural Tours"
-                    {...register('specializations')}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex-1"
-                  >
-                    {isSubmitting ? 'Creating...' : 'Create Operator'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setIsDialogOpen(false);
-                      reset();
-                      setError(null);
-                      setTempPassword(null);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              Tour Operators ({operators.length})
-            </CardTitle>
-            <CardDescription>
-              Manage all tour operator accounts in the system
-            </CardDescription>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Operators</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className="text-center py-8">Loading operators...</div>
-            ) : operators.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No operators found. Create your first operator account.
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Specializations</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {operators.map((operator) => (
-                    <TableRow key={operator.id}>
-                      <TableCell className="font-medium">{operator.name}</TableCell>
-                      <TableCell>{operator.email}</TableCell>
-                      <TableCell>{operator.company}</TableCell>
-                      <TableCell>
-                        <Badge variant={operator.role === 'admin' ? 'default' : 'secondary'}>
-                          {operator.role}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={operator.is_active ? 'default' : 'destructive'}>
-                          {operator.is_active ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {operator.specializations.map((spec, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {spec}
-                            </Badge>
-                          ))}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="sm" className="text-red-600">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+            <div className="text-2xl font-bold">{operators?.length || 0}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Operators</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {operators?.filter(op => op.is_active).length || 0}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Admin Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {operators?.filter(op => op.role === 'admin').length || 0}
+            </div>
           </CardContent>
         </Card>
       </div>
-    </DashboardLayout>
+
+      {/* Operators Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <div>
+              <CardTitle>Tour Operators</CardTitle>
+              <CardDescription>Manage tour operator accounts</CardDescription>
+            </div>
+            
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Operator
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Operator</DialogTitle>
+                  <DialogDescription>
+                    Add a new tour operator to the system
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <form onSubmit={handleCreateOperator} className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      value={newOperator.name}
+                      onChange={(e) => setNewOperator(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter operator's full name"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={newOperator.email}
+                      onChange={(e) => setNewOperator(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Enter email address"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company Name *</Label>
+                    <Input
+                      id="company"
+                      value={newOperator.company}
+                      onChange={(e) => setNewOperator(prev => ({ ...prev, company: e.target.value }))}
+                      placeholder="Enter company name"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => setIsCreateDialogOpen(false)}
+                      disabled={createOperatorMutation.isPending}
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={createOperatorMutation.isPending}
+                    >
+                      {createOperatorMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        'Create Operator'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          {fetchError && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                Failed to load operators: {fetchError instanceof Error ? fetchError.message : 'Unknown error'}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {operators && operators.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No operators found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-2">Name</th>
+                    <th className="text-left py-2">Email</th>
+                    <th className="text-left py-2">Company</th>
+                    <th className="text-left py-2">Role</th>
+                    <th className="text-left py-2">Status</th>
+                    <th className="text-left py-2">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {operators?.map((operator) => (
+                    <tr key={operator.id} className="border-b">
+                      <td className="py-3">{operator.name}</td>
+                      <td className="py-3">{operator.email}</td>
+                      <td className="py-3">{operator.company}</td>
+                      <td className="py-3">
+                        <Badge variant={operator.role === 'admin' ? 'default' : 'secondary'}>
+                          {operator.role}
+                        </Badge>
+                      </td>
+                      <td className="py-3">
+                        <Badge variant={operator.is_active ? 'default' : 'destructive'}>
+                          {operator.is_active ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </td>
+                      <td className="py-3">
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-3 w-3" />
+                          </Button>
+                          <Button variant="outline" size="sm" className="text-red-600">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
