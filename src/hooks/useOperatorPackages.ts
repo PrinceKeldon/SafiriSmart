@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { OperatorPackage } from '@/types/operator';
+import { OperatorPackage, OperatorPackageCreate } from '@/types/operator';
 
 export const useOperatorPackages = () => {
   return useQuery({
@@ -27,7 +27,19 @@ export const useOperatorPackages = () => {
       }
 
       console.log('Fetched operator packages:', data);
-      return data || [];
+      
+      // Transform the data to match our interface
+      const transformedData: OperatorPackage[] = (data || []).map(pkg => ({
+        ...pkg,
+        included_locations: Array.isArray(pkg.included_locations) 
+          ? pkg.included_locations as string[]
+          : [],
+        included_activities: Array.isArray(pkg.included_activities)
+          ? pkg.included_activities as string[]
+          : [],
+      }));
+
+      return transformedData;
     },
   });
 };
@@ -36,7 +48,7 @@ export const useCreateOperatorPackage = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (packageData: Omit<OperatorPackage, 'id' | 'operator_id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (packageData: OperatorPackageCreate) => {
       console.log('Creating operator package:', packageData);
       
       const { data: { user } } = await supabase.auth.getUser();

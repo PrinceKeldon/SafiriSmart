@@ -56,7 +56,7 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
       };
 
       if (isEditing && editPackage) {
-        await updatePackage.mutateAsync({ id: editPackage.id, data: packageData });
+        await updatePackage.mutateAsync({ id: editPackage.id, ...packageData });
         toast.success('Package updated successfully');
       } else {
         await createPackage.mutateAsync(packageData);

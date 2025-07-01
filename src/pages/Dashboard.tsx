@@ -16,13 +16,15 @@ const Dashboard = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   
-  const { data: leadsResponse, isLoading, error, refetch } = useLeads();
+  const { data: leadsData, isLoading, error, refetch } = useLeads();
   const updateLeadStatusMutation = useUpdateLeadStatus();
 
-  // Extract leads from response
-  const leads = Array.isArray(leadsResponse) 
-    ? leadsResponse 
-    : (leadsResponse?.success && leadsResponse.data ? leadsResponse.data : []);
+  // Handle different response formats from the API
+  const leads: Lead[] = Array.isArray(leadsData) 
+    ? leadsData 
+    : (leadsData && typeof leadsData === 'object' && 'data' in leadsData && Array.isArray(leadsData.data))
+      ? leadsData.data
+      : [];
 
   const handleViewDetails = (lead: Lead) => {
     console.log('Viewing lead details:', lead);

@@ -46,7 +46,7 @@ export interface OperatorPackage {
   max_duration: number;
   min_group_size: number;
   max_group_size: number;
-  budget_tier: 'budget' | 'mid-range' | 'luxury';
+  budget_tier: string;
   estimated_cost_per_person_per_day: number;
   included_locations: string[];
   included_activities: string[];
