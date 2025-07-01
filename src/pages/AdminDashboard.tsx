@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { Plus, Users, Package, Settings } from 'lucide-react';
 import { ConfigLink } from '@/components/ui/navigation/ConfigLink';
 import { OperatorsList } from '@/components/admin/OperatorsList';
 import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
+import { adminService } from '@/services/AdminService';
+import { toast } from 'sonner';
 
 interface Operator {
   id: string;
@@ -32,88 +35,85 @@ interface Operator {
 }
 
 const AdminDashboard = () => {
-  const [operators, setOperators] = useState<Operator[]>([
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      company: 'Safari Adventures Ltd',
-      company_name: 'Safari Adventures Limited',
-      registration_number: 'REG-001-2024',
-      address: '123 Safari Street, Wildlife District',
-      city: 'Nairobi',
-      country: 'Kenya',
-      contact_person_name: 'John Doe',
-      contact_person_phone: '+254-700-123456',
-      website_url: 'https://safariadventures.com',
-      description: 'Leading safari operator specializing in wildlife photography tours and cultural experiences.',
-      certificate_of_incorporation_url: 'https://example.com/cert1.pdf',
-      business_permit_url: 'https://example.com/permit1.pdf',
-      kato_membership_url: '',
-      role: 'operator',
-      specializations: ['Safari Tours', 'Wildlife Photography'],
-      is_active: true,
-      created_at: '2024-01-15'
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      company: 'Mountain Expeditions',
-      company_name: 'Mountain Expeditions Kenya Ltd',
-      registration_number: 'REG-002-2024',
-      address: '456 Mountain View Road',
-      city: 'Nakuru',
-      country: 'Kenya',
-      contact_person_name: 'Jane Smith',
-      contact_person_phone: '+254-700-789012',
-      website_url: 'https://mountainexpeditions.com',
-      description: 'Expert mountain trekking and adventure tourism company with over 10 years of experience.',
-      certificate_of_incorporation_url: 'https://example.com/cert2.pdf',
-      business_permit_url: 'https://example.com/permit2.pdf',
-      kato_membership_url: 'https://example.com/kato2.pdf',
-      role: 'operator',
-      specializations: ['Mountain Climbing', 'Trekking'],
-      is_active: true,
-      created_at: '2024-01-20'
+  const [operators, setOperators] = useState<Operator[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchOperators = async () => {
+    try {
+      setIsLoading(true);
+      const response = await adminService.getOperators();
+      if (response.success) {
+        setOperators(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch operators:', error);
+      toast.error('Failed to load operators');
+    } finally {
+      setIsLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchOperators();
+
+    // Listen for operator profile updates
+    const handleOperatorUpdate = () => {
+      console.log('Operator profile updated - refreshing admin dashboard');
+      fetchOperators();
+    };
+
+    window.addEventListener('operatorProfileUpdated', handleOperatorUpdate);
+    
+    return () => {
+      window.removeEventListener('operatorProfileUpdated', handleOperatorUpdate);
+    };
+  }, []);
 
   const handleUpdateOperator = (updatedOperator: Operator) => {
     setOperators(operators.map(op => 
       op.id === updatedOperator.id ? updatedOperator : op
     ));
+    toast.success('Operator updated successfully');
   };
 
-  const handleCreateOperator = (newOperatorData: {
+  const handleCreateOperator = async (newOperatorData: {
     name: string;
     email: string;
     company: string;
     specializations: string[];
   }) => {
-    const operatorWithDefaults: Operator = {
-      id: (operators.length + 1).toString(),
-      name: newOperatorData.name,
-      email: newOperatorData.email,
-      company: newOperatorData.company,
-      specializations: newOperatorData.specializations,
-      role: 'operator',
-      is_active: true,
-      created_at: new Date().toISOString().split('T')[0],
-      company_name: '',
-      registration_number: '',
-      address: '',
-      city: '',
-      country: 'Kenya',
-      contact_person_name: '',
-      contact_person_phone: '',
-      website_url: '',
-      description: '',
-      certificate_of_incorporation_url: '',
-      business_permit_url: '',
-      kato_membership_url: '',
-    };
-    setOperators([...operators, operatorWithDefaults]);
+    try {
+      const response = await adminService.createOperator(newOperatorData);
+      if (response.success) {
+        const operatorWithDefaults: Operator = {
+          id: response.data.id,
+          name: response.data.name,
+          email: response.data.email,
+          company: response.data.company,
+          specializations: response.data.specializations,
+          role: response.data.role,
+          is_active: response.data.is_active,
+          created_at: response.data.created_at,
+          company_name: response.data.company_name,
+          registration_number: response.data.registration_number,
+          address: response.data.address,
+          city: response.data.city,
+          country: response.data.country,
+          contact_person_name: response.data.contact_person_name,
+          contact_person_phone: response.data.contact_person_phone,
+          website_url: response.data.website_url,
+          description: response.data.description,
+          certificate_of_incorporation_url: response.data.certificate_of_incorporation_url,
+          business_permit_url: response.data.business_permit_url,
+          kato_membership_url: response.data.kato_membership_url,
+        };
+        setOperators([...operators, operatorWithDefaults]);
+        toast.success('Operator created successfully');
+      }
+    } catch (error) {
+      console.error('Failed to create operator:', error);
+      toast.error('Failed to create operator');
+    }
   };
 
   return (
@@ -187,10 +187,14 @@ const AdminDashboard = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <OperatorsList 
-              operators={operators} 
-              onUpdateOperator={handleUpdateOperator}
-            />
+            {isLoading ? (
+              <div className="text-center py-8">Loading operators...</div>
+            ) : (
+              <OperatorsList 
+                operators={operators} 
+                onUpdateOperator={handleUpdateOperator}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

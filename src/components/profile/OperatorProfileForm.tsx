@@ -83,8 +83,9 @@ export const OperatorProfileForm: React.FC = () => {
       });
 
       await updateProfile.mutateAsync(updateData);
-      toast.success('Profile updated successfully');
+      toast.success('Profile updated successfully! Changes will appear in the admin dashboard.');
     } catch (error) {
+      console.error('Profile update error:', error);
       toast.error('Failed to update profile');
     }
   };
