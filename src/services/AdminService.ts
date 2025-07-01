@@ -1,4 +1,7 @@
 
+import { supabase } from "@/integrations/supabase/client";
+import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
+
 interface ApiResponse<T> {
   success: boolean;
   data: T;
@@ -6,90 +9,70 @@ interface ApiResponse<T> {
   errors?: string[];
 }
 
-interface Operator {
-  id: string;
-  name: string;
-  email: string;
-  company: string;
-  company_name: string;
-  registration_number: string;
-  address: string;
-  city: string;
-  country: string;
-  contact_person_name: string;
-  contact_person_phone: string;
-  website_url: string;
-  description: string;
-  certificate_of_incorporation_url: string;
-  business_permit_url: string;
-  kato_membership_url: string;
-  role: string;
-  specializations: string[];
-  is_active: boolean;
-  created_at: string;
-  updated_at?: string;
-}
+type Operator = Tables<'operators'>;
+type OperatorInsert = TablesInsert<'operators'>;
+type OperatorUpdate = TablesUpdate<'operators'>;
 
 class AdminService {
   async getOperators(): Promise<ApiResponse<Operator[]>> {
-    // Get updated operators from OperatorService using proper import
-    const operatorServiceModule = await import('./OperatorService');
-    const updatedOperators = operatorServiceModule.OperatorService.getUpdatedOperators();
-    
-    const mockOperators: Operator[] = [
-      // Use the updated operator data
-      ...updatedOperators.map(op => ({
-        id: op.id,
-        name: op.name,
-        email: op.email,
-        company: op.company,
-        company_name: op.company_name || '',
-        registration_number: op.registration_number || '',
-        address: op.address || '',
-        city: op.city || '',
-        country: op.country || 'Kenya',
-        contact_person_name: op.contact_person_name || '',
-        contact_person_phone: op.contact_person_phone || '',
-        website_url: op.website_url || '',
-        description: op.description || '',
-        certificate_of_incorporation_url: op.certificate_of_incorporation_url || '',
-        business_permit_url: op.business_permit_url || '',
-        kato_membership_url: op.kato_membership_url || '',
-        role: op.role,
-        specializations: op.specializations || [],
-        is_active: op.is_active,
-        created_at: op.created_at?.split('T')[0] || '2024-01-15',
-        updated_at: op.updated_at
-      })),
-      // Additional mock operators
-      {
-        id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        company: 'Mountain Expeditions',
-        company_name: 'Mountain Expeditions Kenya Ltd',
-        registration_number: 'REG-002-2024',
-        address: '456 Mountain View Road',
-        city: 'Nakuru',
-        country: 'Kenya',
-        contact_person_name: 'Jane Smith',
-        contact_person_phone: '+254-700-789012',
-        website_url: 'https://mountainexpeditions.com',
-        description: 'Expert mountain trekking and adventure tourism company with over 10 years of experience.',
-        certificate_of_incorporation_url: 'https://example.com/cert2.pdf',
-        business_permit_url: 'https://example.com/permit2.pdf',
-        kato_membership_url: 'https://example.com/kato2.pdf',
-        role: 'operator',
-        specializations: ['Mountain Climbing', 'Trekking'],
-        is_active: true,
-        created_at: '2024-01-20'
-      }
-    ];
+    try {
+      const { data, error } = await supabase
+        .from('operators')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    return {
-      success: true,
-      data: mockOperators
-    };
+      if (error) {
+        console.error('Error fetching operators:', error);
+        return {
+          success: false,
+          data: [],
+          errors: [error.message]
+        };
+      }
+
+      return {
+        success: true,
+        data: data || []
+      };
+    } catch (error) {
+      console.error('Unexpected error fetching operators:', error);
+      return {
+        success: false,
+        data: [],
+        errors: ['An unexpected error occurred']
+      };
+    }
+  }
+
+  async getOperator(id: string): Promise<ApiResponse<Operator | null>> {
+    try {
+      const { data, error } = await supabase
+        .from('operators')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching operator:', error);
+        return {
+          success: false,
+          data: null,
+          errors: [error.message]
+        };
+      }
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('Unexpected error fetching operator:', error);
+      return {
+        success: false,
+        data: null,
+        errors: ['An unexpected error occurred']
+      };
+    }
   }
 
   async createOperator(operatorData: {
@@ -97,35 +80,121 @@ class AdminService {
     email: string;
     company: string;
     specializations?: string[];
+    password?: string;
   }): Promise<ApiResponse<Operator & { temporary_password?: string }>> {
-    const newOperator: Operator & { temporary_password?: string } = {
-      id: Date.now().toString(),
-      name: operatorData.name,
-      email: operatorData.email,
-      company: operatorData.company,
-      company_name: '',
-      registration_number: '',
-      address: '',
-      city: '',
-      country: 'Kenya',
-      contact_person_name: '',
-      contact_person_phone: '',
-      website_url: '',
-      description: '',
-      certificate_of_incorporation_url: '',
-      business_permit_url: '',
-      kato_membership_url: '',
-      specializations: operatorData.specializations || [],
-      role: 'operator',
-      is_active: true,
-      created_at: new Date().toISOString().split('T')[0],
-      temporary_password: 'demo123'
-    };
+    try {
+      // Generate a temporary password if not provided
+      const temporaryPassword = operatorData.password || Math.random().toString(36).slice(-8);
+      
+      // Hash the password (in a real implementation, this should be done on the backend)
+      const passwordHash = btoa(temporaryPassword); // Simple base64 encoding for demo
 
-    return {
-      success: true,
-      data: newOperator
-    };
+      const newOperatorData: OperatorInsert = {
+        name: operatorData.name,
+        email: operatorData.email,
+        company: operatorData.company,
+        password_hash: passwordHash,
+        specializations: operatorData.specializations || [],
+        role: 'operator',
+        is_active: true
+      };
+
+      const { data, error } = await supabase
+        .from('operators')
+        .insert([newOperatorData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating operator:', error);
+        return {
+          success: false,
+          data: {} as Operator & { temporary_password?: string },
+          errors: [error.message]
+        };
+      }
+
+      return {
+        success: true,
+        data: {
+          ...data,
+          temporary_password: temporaryPassword
+        }
+      };
+    } catch (error) {
+      console.error('Unexpected error creating operator:', error);
+      return {
+        success: false,
+        data: {} as Operator & { temporary_password?: string },
+        errors: ['An unexpected error occurred']
+      };
+    }
+  }
+
+  async updateOperator(id: string, operatorData: Partial<OperatorUpdate>): Promise<ApiResponse<Operator>> {
+    try {
+      const { data, error } = await supabase
+        .from('operators')
+        .update(operatorData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating operator:', error);
+        return {
+          success: false,
+          data: {} as Operator,
+          errors: [error.message]
+        };
+      }
+
+      return {
+        success: true,
+        data: data
+      };
+    } catch (error) {
+      console.error('Unexpected error updating operator:', error);
+      return {
+        success: false,
+        data: {} as Operator,
+        errors: ['An unexpected error occurred']
+      };
+    }
+  }
+
+  async deleteOperator(id: string): Promise<ApiResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('operators')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting operator:', error);
+        return {
+          success: false,
+          data: undefined,
+          errors: [error.message]
+        };
+      }
+
+      return {
+        success: true,
+        data: undefined
+      };
+    } catch (error) {
+      console.error('Unexpected error deleting operator:', error);
+      return {
+        success: false,
+        data: undefined,
+        errors: ['An unexpected error occurred']
+      };
+    }
+  }
+
+  async toggleOperatorStatus(id: string, isActive: boolean): Promise<ApiResponse<Operator>> {
+    return this.updateOperator(id, { is_active: isActive });
   }
 }
 

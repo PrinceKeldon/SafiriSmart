@@ -5,7 +5,6 @@ import {
   LayoutDashboard, 
   Package, 
   UserCircle, 
-  Shield,
   MapPin
 } from 'lucide-react';
 
@@ -30,12 +29,6 @@ const Navigation = () => {
       label: 'Profile',
       icon: UserCircle,
       active: location.pathname === '/profile'
-    },
-    {
-      href: '/admin',
-      label: 'Admin',
-      icon: Shield,
-      active: location.pathname === '/admin'
     }
   ];
 

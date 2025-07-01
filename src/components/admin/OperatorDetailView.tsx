@@ -10,31 +10,14 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Edit, ExternalLink, Save, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { adminService } from '@/services/AdminService';
+import { Tables } from '@/integrations/supabase/types';
+
+type Operator = Tables<'operators'>;
 
 interface OperatorDetailViewProps {
-  operator: {
-    id: string;
-    name: string;
-    email: string;
-    company: string;
-    company_name?: string;
-    registration_number?: string;
-    address?: string;
-    city?: string;
-    country?: string;
-    contact_person_name?: string;
-    contact_person_phone?: string;
-    website_url?: string;
-    description?: string;
-    certificate_of_incorporation_url?: string;
-    business_permit_url?: string;
-    kato_membership_url?: string;
-    role: string;
-    specializations: string[];
-    is_active: boolean;
-    created_at: string;
-  };
-  onUpdate?: (updatedOperator: any) => void;
+  operator: Operator;
+  onUpdate?: (updatedOperator: Operator) => void;
 }
 
 export const OperatorDetailView: React.FC<OperatorDetailViewProps> = ({ 
@@ -48,13 +31,16 @@ export const OperatorDetailView: React.FC<OperatorDetailViewProps> = ({
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast.success('Operator profile updated successfully');
-      onUpdate?.(editedOperator);
-      setIsEditing(false);
+      const response = await adminService.updateOperator(operator.id, editedOperator);
+      if (response.success) {
+        toast.success('Operator profile updated successfully');
+        onUpdate?.(response.data);
+        setIsEditing(false);
+      } else {
+        toast.error(response.errors?.[0] || 'Failed to update operator profile');
+      }
     } catch (error) {
+      console.error('Error updating operator:', error);
       toast.error('Failed to update operator profile');
     } finally {
       setIsLoading(false);

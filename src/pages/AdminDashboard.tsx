@@ -10,29 +10,9 @@ import { OperatorsList } from '@/components/admin/OperatorsList';
 import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
 import { adminService } from '@/services/AdminService';
 import { toast } from 'sonner';
+import { Tables } from '@/integrations/supabase/types';
 
-interface Operator {
-  id: string;
-  name: string;
-  email: string;
-  company: string;
-  company_name: string;
-  registration_number: string;
-  address: string;
-  city: string;
-  country: string;
-  contact_person_name: string;
-  contact_person_phone: string;
-  website_url: string;
-  description: string;
-  certificate_of_incorporation_url: string;
-  business_permit_url: string;
-  kato_membership_url: string;
-  role: string;
-  specializations: string[];
-  is_active: boolean;
-  created_at: string;
-}
+type Operator = Tables<'operators'>;
 
 const AdminDashboard = () => {
   const [operators, setOperators] = useState<Operator[]>([]);
@@ -76,6 +56,10 @@ const AdminDashboard = () => {
     toast.success('Operator updated successfully');
   };
 
+  const handleDeleteOperator = (operatorId: string) => {
+    setOperators(operators.filter(op => op.id !== operatorId));
+  };
+
   const handleCreateOperator = async (newOperatorData: {
     name: string;
     email: string;
@@ -85,30 +69,9 @@ const AdminDashboard = () => {
     try {
       const response = await adminService.createOperator(newOperatorData);
       if (response.success) {
-        const operatorWithDefaults: Operator = {
-          id: response.data.id,
-          name: response.data.name,
-          email: response.data.email,
-          company: response.data.company,
-          specializations: response.data.specializations,
-          role: response.data.role,
-          is_active: response.data.is_active,
-          created_at: response.data.created_at,
-          company_name: response.data.company_name,
-          registration_number: response.data.registration_number,
-          address: response.data.address,
-          city: response.data.city,
-          country: response.data.country,
-          contact_person_name: response.data.contact_person_name,
-          contact_person_phone: response.data.contact_person_phone,
-          website_url: response.data.website_url,
-          description: response.data.description,
-          certificate_of_incorporation_url: response.data.certificate_of_incorporation_url,
-          business_permit_url: response.data.business_permit_url,
-          kato_membership_url: response.data.kato_membership_url,
-        };
-        setOperators([...operators, operatorWithDefaults]);
-        toast.success('Operator created successfully');
+        // Simply add the response data since it's already properly typed
+        setOperators([...operators, response.data]);
+        toast.success(`Operator created successfully. Temporary password: ${response.data.temporary_password}`);
       }
     } catch (error) {
       console.error('Failed to create operator:', error);
@@ -193,6 +156,7 @@ const AdminDashboard = () => {
               <OperatorsList 
                 operators={operators} 
                 onUpdateOperator={handleUpdateOperator}
+                onDeleteOperator={handleDeleteOperator}
               />
             )}
           </CardContent>
