@@ -9,19 +9,9 @@ export const useOperatorPackages = () => {
     queryFn: async () => {
       console.log('Fetching operator packages...');
       
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        console.log('No authenticated user found');
-        throw new Error('No authenticated user found');
-      }
-
-      console.log('Authenticated user:', user.id);
-
       const { data, error } = await supabase
         .from('operator_packages')
         .select('*')
-        .eq('operator_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -60,17 +50,15 @@ export const useCreateOperatorPackage = () => {
     mutationFn: async (packageData: OperatorPackageCreate) => {
       console.log('Creating operator package:', packageData);
       
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        throw new Error('No authenticated user found');
-      }
+      // For demo purposes, we'll use a placeholder operator_id
+      // In a real app, this would come from the authenticated user
+      const placeholderOperatorId = 'demo-operator-id';
 
       const { data, error } = await supabase
         .from('operator_packages')
         .insert({
           ...packageData,
-          operator_id: user.id
+          operator_id: placeholderOperatorId
         })
         .select()
         .single();
