@@ -110,7 +110,7 @@ export const LeadDetailModal = ({
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center justify-between">
-              <span>Lead Details - {lead.traveler.name}</span>
+              <span>Lead Details - {lead.traveler_name}</span>
               <div className="flex items-center space-x-2">
                 <Badge className={`${
                   lead.status === 'new' ? 'bg-blue-100 text-blue-800' :
@@ -123,31 +123,33 @@ export const LeadDetailModal = ({
                 </Badge>
                 
                 {/* Delete Lead Button */}
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete Lead</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete this lead? This action cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDeleteLead}
-                        disabled={isDeletingLead}
-                        className="bg-red-600 hover:bg-red-700"
-                      >
-                        {isDeletingLead ? 'Deleting...' : 'Delete'}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                {onDeleteLead && (
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" size="sm">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Lead</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this lead? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={handleDeleteLead}
+                          disabled={isDeletingLead}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          {isDeletingLead ? 'Deleting...' : 'Delete'}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
               </div>
             </DialogTitle>
           </DialogHeader>
@@ -185,13 +187,15 @@ export const LeadDetailModal = ({
       </Dialog>
 
       {/* Itinerary Editor Modal */}
-      <ItineraryEditor
-        itinerary={lead.itinerary}
-        isOpen={isEditingItinerary}
-        onClose={() => setIsEditingItinerary(false)}
-        onSave={handleUpdateItinerary}
-        isLoading={isUpdatingItinerary}
-      />
+      {onUpdateItinerary && (
+        <ItineraryEditor
+          itinerary={lead.itinerary}
+          isOpen={isEditingItinerary}
+          onClose={() => setIsEditingItinerary(false)}
+          onSave={handleUpdateItinerary}
+          isLoading={isUpdatingItinerary}
+        />
+      )}
     </>
   );
 };

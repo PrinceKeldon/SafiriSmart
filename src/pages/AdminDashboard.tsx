@@ -9,17 +9,19 @@ import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
 import { OperatorsList } from '@/components/admin/OperatorsList';
 import { OperatorDetailView } from '@/components/admin/OperatorDetailView';
 import { adminService } from '@/services/AdminService';
-import { Operator } from '@/types/operator';
 import { toast } from 'sonner';
 
 const AdminDashboard = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
+  const [selectedOperator, setSelectedOperator] = useState<any | null>(null);
 
-  const { data: operators = [], isLoading, error, refetch } = useQuery({
+  const { data: operatorsResponse, isLoading, error, refetch } = useQuery({
     queryKey: ['operators'],
     queryFn: adminService.getOperators,
   });
+
+  // Extract operators array from the response
+  const operators = operatorsResponse?.success ? operatorsResponse.data : [];
 
   const handleCreateOperator = async (operatorData: any) => {
     try {
@@ -47,7 +49,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleUpdateOperator = async (operatorId: string, updates: Partial<Operator>) => {
+  const handleUpdateOperator = async (operatorId: string, updates: any) => {
     try {
       await adminService.updateOperator(operatorId, updates);
       toast.success('Operator updated successfully');
@@ -59,9 +61,9 @@ const AdminDashboard = () => {
   };
 
   const stats = {
-    total: operators.length,
-    active: operators.filter(op => op.is_active).length,
-    inactive: operators.filter(op => !op.is_active).length,
+    total: operators?.length || 0,
+    active: operators?.filter((op: any) => op.is_active)?.length || 0,
+    inactive: operators?.filter((op: any) => !op.is_active)?.length || 0,
   };
 
   if (isLoading) {
@@ -150,7 +152,7 @@ const AdminDashboard = () => {
               </CardHeader>
               <CardContent>
                 <OperatorsList
-                  operators={operators}
+                  operators={operators || []}
                   onSelectOperator={setSelectedOperator}
                   onDeleteOperator={handleDeleteOperator}
                   selectedOperatorId={selectedOperator?.id}
@@ -163,15 +165,14 @@ const AdminDashboard = () => {
           <div>
             <OperatorDetailView
               operator={selectedOperator}
-              onUpdateOperator={handleUpdateOperator}
             />
           </div>
         </div>
 
         {/* Create Operator Dialog */}
         <CreateOperatorDialog
-          isOpen={isCreateDialogOpen}
-          onClose={() => setIsCreateDialogOpen(false)}
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
           onCreateOperator={handleCreateOperator}
         />
       </div>

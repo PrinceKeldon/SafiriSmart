@@ -68,7 +68,7 @@ export const ItineraryView = ({
             <AlertDialogHeader>
               <AlertDialogTitle>Send Itinerary</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to send the current itinerary to {lead.traveler.name} at {lead.traveler.email}?
+                Are you sure you want to send the current itinerary to {lead.traveler_name} at {lead.traveler_email}?
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

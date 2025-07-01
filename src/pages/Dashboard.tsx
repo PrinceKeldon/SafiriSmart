@@ -19,7 +19,8 @@ const Dashboard = () => {
   const { data: leadsResponse, isLoading, error } = useLeads();
   const updateLeadStatusMutation = useUpdateLeadStatus();
 
-  const leads = leadsResponse?.data?.leads || [];
+  // Extract leads from response
+  const leads = leadsResponse?.success && leadsResponse.data?.leads ? leadsResponse.data.leads : [];
 
   const handleViewDetails = (lead: Lead) => {
     setSelectedLead(lead);

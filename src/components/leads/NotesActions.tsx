@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,23 +72,13 @@ export const NotesActions = ({
         </CardContent>
       </Card>
 
-      {/* Existing Notes */}
+      {/* Notes History */}
       <Card>
         <CardHeader>
           <CardTitle>Notes History</CardTitle>
         </CardHeader>
         <CardContent>
-          {lead.notes.length === 0 ? (
-            <p className="text-gray-500">No notes yet.</p>
-          ) : (
-            <div className="space-y-2">
-              {lead.notes.map((note, index) => (
-                <div key={index} className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm">{note}</p>
-                </div>
-              ))}
-            </div>
-          )}
+          <p className="text-gray-500">Notes functionality will be implemented when backend support is added.</p>
         </CardContent>
       </Card>
     </div>
