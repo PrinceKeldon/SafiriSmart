@@ -16,6 +16,7 @@ export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({
   onCreateOperator 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const [newOperator, setNewOperator] = useState({
     name: '',
     email: '',
@@ -36,6 +37,7 @@ export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({
       
       await onCreateOperator(operatorData);
       setNewOperator({ name: '', email: '', company: '', specializations: '' });
+      setIsOpen(false);
       
     } catch (error) {
       toast.error('Failed to create operator');
@@ -45,7 +47,7 @@ export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
