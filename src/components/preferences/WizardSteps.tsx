@@ -25,6 +25,8 @@ export const WizardSteps: React.FC<WizardStepsProps> = ({
   updatePreferences,
   form,
 }) => {
+  console.log('Rendering step:', currentStep);
+  
   switch (currentStep) {
     case 1:
       return (
@@ -85,6 +87,7 @@ export const WizardSteps: React.FC<WizardStepsProps> = ({
         />
       );
     default:
-      return null;
+      console.warn('Unknown step:', currentStep);
+      return <div>Step {currentStep} not found</div>;
   }
 };

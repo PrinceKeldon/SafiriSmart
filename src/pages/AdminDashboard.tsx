@@ -20,11 +20,27 @@ const AdminDashboard = () => {
 
   const { data: operatorsResponse, isLoading, error, refetch } = useQuery({
     queryKey: ['operators'],
-    queryFn: adminService.getOperators,
+    queryFn: async () => {
+      try {
+        console.log('Fetching operators...');
+        const response = await adminService.getOperators();
+        console.log('Operators response:', response);
+        return response;
+      } catch (error) {
+        console.error('Error fetching operators:', error);
+        throw error;
+      }
+    },
   });
 
-  // Extract operators array from the response
-  const operators = operatorsResponse?.success ? operatorsResponse.data : [];
+  // Handle different response formats
+  const operators = Array.isArray(operatorsResponse) 
+    ? operatorsResponse 
+    : (operatorsResponse?.success && Array.isArray(operatorsResponse.data))
+      ? operatorsResponse.data
+      : [];
+
+  console.log('Processed operators:', operators);
 
   const handleCreateOperator = async (operatorData: any) => {
     try {
@@ -75,7 +91,7 @@ const AdminDashboard = () => {
       <DashboardLayout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center items-center h-64">
-            <div className="text-lg">Loading operators...</div>
+            <div className="text-lg">Loading admin dashboard...</div>
           </div>
         </div>
       </DashboardLayout>
@@ -83,11 +99,17 @@ const AdminDashboard = () => {
   }
 
   if (error) {
+    console.error('Admin dashboard error:', error);
     return (
       <DashboardLayout>
         <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg text-red-600">Error loading operators</div>
+          <div className="flex flex-col items-center justify-center h-64">
+            <div className="text-lg text-red-600 mb-4">
+              Error loading admin dashboard: {error instanceof Error ? error.message : 'Unknown error'}
+            </div>
+            <Button onClick={() => refetch()} variant="outline">
+              Try Again
+            </Button>
           </div>
         </div>
       </DashboardLayout>
@@ -155,11 +177,21 @@ const AdminDashboard = () => {
                 <CardTitle>Tour Operators</CardTitle>
               </CardHeader>
               <CardContent>
-                <OperatorsList
-                  operators={operators || []}
-                  onUpdateOperator={handleUpdateOperator}
-                  onDeleteOperator={handleDeleteOperator}
-                />
+                {operators.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500 mb-4">No operators found</p>
+                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create First Operator
+                    </Button>
+                  </div>
+                ) : (
+                  <OperatorsList
+                    operators={operators}
+                    onUpdateOperator={handleUpdateOperator}
+                    onDeleteOperator={handleDeleteOperator}
+                  />
+                )}
               </CardContent>
             </Card>
           </div>

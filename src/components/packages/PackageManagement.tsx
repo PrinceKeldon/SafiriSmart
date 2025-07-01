@@ -7,11 +7,16 @@ import { PackageList } from './PackageList';
 import { PackageForm } from './PackageForm';
 import { useOperatorPackages } from '@/hooks/useOperatorPackages';
 import { OperatorPackage } from '@/types/operator';
+import { toast } from 'sonner';
 
 export const PackageManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingPackage, setEditingPackage] = useState<OperatorPackage | null>(null);
-  const { data: packages = [], isLoading, error } = useOperatorPackages();
+  const { data: packages = [], isLoading, error, refetch } = useOperatorPackages();
+
+  console.log('Packages data:', packages);
+  console.log('Loading state:', isLoading);
+  console.log('Error:', error);
 
   const handleCreateNew = () => {
     setEditingPackage(null);
@@ -26,6 +31,8 @@ export const PackageManagement = () => {
   const handleFormClose = () => {
     setIsFormOpen(false);
     setEditingPackage(null);
+    // Refresh the packages list after form closes
+    refetch();
   };
 
   if (isLoading) {
@@ -39,10 +46,14 @@ export const PackageManagement = () => {
   }
 
   if (error) {
+    console.error('Package loading error:', error);
     return (
       <div className="container mx-auto px-6 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-red-500">Error loading packages. Please try again.</div>
+        <div className="flex flex-col items-center justify-center h-64">
+          <div className="text-red-500 mb-4">Error loading packages: {error.message}</div>
+          <Button onClick={() => refetch()} variant="outline">
+            Try Again
+          </Button>
         </div>
       </div>
     );
@@ -62,10 +73,10 @@ export const PackageManagement = () => {
           </Button>
         </div>
 
-        {packages.length === 0 ? (
+        {!packages || packages.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <h3 className="text-xl font-semibold mb-2">No packages yet</h3>
+              <h3 className="text-xl font-semibold mb-2">No packages to display</h3>
               <p className="text-gray-500 text-center mb-4">
                 Create your first tour package to start managing your offerings
               </p>

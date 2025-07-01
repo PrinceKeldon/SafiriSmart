@@ -12,8 +12,11 @@ export const useOperatorPackages = () => {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
+        console.log('No authenticated user found');
         throw new Error('No authenticated user found');
       }
+
+      console.log('Authenticated user:', user.id);
 
       const { data, error } = await supabase
         .from('operator_packages')
@@ -26,19 +29,25 @@ export const useOperatorPackages = () => {
         throw new Error(`Failed to fetch packages: ${error.message}`);
       }
 
-      console.log('Fetched operator packages:', data);
+      console.log('Raw packages data:', data);
       
       // Transform the data to match our interface
-      const transformedData: OperatorPackage[] = (data || []).map(pkg => ({
-        ...pkg,
-        included_locations: Array.isArray(pkg.included_locations) 
-          ? pkg.included_locations as string[]
-          : [],
-        included_activities: Array.isArray(pkg.included_activities)
-          ? pkg.included_activities as string[]
-          : [],
-      }));
+      const transformedData: OperatorPackage[] = (data || []).map(pkg => {
+        const transformed = {
+          ...pkg,
+          budget_tier: pkg.budget_tier as 'budget' | 'mid-range' | 'luxury',
+          included_locations: Array.isArray(pkg.included_locations) 
+            ? pkg.included_locations as string[]
+            : [],
+          included_activities: Array.isArray(pkg.included_activities)
+            ? pkg.included_activities as string[]
+            : [],
+        };
+        console.log('Transformed package:', transformed);
+        return transformed;
+      });
 
+      console.log('Final transformed packages:', transformedData);
       return transformedData;
     },
   });
@@ -71,6 +80,7 @@ export const useCreateOperatorPackage = () => {
         throw new Error(`Failed to create package: ${error.message}`);
       }
 
+      console.log('Created package:', data);
       return data;
     },
     onSuccess: () => {
