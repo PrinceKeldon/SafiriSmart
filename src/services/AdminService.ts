@@ -32,9 +32,9 @@ interface Operator {
 
 class AdminService {
   async getOperators(): Promise<ApiResponse<Operator[]>> {
-    // Get updated operators from OperatorService
-    const { OperatorService } = await import('./OperatorService');
-    const updatedOperators = OperatorService.getUpdatedOperators();
+    // Get updated operators from OperatorService using proper import
+    const operatorServiceModule = await import('./OperatorService');
+    const updatedOperators = operatorServiceModule.OperatorService.getUpdatedOperators();
     
     const mockOperators: Operator[] = [
       // Use the updated operator data

@@ -35,7 +35,7 @@ let mockOperators: any[] = [
   }
 ];
 
-class OperatorService {
+export class OperatorService {
   // Mock current operator for demo purposes
   async getCurrentOperator(): Promise<ApiResponse<{
     id: string;
@@ -102,7 +102,7 @@ class OperatorService {
     }));
   }
 
-  // Method to get updated operator data for admin dashboard
+  // Static method to get updated operator data for admin dashboard
   static getUpdatedOperators(): any[] {
     return mockOperators;
   }
