@@ -18,7 +18,7 @@ const AdminDashboard = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
 
-  const { data: operatorsResponse, isLoading, error, refetch } = useQuery({
+  const { data: operatorsData, isLoading, error, refetch } = useQuery({
     queryKey: ['operators'],
     queryFn: async () => {
       try {
@@ -33,12 +33,19 @@ const AdminDashboard = () => {
     },
   });
 
-  // Handle different response formats
-  const operators = Array.isArray(operatorsResponse) 
-    ? operatorsResponse 
-    : (operatorsResponse?.success && Array.isArray(operatorsResponse.data))
-      ? operatorsResponse.data
-      : [];
+  // Safely handle different response formats
+  let operators: Operator[] = [];
+  
+  if (Array.isArray(operatorsData)) {
+    operators = operatorsData;
+  } else if (operatorsData && typeof operatorsData === 'object') {
+    // Handle case where response has a success field and data array
+    if ('success' in operatorsData && operatorsData.success && 'data' in operatorsData) {
+      operators = Array.isArray(operatorsData.data) ? operatorsData.data : [];
+    } else if ('data' in operatorsData) {
+      operators = Array.isArray(operatorsData.data) ? operatorsData.data : [];
+    }
+  }
 
   console.log('Processed operators:', operators);
 

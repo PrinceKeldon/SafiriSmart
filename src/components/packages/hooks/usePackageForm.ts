@@ -50,7 +50,14 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
   const onSubmit = async (data: PackageFormData) => {
     try {
       const packageData: OperatorPackageCreate = {
-        ...data,
+        package_name: data.package_name,
+        description: data.description,
+        min_duration: data.min_duration,
+        max_duration: data.max_duration,
+        min_group_size: data.min_group_size,
+        max_group_size: data.max_group_size,
+        budget_tier: data.budget_tier,
+        estimated_cost_per_person_per_day: data.estimated_cost_per_person_per_day,
         included_locations: data.included_locations.map(loc => loc.value).filter(Boolean),
         included_activities: data.included_activities.map(act => act.value).filter(Boolean),
       };
@@ -64,6 +71,7 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
       }
       onClose();
     } catch (error) {
+      console.error('Package form error:', error);
       toast.error(isEditing ? 'Failed to update package' : 'Failed to create package');
     }
   };
