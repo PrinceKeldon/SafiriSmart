@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, MapPin, Users, Calendar, Settings, Compass, Shield, Zap, Globe, Star } from "lucide-react";
@@ -20,14 +21,6 @@ const Index = () => {
               </h1>
               <p className="text-xs text-gray-600">Complete Safari Solutions</p>
             </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link to="/config">
-              <Button variant="outline" size="sm" className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                Configure
-              </Button>
-            </Link>
           </div>
         </div>
       </header>
@@ -235,13 +228,13 @@ const Index = () => {
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link to="/safari-guide">
-              <Button size="lg" variant="secondary" className="bg-white text-orange-600 hover:bg-gray-50 font-bold">
+              <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-50 font-bold border-2 border-white hover:border-gray-100">
                 <Compass className="h-5 w-5 mr-2" />
                 Plan My Safari
               </Button>
             </Link>
             <Link to="/dashboard">
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 font-bold">
+              <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-50 font-bold border-2 border-white hover:border-gray-100">
                 <Shield className="h-5 w-5 mr-2" />
                 Operator Access
               </Button>
@@ -260,7 +253,7 @@ const Index = () => {
             </div>
             <p className="text-gray-400 mb-6">Connecting Dreams to Adventures Across Kenya</p>
             <div className="flex justify-center gap-6 text-sm text-gray-400">
-              <span>© 2024 SafiriSmart</span>
+              <span>© 2025 SafiriSmart</span>
               <span>•</span>
               <span>All rights reserved</span>
             </div>

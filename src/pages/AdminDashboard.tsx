@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Users, Package, Settings } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfigLink } from '@/components/ui/navigation/ConfigLink';
 
 const AdminDashboard = () => {
   const [operators, setOperators] = useState([
@@ -73,9 +74,12 @@ const AdminDashboard = () => {
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Website Administration</h1>
-          <p className="text-gray-600">Manage operators, system settings, and platform configuration</p>
+        <div className="mb-8 flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Website Administration</h1>
+            <p className="text-gray-600">Manage operators, system settings, and platform configuration</p>
+          </div>
+          <ConfigLink />
         </div>
 
         {/* Stats Cards */}
