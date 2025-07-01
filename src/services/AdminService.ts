@@ -85,15 +85,12 @@ class AdminService {
     try {
       // Generate a temporary password if not provided
       const temporaryPassword = operatorData.password || Math.random().toString(36).slice(-8);
-      
-      // Hash the password (in a real implementation, this should be done on the backend)
-      const passwordHash = btoa(temporaryPassword); // Simple base64 encoding for demo
 
-      const newOperatorData: OperatorInsert = {
+      const newOperatorData = {
         name: operatorData.name,
         email: operatorData.email,
         company: operatorData.company,
-        password_hash: passwordHash,
+        password_hash: temporaryPassword, // Store plain text for demo - in production use proper hashing
         specializations: operatorData.specializations || [],
         role: 'operator',
         is_active: true

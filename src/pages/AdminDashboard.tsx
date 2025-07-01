@@ -69,9 +69,13 @@ const AdminDashboard = () => {
     try {
       const response = await adminService.createOperator(newOperatorData);
       if (response.success) {
-        // Simply add the response data since it's already properly typed
-        setOperators([...operators, response.data]);
+        // Add the new operator to the list and refresh the data
+        setOperators([response.data, ...operators]);
         toast.success(`Operator created successfully. Temporary password: ${response.data.temporary_password}`);
+        // Also refresh the operators list to ensure consistency
+        fetchOperators();
+      } else {
+        toast.error(response.errors?.[0] || 'Failed to create operator');
       }
     } catch (error) {
       console.error('Failed to create operator:', error);
