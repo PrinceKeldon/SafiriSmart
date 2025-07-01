@@ -87,6 +87,10 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleSelectOperator = (operator: Operator) => {
+    setSelectedOperator(operator);
+  };
+
   const stats = {
     total: operators?.length || 0,
     active: operators?.filter((op: Operator) => op.is_active)?.length || 0,
@@ -195,6 +199,7 @@ const AdminDashboard = () => {
                 ) : (
                   <OperatorsList
                     operators={operators}
+                    onSelectOperator={handleSelectOperator}
                     onUpdateOperator={handleUpdateOperator}
                     onDeleteOperator={handleDeleteOperator}
                   />
@@ -205,14 +210,14 @@ const AdminDashboard = () => {
 
           {/* Operator Details */}
           <div>
-            <OperatorDetailView
-              operator={selectedOperator}
-            />
+            <OperatorDetailView operator={selectedOperator} />
           </div>
         </div>
 
         {/* Create Operator Dialog */}
         <CreateOperatorDialog
+          open={isCreateDialogOpen}
+          onOpenChange={setIsCreateDialogOpen}
           onCreateOperator={handleCreateOperator}
         />
       </div>
