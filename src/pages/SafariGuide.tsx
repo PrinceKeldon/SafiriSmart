@@ -19,7 +19,7 @@ const SafariGuide = () => {
               <h1 className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                 SafariGuide AI
               </h1>
-              <p className="text-xs text-gray-600">Plan Your Perfect Safari</p>
+              <p className="text-xs text-gray-600">by SafiriSmart</p>
             </div>
           </div>
           <Link to="/">

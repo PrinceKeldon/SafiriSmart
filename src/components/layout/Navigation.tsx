@@ -56,7 +56,7 @@ const Navigation = () => {
                 <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
                   TourMaster AI
                 </span>
-                <div className="text-xs text-gray-500 font-normal">by SafariLink</div>
+                <div className="text-xs text-gray-500 font-normal">by SafiriSmart</div>
               </div>
             </Link>
             

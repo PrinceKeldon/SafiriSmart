@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, MapPin, Users, Calendar, Settings, Compass, Shield, Zap, Globe, Star } from "lucide-react";
@@ -17,7 +16,7 @@ const Index = () => {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                SafariLink AI
+                SafiriSmart
               </h1>
               <p className="text-xs text-gray-600">Complete Safari Solutions</p>
             </div>
@@ -91,7 +90,7 @@ const Index = () => {
       {/* How It Works Section */}
       <section className="bg-white/60 backdrop-blur-sm py-20">
         <div className="container mx-auto px-4">
-          <h3 className="text-4xl font-bold text-center mb-4 text-gray-900">How SafariLink AI Works</h3>
+          <h3 className="text-4xl font-bold text-center mb-4 text-gray-900">How SafiriSmart Works</h3>
           <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
             Whether you're a traveler seeking adventure or an operator managing tours, we've got you covered.
           </p>
@@ -184,7 +183,7 @@ const Index = () => {
 
       {/* Features Section */}
       <section className="container mx-auto px-4 py-20">
-        <h3 className="text-4xl font-bold text-center mb-4 text-gray-900">Why Choose SafariLink AI?</h3>
+        <h3 className="text-4xl font-bold text-center mb-4 text-gray-900">Why Choose SafiriSmart?</h3>
         <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
           Cutting-edge technology meets authentic African safari experiences
         </p>
@@ -232,7 +231,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <h3 className="text-4xl font-bold mb-4">Ready to Start Your Safari Journey?</h3>
           <p className="text-xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Join thousands of travelers and operators who trust SafariLink AI for unforgettable safari experiences
+            Join thousands of travelers and operators who trust SafiriSmart for unforgettable safari experiences
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Link to="/safari-guide">
@@ -257,11 +256,11 @@ const Index = () => {
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
               <MapPin className="h-6 w-6 text-orange-500" />
-              <span className="text-xl font-bold">SafariLink AI</span>
+              <span className="text-xl font-bold">SafiriSmart</span>
             </div>
             <p className="text-gray-400 mb-6">Connecting Dreams to Adventures Across Kenya</p>
             <div className="flex justify-center gap-6 text-sm text-gray-400">
-              <span>© 2024 SafariLink AI</span>
+              <span>© 2024 SafiriSmart</span>
               <span>•</span>
               <span>All rights reserved</span>
             </div>
