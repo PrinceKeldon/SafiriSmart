@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -13,12 +14,37 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Create lead function called');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     );
 
-    const { traveler, preferences, schedule, travel, dietary } = await req.json();
+    const requestBody = await req.json();
+    console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+
+    const { traveler, preferences, schedule, travel, dietary } = requestBody;
+
+    // Validate required fields
+    if (!traveler?.name || !traveler?.email) {
+      throw new Error('Traveler name and email are required');
+    }
+
+    if (!preferences) {
+      throw new Error('Preferences are required');
+    }
+
+    // Process dates properly
+    const processedSchedule = schedule ? {
+      startDate: schedule.startDate ? new Date(schedule.startDate).toISOString() : null,
+      endDate: schedule.endDate ? new Date(schedule.endDate).toISOString() : null,
+      flexible: schedule.flexible || true
+    } : {
+      startDate: null,
+      endDate: null,
+      flexible: true
+    };
 
     // Enhanced mock itinerary with new features including languages
     const mockItinerary = {
@@ -37,11 +63,7 @@ serve(async (req) => {
           other: 0.0
         }
       },
-      schedule: {
-        startDate: schedule?.startDate || null,
-        endDate: schedule?.endDate || null,
-        flexible: schedule?.flexible || true
-      },
+      schedule: processedSchedule,
       travel: {
         portOfEntry: travel?.portOfEntry || 'TBD',
         airportPickup: travel?.airportPickup || false,
@@ -89,11 +111,13 @@ serve(async (req) => {
     // Create enhanced preferences object including languages
     const enhancedPreferences = {
       ...preferences,
-      schedule,
+      schedule: processedSchedule,
       travel,
       dietary,
       languages: preferences.languages || ['English']
     };
+
+    console.log('Inserting lead into database...');
 
     // Insert the lead into Supabase
     const { data, error } = await supabaseClient
@@ -111,8 +135,11 @@ serve(async (req) => {
       .single();
 
     if (error) {
+      console.error('Database insertion error:', error);
       throw error;
     }
+
+    console.log('Lead created successfully:', data);
 
     return new Response(
       JSON.stringify({

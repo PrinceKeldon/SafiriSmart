@@ -30,8 +30,8 @@ const manualLeadSchema = z.object({
     languages: z.array(z.string()).min(1, 'At least one language must be selected'),
   }),
   schedule: z.object({
-    startDate: z.date().optional(),
-    endDate: z.date().optional(),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
     flexible: z.boolean().default(true),
   }),
   travel: z.object({
@@ -72,6 +72,8 @@ const NewLead = () => {
       },
       schedule: {
         flexible: true,
+        startDate: '',
+        endDate: '',
       },
       travel: {
         portOfEntry: '',
@@ -88,29 +90,48 @@ const NewLead = () => {
   });
 
   const onSubmit = async (data: ManualLeadFormData) => {
+    console.log('Form submission started with data:', data);
     setIsSubmitting(true);
     
     try {
+      // Convert date strings to Date objects if they exist
+      const processedData = {
+        ...data,
+        schedule: {
+          ...data.schedule,
+          startDate: data.schedule.startDate ? new Date(data.schedule.startDate) : undefined,
+          endDate: data.schedule.endDate ? new Date(data.schedule.endDate) : undefined,
+        }
+      };
+
+      console.log('Processed data for submission:', processedData);
+
       const { data: result, error } = await supabase.functions.invoke('create-lead', {
-        body: data
+        body: processedData
       });
 
+      console.log('Supabase function result:', result);
+      console.log('Supabase function error:', error);
+
       if (error) {
+        console.error('Supabase function error:', error);
         throw error;
       }
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create lead');
+      if (!result || !result.success) {
+        console.error('Lead creation failed:', result);
+        throw new Error(result?.error || 'Failed to create lead');
       }
       
       toast.success('Lead created successfully!');
+      console.log('Lead created successfully, navigating to dashboard');
       
       // Redirect back to dashboard
       navigate('/dashboard');
       
     } catch (error) {
       console.error('Error creating lead:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create lead');
+      toast.error(error instanceof Error ? error.message : 'Failed to create lead. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
