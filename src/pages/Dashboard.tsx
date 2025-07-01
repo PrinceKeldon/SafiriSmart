@@ -22,8 +22,8 @@ const Dashboard = () => {
   // Handle different response formats from the API
   const leads: Lead[] = Array.isArray(leadsData) 
     ? leadsData 
-    : (leadsData && typeof leadsData === 'object' && 'data' in leadsData && Array.isArray(leadsData.data))
-      ? leadsData.data
+    : (leadsData && typeof leadsData === 'object' && 'data' in leadsData && Array.isArray((leadsData as any).data))
+      ? (leadsData as any).data
       : [];
 
   const handleViewDetails = (lead: Lead) => {
