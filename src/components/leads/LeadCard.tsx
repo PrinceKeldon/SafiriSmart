@@ -39,7 +39,7 @@ export const LeadCard = ({ lead, onViewDetails, onUpdateStatus }: LeadCardProps)
     });
   };
 
-  const formatCurrency = (amount: number, currency: string) => {
+  const formatCurrency = (amount: number, currency: string = 'USD') => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: currency
@@ -55,13 +55,21 @@ export const LeadCard = ({ lead, onViewDetails, onUpdateStatus }: LeadCardProps)
     }
   };
 
+  // Extract preferences from the lead data
+  const preferences = lead.preferences || {};
+  const duration = preferences.duration || 'N/A';
+  const groupSize = preferences.groupSize || 1;
+  const budgetRange = preferences.budgetRange || 'mid-range';
+  const interests = preferences.interests || [];
+  const schedule = preferences.schedule || {};
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-lg">{lead.traveler.name}</h3>
-            <p className="text-sm text-gray-600">{lead.traveler.country}</p>
+            <h3 className="font-semibold text-lg">{lead.traveler_name}</h3>
+            <p className="text-sm text-gray-600">{lead.traveler_country || 'Unknown'}</p>
           </div>
           <Badge className={statusColors[lead.status]}>
             {statusLabels[lead.status]}
@@ -74,21 +82,19 @@ export const LeadCard = ({ lead, onViewDetails, onUpdateStatus }: LeadCardProps)
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center space-x-2">
             <MapPin className="h-4 w-4 text-gray-400" />
-            <span>{lead.preferences.destination}</span>
+            <span>Safari Adventure</span>
           </div>
           <div className="flex items-center space-x-2">
             <CalendarDays className="h-4 w-4 text-gray-400" />
-            <span>{lead.preferences.duration} days</span>
+            <span>{duration} days</span>
           </div>
           <div className="flex items-center space-x-2">
             <Users className="h-4 w-4 text-gray-400" />
-            <span>{lead.preferences.groupSize} {lead.preferences.groupSize === 1 ? 'person' : 'people'}</span>
+            <span>{groupSize} {groupSize === 1 ? 'person' : 'people'}</span>
           </div>
           <div className="flex items-center space-x-2">
             <DollarSign className="h-4 w-4 text-gray-400" />
-            <span>
-              {formatCurrency(lead.preferences.budget.min, lead.preferences.budget.currency)} - {formatCurrency(lead.preferences.budget.max, lead.preferences.budget.currency)}
-            </span>
+            <span className="capitalize">{budgetRange}</span>
           </div>
         </div>
 
@@ -96,40 +102,51 @@ export const LeadCard = ({ lead, onViewDetails, onUpdateStatus }: LeadCardProps)
         <div className="space-y-1 text-sm">
           <div className="flex items-center space-x-2">
             <Mail className="h-4 w-4 text-gray-400" />
-            <span>{lead.traveler.email}</span>
+            <span>{lead.traveler_email}</span>
           </div>
-          <div className="flex items-center space-x-2">
-            <Phone className="h-4 w-4 text-gray-400" />
-            <span>{lead.traveler.phone}</span>
-          </div>
+          {lead.traveler_phone && (
+            <div className="flex items-center space-x-2">
+              <Phone className="h-4 w-4 text-gray-400" />
+              <span>{lead.traveler_phone}</span>
+            </div>
+          )}
         </div>
 
         {/* Travel Dates */}
-        <div className="text-sm">
-          <p className="font-medium">Travel Dates:</p>
-          <p className="text-gray-600">
-            {formatDate(lead.preferences.travelDates.startDate)} - {formatDate(lead.preferences.travelDates.endDate)}
-            {lead.preferences.travelDates.flexible && <span className="text-blue-600 ml-1">(Flexible)</span>}
-          </p>
-        </div>
+        {schedule.startDate && schedule.endDate && (
+          <div className="text-sm">
+            <p className="font-medium">Travel Dates:</p>
+            <p className="text-gray-600">
+              {formatDate(schedule.startDate)} - {formatDate(schedule.endDate)}
+              {schedule.flexible && <span className="text-blue-600 ml-1">(Flexible)</span>}
+            </p>
+          </div>
+        )}
 
         {/* Interests */}
-        <div>
-          <p className="text-sm font-medium mb-2">Interests:</p>
-          <div className="flex flex-wrap gap-1">
-            {lead.preferences.interests.map((interest, index) => (
-              <Badge key={index} variant="secondary" className="text-xs">
-                {interest}
-              </Badge>
-            ))}
+        {interests.length > 0 && (
+          <div>
+            <p className="text-sm font-medium mb-2">Interests:</p>
+            <div className="flex flex-wrap gap-1">
+              {interests.slice(0, 3).map((interest, index) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {interest}
+                </Badge>
+              ))}
+              {interests.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{interests.length - 3} more
+                </Badge>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Quote Info */}
-        {lead.quotedPrice && (
+        {lead.quoted_price && (
           <div className="bg-green-50 p-3 rounded-lg">
             <p className="text-sm font-medium text-green-800">
-              Quoted: {formatCurrency(lead.quotedPrice, lead.quotedCurrency || 'USD')}
+              Quoted: {formatCurrency(lead.quoted_price, lead.quoted_currency || 'USD')}
             </p>
           </div>
         )}
@@ -168,7 +185,7 @@ export const LeadCard = ({ lead, onViewDetails, onUpdateStatus }: LeadCardProps)
         </div>
 
         <p className="text-xs text-gray-500 pt-2">
-          Created: {formatDate(lead.createdAt)}
+          Created: {formatDate(lead.created_at)}
         </p>
       </CardContent>
     </Card>

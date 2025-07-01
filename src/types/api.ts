@@ -1,48 +1,41 @@
 
-// API Types and Specifications for FastAPI Backend
-// This file defines the complete data structures and API contracts
-
 export interface Lead {
   id: string;
   status: 'new' | 'contacted' | 'quoted' | 'booked' | 'cancelled';
-  createdAt: string;
-  updatedAt: string;
-  assignedOperatorId: string;
-  
-  // Traveler Information
-  traveler: {
-    name: string;
-    email: string;
-    phone: string;
-    country: string;
-  };
-  
-  // Trip Preferences
+  created_at: string;
+  updated_at: string;
+  assigned_operator_id?: string;
+  traveler_name: string;
+  traveler_email: string;
+  traveler_phone?: string;
+  traveler_country?: string;
   preferences: {
-    destination: string;
-    duration: number; // days
-    budget: {
-      min: number;
-      max: number;
-      currency: string;
+    duration?: number;
+    budgetRange?: 'budget' | 'mid-range' | 'luxury';
+    interests?: string[];
+    groupSize?: number;
+    travelPace?: 'relaxed' | 'moderate' | 'active';
+    languages?: string[];
+    schedule?: {
+      startDate?: string;
+      endDate?: string;
+      flexible?: boolean;
     };
-    travelDates: {
-      startDate: string;
-      endDate: string;
-      flexible: boolean;
+    travel?: {
+      portOfEntry?: string;
+      airportPickup?: boolean;
+      pickupTime?: string;
+      pickupLocation?: string;
     };
-    groupSize: number;
-    interests: string[];
-    accommodationType: 'budget' | 'mid-range' | 'luxury';
+    dietary?: {
+      mealWishes?: string;
+      allergies?: string;
+      specialRequirements?: string;
+    };
   };
-  
-  // AI-Generated Itinerary
-  itinerary: TripItinerary;
-  
-  // Lead Management
-  notes: string[];
-  quotedPrice?: number;
-  quotedCurrency?: string;
+  itinerary?: TripItinerary;
+  quoted_price?: number;
+  quoted_currency?: string;
 }
 
 export interface TripItinerary {
@@ -61,6 +54,25 @@ export interface TripItinerary {
       other: number;
     };
   };
+  schedule?: {
+    startDate?: string;
+    endDate?: string;
+    flexible?: boolean;
+  };
+  travel?: {
+    portOfEntry?: string;
+    airportPickup?: boolean;
+    pickupDetails?: {
+      time?: string;
+      location?: string;
+    };
+  };
+  dietary?: {
+    mealWishes?: string;
+    allergies?: string;
+    specialRequirements?: string;
+  };
+  languages?: string[];
   days: ItineraryDay[];
 }
 
@@ -75,7 +87,12 @@ export interface ItineraryDay {
   activities: Activity[];
   meals: string[];
   transport: string;
-  notes: string;
+  notes?: string;
+  pickup_details?: {
+    time?: string;
+    location?: string;
+  };
+  travel_notes?: string;
 }
 
 export interface Activity {
@@ -83,7 +100,7 @@ export interface Activity {
   duration: string;
   description: string;
   cost: number;
-  type: 'safari' | 'cultural' | 'adventure' | 'relaxation' | 'sightseeing';
+  type: string;
 }
 
 export interface Operator {
@@ -95,40 +112,35 @@ export interface Operator {
   isActive: boolean;
 }
 
-// API Response Types
+export interface LeadNote {
+  id: string;
+  lead_id: string;
+  note: string;
+  created_at: string;
+  created_by: string;
+}
+
+// API Response types
 export interface ApiResponse<T> {
   success: boolean;
-  data: T;
+  data?: T;
   message?: string;
-  errors?: string[];
+  error?: string;
 }
 
-export interface PaginatedResponse<T> {
-  success: boolean;
-  data: T[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+export interface LeadListResponse {
+  leads: Lead[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
-// API Endpoints Specification for FastAPI Backend:
-/*
-POST /api/leads - Create new lead from B2C app
-GET /api/leads - Get paginated leads for operator
-GET /api/leads/{id} - Get specific lead details
-PUT /api/leads/{id}/status - Update lead status
-POST /api/leads/{id}/notes - Add note to lead
-PUT /api/leads/{id}/quote - Add quote to lead
-
-POST /api/auth/login - Operator authentication
-GET /api/auth/me - Get current operator info
-POST /api/auth/logout - Logout operator
-
-GET /api/operators - Get all operators (admin)
-POST /api/operators - Create new operator (admin)
-
-POST /api/ai/generate-itinerary - Generate itinerary via AI Core Service
-*/
+export interface CreateLeadResponse {
+  lead_id: string;
+  status: string;
+  assigned_operator: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+}

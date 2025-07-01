@@ -1,12 +1,69 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LeadsGrid } from '@/components/dashboard/LeadsGrid';
+import { DashboardStats } from '@/components/dashboard/DashboardStats';
+import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
+import { useLeads, useUpdateLeadStatus } from '@/hooks/useLeads';
+import { Lead } from '@/types/api';
+import { toast } from 'sonner';
 
 const Dashboard = () => {
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  
+  const { data: leadsResponse, isLoading, error } = useLeads();
+  const updateLeadStatusMutation = useUpdateLeadStatus();
+
+  const leads = leadsResponse?.data?.leads || [];
+
+  const handleViewDetails = (lead: Lead) => {
+    setSelectedLead(lead);
+    setIsDetailModalOpen(true);
+  };
+
+  const handleUpdateStatus = async (leadId: string, newStatus: Lead['status']) => {
+    try {
+      await updateLeadStatusMutation.mutateAsync({ leadId, status: newStatus });
+      toast.success('Lead status updated successfully');
+    } catch (error) {
+      toast.error('Failed to update lead status');
+    }
+  };
+
+  const handleAddNote = async (leadId: string, note: string) => {
+    // This will be implemented when the user requests it
+    console.log('Add note functionality not yet implemented');
+  };
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg">Loading leads...</div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-lg text-red-600">Error loading leads: {error.message}</div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="container mx-auto px-4 py-8">
@@ -24,41 +81,32 @@ const Dashboard = () => {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">52</div>
-              <p className="text-sm text-muted-foreground">
-                Demo data
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Open Leads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">24</div>
-              <p className="text-sm text-muted-foreground">
-                Demo data
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Closed Leads</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">28</div>
-              <p className="text-sm text-muted-foreground">
-                Demo data
-              </p>
-            </CardContent>
-          </Card>
+        <div className="space-y-8">
+          {/* Stats Section */}
+          <DashboardStats leads={leads} />
+
+          {/* Leads Section */}
+          <div>
+            <h2 className="text-2xl font-bold mb-6">Recent Leads</h2>
+            <LeadsGrid
+              leads={leads}
+              onViewDetails={handleViewDetails}
+              onUpdateStatus={handleUpdateStatus}
+            />
+          </div>
         </div>
+
+        {/* Lead Detail Modal */}
+        <LeadDetailModal
+          lead={selectedLead}
+          isOpen={isDetailModalOpen}
+          onClose={() => {
+            setIsDetailModalOpen(false);
+            setSelectedLead(null);
+          }}
+          onUpdateStatus={handleUpdateStatus}
+          onAddNote={handleAddNote}
+        />
       </div>
     </DashboardLayout>
   );

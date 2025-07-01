@@ -5,7 +5,13 @@ from models import Operator
 from auth import get_password_hash
 
 def create_sample_operator():
-    """Create a sample operator for testing"""
+    """Create a sample operator for testing - this is now optional for demo purposes only"""
+    print("Sample data creation has been disabled.")
+    print("Use the admin dashboard to create operators through the web interface.")
+    print("If you need a sample operator for testing, uncomment the code below.")
+    
+    # Commented out to remove demo data
+    """
     db = SessionLocal()
     try:
         # Check if operator already exists
@@ -35,6 +41,7 @@ def create_sample_operator():
         db.rollback()
     finally:
         db.close()
+    """
 
 if __name__ == "__main__":
     create_tables()
