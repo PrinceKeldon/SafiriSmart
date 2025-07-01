@@ -1,3 +1,4 @@
+
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
@@ -82,8 +83,43 @@ class OperatorProfileUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     company: Optional[str] = None
+    company_name: Optional[str] = None
+    registration_number: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+    contact_person_name: Optional[str] = None
+    contact_person_phone: Optional[str] = None
+    website_url: Optional[str] = None
+    description: Optional[str] = None
+    certificate_of_incorporation_url: Optional[str] = None
+    business_permit_url: Optional[str] = None
+    kato_membership_url: Optional[str] = None
     specializations: Optional[List[str]] = None
     is_active: Optional[bool] = None
+
+class OperatorProfileResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    email: str
+    company: str
+    role: str
+    company_name: Optional[str] = None
+    registration_number: Optional[str] = None
+    address: Optional[str] = None
+    city: Optional[str] = None
+    country: Optional[str] = None
+    contact_person_name: Optional[str] = None
+    contact_person_phone: Optional[str] = None
+    website_url: Optional[str] = None
+    description: Optional[str] = None
+    certificate_of_incorporation_url: Optional[str] = None
+    business_permit_url: Optional[str] = None
+    kato_membership_url: Optional[str] = None
+    specializations: List[str]
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
 # Operator Package Schemas
 class OperatorPackageCreate(BaseModel):

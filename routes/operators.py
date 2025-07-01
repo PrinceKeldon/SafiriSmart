@@ -21,7 +21,30 @@ async def get_operator_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Operator profile not found"
         )
-    return operator
+    
+    return OperatorProfileResponse(
+        id=operator.id,
+        name=operator.name,
+        email=operator.email,
+        company=operator.company,
+        role=operator.role,
+        company_name=operator.company_name,
+        registration_number=operator.registration_number,
+        address=operator.address,
+        city=operator.city,
+        country=operator.country,
+        contact_person_name=operator.contact_person_name,
+        contact_person_phone=operator.contact_person_phone,
+        website_url=operator.website_url,
+        description=operator.description,
+        certificate_of_incorporation_url=operator.certificate_of_incorporation_url,
+        business_permit_url=operator.business_permit_url,
+        kato_membership_url=operator.kato_membership_url,
+        specializations=operator.specializations or [],
+        is_active=operator.is_active,
+        created_at=operator.created_at,
+        updated_at=operator.updated_at
+    )
 
 @router.put("/profile", response_model=OperatorProfileResponse)
 async def update_operator_profile(
@@ -36,4 +59,27 @@ async def update_operator_profile(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Operator profile not found"
         )
-    return operator
+    
+    return OperatorProfileResponse(
+        id=operator.id,
+        name=operator.name,
+        email=operator.email,
+        company=operator.company,
+        role=operator.role,
+        company_name=operator.company_name,
+        registration_number=operator.registration_number,
+        address=operator.address,
+        city=operator.city,
+        country=operator.country,
+        contact_person_name=operator.contact_person_name,
+        contact_person_phone=operator.contact_person_phone,
+        website_url=operator.website_url,
+        description=operator.description,
+        certificate_of_incorporation_url=operator.certificate_of_incorporation_url,
+        business_permit_url=operator.business_permit_url,
+        kato_membership_url=operator.kato_membership_url,
+        specializations=operator.specializations or [],
+        is_active=operator.is_active,
+        created_at=operator.created_at,
+        updated_at=operator.updated_at
+    )

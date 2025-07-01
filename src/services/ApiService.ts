@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { OperatorProfile, OperatorProfileUpdate } from '@/types/operator';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -27,6 +28,7 @@ interface Operator {
   specializations: string[];
   is_active: boolean;
   created_at?: string;
+  temporary_password?: string;
 }
 
 class ApiService {
@@ -108,6 +110,58 @@ class ApiService {
     return {
       success: true,
       data: newOperator
+    };
+  }
+
+  // Operator Profile methods
+  async getOperatorProfile(): Promise<ApiResponse<OperatorProfile>> {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const mockProfile: OperatorProfile = {
+      id: 'demo-operator-1',
+      name: 'Demo Operator',
+      email: 'demo@example.com',
+      company: 'Demo Safari Company',
+      company_name: 'Demo Safari Company Ltd',
+      registration_number: 'REG-123456',
+      address: '123 Safari Street, Wildlife District',
+      city: 'Nairobi',
+      country: 'Kenya',
+      contact_person_name: 'John Safari',
+      contact_person_phone: '+254-700-123456',
+      website_url: 'https://demosafari.com',
+      description: 'Leading safari operator in Kenya with over 15 years of experience providing unforgettable wildlife adventures.',
+      certificate_of_incorporation_url: '',
+      business_permit_url: '',
+      kato_membership_url: '',
+      specializations: ['Safari Tours', 'Wildlife Photography', 'Cultural Tours'],
+      is_active: true,
+      created_at: '2024-01-15T10:00:00Z',
+      updated_at: '2024-01-15T10:00:00Z'
+    };
+
+    return {
+      success: true,
+      data: mockProfile
+    };
+  }
+
+  async updateOperatorProfile(profileData: OperatorProfileUpdate): Promise<ApiResponse<OperatorProfile>> {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // For demo purposes, merge with existing data
+    const currentProfile = await this.getOperatorProfile();
+    const updatedProfile = { 
+      ...currentProfile.data, 
+      ...profileData,
+      updated_at: new Date().toISOString()
+    };
+
+    return {
+      success: true,
+      data: updatedProfile
     };
   }
 
@@ -212,34 +266,6 @@ class ApiService {
           operator: { name: 'Demo User' }
         }
       ]
-    };
-  }
-
-  // Mock profile data
-  async getOperatorProfile(): Promise<ApiResponse<any>> {
-    return {
-      success: true,
-      data: {
-        id: 'demo-user-1',
-        name: 'Demo User',
-        email: 'demo@example.com',
-        company: 'Demo Safari Company',
-        phone: '+1234567890',
-        specializations: ['Safari Tours', 'Wildlife Photography'],
-        bio: 'Experienced safari guide with over 10 years in the industry.',
-        website: 'https://demosafari.com',
-        location: 'Nairobi, Kenya'
-      }
-    };
-  }
-
-  async updateOperatorProfile(profileData: any): Promise<ApiResponse<any>> {
-    return {
-      success: true,
-      data: {
-        ...profileData,
-        updated_at: new Date().toISOString()
-      }
     };
   }
 

@@ -8,9 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Users, Package, Settings } from 'lucide-react';
+import { Plus, Users, Package, Settings, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfigLink } from '@/components/ui/navigation/ConfigLink';
+import { OperatorDetailView } from '@/components/admin/OperatorDetailView';
 
 const AdminDashboard = () => {
   const [operators, setOperators] = useState([
@@ -19,6 +20,18 @@ const AdminDashboard = () => {
       name: 'John Doe',
       email: 'john@example.com',
       company: 'Safari Adventures Ltd',
+      company_name: 'Safari Adventures Limited',
+      registration_number: 'REG-001-2024',
+      address: '123 Safari Street, Wildlife District',
+      city: 'Nairobi',
+      country: 'Kenya',
+      contact_person_name: 'John Doe',
+      contact_person_phone: '+254-700-123456',
+      website_url: 'https://safariadventures.com',
+      description: 'Leading safari operator specializing in wildlife photography tours and cultural experiences.',
+      certificate_of_incorporation_url: 'https://example.com/cert1.pdf',
+      business_permit_url: 'https://example.com/permit1.pdf',
+      kato_membership_url: '',
       role: 'operator',
       specializations: ['Safari Tours', 'Wildlife Photography'],
       is_active: true,
@@ -29,6 +42,18 @@ const AdminDashboard = () => {
       name: 'Jane Smith',
       email: 'jane@example.com',
       company: 'Mountain Expeditions',
+      company_name: 'Mountain Expeditions Kenya Ltd',
+      registration_number: 'REG-002-2024',
+      address: '456 Mountain View Road',
+      city: 'Nakuru',
+      country: 'Kenya',
+      contact_person_name: 'Jane Smith',
+      contact_person_phone: '+254-700-789012',
+      website_url: 'https://mountainexpeditions.com',
+      description: 'Expert mountain trekking and adventure tourism company with over 10 years of experience.',
+      certificate_of_incorporation_url: 'https://example.com/cert2.pdf',
+      business_permit_url: 'https://example.com/permit2.pdf',
+      kato_membership_url: 'https://example.com/kato2.pdf',
       role: 'operator',
       specializations: ['Mountain Climbing', 'Trekking'],
       is_active: true,
@@ -36,6 +61,7 @@ const AdminDashboard = () => {
     }
   ]);
 
+  const [selectedOperator, setSelectedOperator] = useState(null);
   const [isAddingOperator, setIsAddingOperator] = useState(false);
   const [newOperator, setNewOperator] = useState({
     name: '',
@@ -69,6 +95,13 @@ const AdminDashboard = () => {
     } finally {
       setIsAddingOperator(false);
     }
+  };
+
+  const handleUpdateOperator = (updatedOperator) => {
+    setOperators(operators.map(op => 
+      op.id === updatedOperator.id ? updatedOperator : op
+    ));
+    setSelectedOperator(null);
   };
 
   return (
@@ -230,7 +263,26 @@ const AdminDashboard = () => {
                   <div className="text-right">
                     <p className="text-sm text-gray-500">Joined: {operator.created_at}</p>
                     <div className="flex space-x-2 mt-2">
-                      <Button variant="outline" size="sm">Edit</Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Eye className="h-4 w-4 mr-1" />
+                            View Details
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Operator Details</DialogTitle>
+                            <DialogDescription>
+                              View and edit operator profile information
+                            </DialogDescription>
+                          </DialogHeader>
+                          <OperatorDetailView 
+                            operator={operator} 
+                            onUpdate={handleUpdateOperator}
+                          />
+                        </DialogContent>
+                      </Dialog>
                       <Button variant="outline" size="sm">
                         {operator.is_active ? "Deactivate" : "Activate"}
                       </Button>
