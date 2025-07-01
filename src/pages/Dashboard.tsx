@@ -22,7 +22,7 @@ const Dashboard = () => {
   // Extract leads from response - handle both array and object response formats
   const leads = Array.isArray(leadsResponse) 
     ? leadsResponse 
-    : (leadsResponse?.success && leadsResponse.data?.leads ? leadsResponse.data.leads : []);
+    : (leadsResponse?.success && leadsResponse.data ? leadsResponse.data : []);
 
   const handleViewDetails = (lead: Lead) => {
     setSelectedLead(lead);
