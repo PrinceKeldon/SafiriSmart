@@ -1,11 +1,13 @@
 
 import { useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import { OperatorPackage, OperatorPackageCreate } from '@/types/operator';
 import { useCreateOperatorPackage, useUpdateOperatorPackage } from '@/hooks/useOperatorPackages';
 import { PackageFormData } from '../types/PackageFormTypes';
 import { DEFAULT_FORM_VALUES } from '../constants/PackageFormConstants';
+import { packageSchema } from '../validation/packageSchema';
 
 export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () => void) => {
   const createPackage = useCreateOperatorPackage();
@@ -13,10 +15,11 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
   const isEditing = !!editPackage;
 
   const form = useForm<PackageFormData>({
+    resolver: zodResolver(packageSchema),
     defaultValues: DEFAULT_FORM_VALUES,
   });
 
-  const { control, reset, handleSubmit } = form;
+  const { control, reset, handleSubmit, formState: { errors } } = form;
 
   const locationFieldArray = useFieldArray({
     control,
@@ -49,6 +52,8 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
 
   const onSubmit = async (data: PackageFormData) => {
     try {
+      console.log('Submitting package data:', data);
+      
       const packageData: OperatorPackageCreate = {
         package_name: data.package_name,
         description: data.description,
@@ -83,5 +88,6 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
     onSubmit: handleSubmit(onSubmit),
     isSubmitting: createPackage.isPending || updatePackage.isPending,
     isEditing,
+    errors,
   };
 };
