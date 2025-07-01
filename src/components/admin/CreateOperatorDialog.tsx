@@ -27,17 +27,15 @@ export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({
     setIsLoading(true);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const operator = {
-        ...newOperator,
+      const operatorData = {
+        name: newOperator.name,
+        email: newOperator.email,
+        company: newOperator.company,
         specializations: newOperator.specializations.split(',').map(s => s.trim()),
       };
       
-      onCreateOperator(operator);
+      await onCreateOperator(operatorData);
       setNewOperator({ name: '', email: '', company: '', specializations: '' });
-      toast.success('Operator created successfully');
       
     } catch (error) {
       toast.error('Failed to create operator');
