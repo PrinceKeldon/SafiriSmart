@@ -1,17 +1,32 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { OperatorProfile, OperatorProfileUpdate } from '@/types/operator';
-import { operatorService } from '@/services/OperatorService';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useOperatorProfile = () => {
   return useQuery({
     queryKey: ['operator-profile'],
-    queryFn: async (): Promise<OperatorProfile> => {
-      const response = await operatorService.getOperatorProfile();
-      if (!response.success) {
-        throw new Error(response.errors?.[0] || 'Failed to fetch operator profile');
+    queryFn: async () => {
+      console.log('Fetching operator profile...');
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user found');
       }
-      return response.data;
+
+      const { data, error } = await supabase
+        .from('operators')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching operator profile:', error);
+        throw new Error(`Failed to fetch profile: ${error.message}`);
+      }
+
+      console.log('Fetched operator profile:', data);
+      return data;
     },
   });
 };
@@ -20,12 +35,31 @@ export const useUpdateOperatorProfile = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: async (data: OperatorProfileUpdate): Promise<OperatorProfile> => {
-      const response = await operatorService.updateOperatorProfile(data);
-      if (!response.success) {
-        throw new Error(response.errors?.[0] || 'Failed to update operator profile');
+    mutationFn: async (profileData: any) => {
+      console.log('Updating operator profile:', profileData);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('No authenticated user found');
       }
-      return response.data;
+
+      const { data, error } = await supabase
+        .from('operators')
+        .update({
+          ...profileData,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating operator profile:', error);
+        throw new Error(`Failed to update profile: ${error.message}`);
+      }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['operator-profile'] });

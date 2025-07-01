@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { PackageList } from './PackageList';
 import { PackageForm } from './PackageForm';
 import { useOperatorPackages } from '@/hooks/useOperatorPackages';
@@ -61,10 +62,25 @@ export const PackageManagement = () => {
           </Button>
         </div>
 
-        <PackageList 
-          packages={packages} 
-          onEdit={handleEdit}
-        />
+        {packages.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <h3 className="text-xl font-semibold mb-2">No packages yet</h3>
+              <p className="text-gray-500 text-center mb-4">
+                Create your first tour package to start managing your offerings
+              </p>
+              <Button onClick={handleCreateNew}>
+                <Plus className="h-4 w-4 mr-2" />
+                Create First Package
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <PackageList 
+            packages={packages} 
+            onEdit={handleEdit}
+          />
+        )}
 
         <PackageForm
           isOpen={isFormOpen}

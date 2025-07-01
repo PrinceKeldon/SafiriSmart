@@ -1,6 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiService } from '@/services/ApiService';
+import { supabase } from '@/integrations/supabase/client';
+import { Lead } from '@/types/api';
 
 export const useLeads = (params: {
   page?: number;
@@ -11,11 +12,36 @@ export const useLeads = (params: {
   return useQuery({
     queryKey: ['leads', params],
     queryFn: async () => {
-      const response = await apiService.getLeads(params);
-      if (!response.success) {
-        throw new Error('Failed to fetch leads');
+      console.log('Fetching leads from Supabase...');
+      
+      let query = supabase
+        .from('leads')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (params.status) {
+        query = query.eq('status', params.status);
       }
-      return response;
+
+      if (params.search) {
+        query = query.or(`traveler_name.ilike.%${params.search}%,traveler_email.ilike.%${params.search}%`);
+      }
+
+      if (params.limit) {
+        const from = ((params.page || 1) - 1) * params.limit;
+        const to = from + params.limit - 1;
+        query = query.range(from, to);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching leads:', error);
+        throw new Error(`Failed to fetch leads: ${error.message}`);
+      }
+
+      console.log('Fetched leads:', data);
+      return data || [];
     },
   });
 };
@@ -24,11 +50,20 @@ export const useLead = (leadId: string) => {
   return useQuery({
     queryKey: ['lead', leadId],
     queryFn: async () => {
-      const response = await apiService.getLeadById(leadId);
-      if (!response.success) {
-        throw new Error('Failed to fetch lead');
+      console.log('Fetching lead by ID:', leadId);
+      
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', leadId)
+        .single();
+
+      if (error) {
+        console.error('Error fetching lead:', error);
+        throw new Error(`Failed to fetch lead: ${error.message}`);
       }
-      return response.data;
+
+      return data;
     },
     enabled: !!leadId,
   });
@@ -39,11 +74,21 @@ export const useUpdateLeadStatus = () => {
   
   return useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: string }) => {
-      const response = await apiService.updateLeadStatus(leadId, status);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to update lead status');
+      console.log('Updating lead status:', { leadId, status });
+      
+      const { data, error } = await supabase
+        .from('leads')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', leadId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating lead status:', error);
+        throw new Error(`Failed to update lead status: ${error.message}`);
       }
-      return response.data;
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
@@ -56,11 +101,24 @@ export const useAddLeadNote = () => {
   
   return useMutation({
     mutationFn: async ({ leadId, note }: { leadId: string; note: string }) => {
-      const response = await apiService.addLeadNote(leadId, note);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to add note');
+      console.log('Adding lead note:', { leadId, note });
+      
+      const { data, error } = await supabase
+        .from('lead_notes')
+        .insert({
+          lead_id: leadId,
+          note: note,
+          created_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding lead note:', error);
+        throw new Error(`Failed to add note: ${error.message}`);
       }
-      return response.data;
+
+      return data;
     },
     onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
@@ -78,11 +136,25 @@ export const useUpdateLeadQuote = () => {
       quotedPrice: number; 
       quotedCurrency: string; 
     }) => {
-      const response = await apiService.updateLeadQuote(leadId, quotedPrice, quotedCurrency);
-      if (!response.success) {
-        throw new Error(response.message || 'Failed to update quote');
+      console.log('Updating lead quote:', { leadId, quotedPrice, quotedCurrency });
+      
+      const { data, error } = await supabase
+        .from('leads')
+        .update({ 
+          quoted_price: quotedPrice, 
+          quoted_currency: quotedCurrency,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', leadId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating lead quote:', error);
+        throw new Error(`Failed to update quote: ${error.message}`);
       }
-      return response.data;
+
+      return data;
     },
     onSuccess: (_, { leadId }) => {
       queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
@@ -95,11 +167,20 @@ export const useLeadNotes = (leadId: string) => {
   return useQuery({
     queryKey: ['lead-notes', leadId],
     queryFn: async () => {
-      const response = await apiService.getLeadNotes(leadId);
-      if (!response.success) {
-        throw new Error('Failed to fetch lead notes');
+      console.log('Fetching lead notes for:', leadId);
+      
+      const { data, error } = await supabase
+        .from('lead_notes')
+        .select('*')
+        .eq('lead_id', leadId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching lead notes:', error);
+        throw new Error(`Failed to fetch lead notes: ${error.message}`);
       }
-      return response.data;
+
+      return data || [];
     },
     enabled: !!leadId,
   });

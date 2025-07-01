@@ -1,5 +1,7 @@
 
-import { useMemo } from 'react';
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users, Eye, CheckCircle, Clock } from 'lucide-react';
 import { Lead } from '@/types/api';
 
 interface DashboardStatsProps {
@@ -7,33 +9,69 @@ interface DashboardStatsProps {
 }
 
 export const DashboardStats = ({ leads }: DashboardStatsProps) => {
-  const stats = useMemo(() => {
-    const total = leads.length;
-    const newLeads = leads.filter(l => l.status === 'new').length;
-    const quoted = leads.filter(l => l.status === 'quoted').length;
-    const booked = leads.filter(l => l.status === 'booked').length;
-    
-    return { total, newLeads, quoted, booked };
-  }, [leads]);
+  const stats = {
+    total: leads.length,
+    new: leads.filter(lead => lead.status === 'new').length,
+    contacted: leads.filter(lead => lead.status === 'contacted').length,
+    quoted: leads.filter(lead => lead.status === 'quoted').length,
+    booked: leads.filter(lead => lead.status === 'booked').length,
+  };
+
+  const conversionRate = stats.total > 0 ? ((stats.booked / stats.total) * 100).toFixed(1) : '0';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-sm font-medium text-gray-500">Total Leads</h3>
-        <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-      </div>
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-sm font-medium text-gray-500">New Leads</h3>
-        <p className="text-2xl font-bold text-blue-600">{stats.newLeads}</p>
-      </div>
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-sm font-medium text-gray-500">Quotes Sent</h3>
-        <p className="text-2xl font-bold text-purple-600">{stats.quoted}</p>
-      </div>
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h3 className="text-sm font-medium text-gray-500">Bookings</h3>
-        <p className="text-2xl font-bold text-green-600">{stats.booked}</p>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{stats.total}</div>
+          <p className="text-xs text-muted-foreground">
+            All time leads received
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">New Leads</CardTitle>
+          <Eye className="h-4 w-4 text-blue-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
+          <p className="text-xs text-muted-foreground">
+            Requiring attention
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Active Leads</CardTitle>
+          <Clock className="h-4 w-4 text-yellow-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-yellow-600">{stats.contacted + stats.quoted}</div>
+          <p className="text-xs text-muted-foreground">
+            In progress
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+          <CheckCircle className="h-4 w-4 text-green-600" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
+          <p className="text-xs text-muted-foreground">
+            Leads to bookings
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -16,15 +16,16 @@ const Dashboard = () => {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   
-  const { data: leadsResponse, isLoading, error } = useLeads();
+  const { data: leadsResponse, isLoading, error, refetch } = useLeads();
   const updateLeadStatusMutation = useUpdateLeadStatus();
 
-  // Extract leads from response - handle both array and object response formats
+  // Extract leads from response
   const leads = Array.isArray(leadsResponse) 
     ? leadsResponse 
     : (leadsResponse?.success && leadsResponse.data ? leadsResponse.data : []);
 
   const handleViewDetails = (lead: Lead) => {
+    console.log('Viewing lead details:', lead);
     setSelectedLead(lead);
     setIsDetailModalOpen(true);
   };
@@ -33,14 +34,16 @@ const Dashboard = () => {
     try {
       await updateLeadStatusMutation.mutateAsync({ leadId, status: newStatus });
       toast.success('Lead status updated successfully');
+      refetch(); // Refresh the leads data
     } catch (error) {
+      console.error('Error updating lead status:', error);
       toast.error('Failed to update lead status');
     }
   };
 
   const handleAddNote = async (leadId: string, note: string) => {
-    // This will be implemented when the user requests it
-    console.log('Add note functionality not yet implemented');
+    console.log('Adding note to lead:', leadId, note);
+    toast.info('Note functionality will be implemented soon');
   };
 
   if (isLoading) {
@@ -91,11 +94,28 @@ const Dashboard = () => {
           {/* Leads Section */}
           <div>
             <h2 className="text-2xl font-bold mb-6">Recent Leads</h2>
-            <LeadsGrid
-              leads={leads}
-              onViewDetails={handleViewDetails}
-              onUpdateStatus={handleUpdateStatus}
-            />
+            {leads.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <h3 className="text-xl font-semibold mb-2">No leads yet</h3>
+                  <p className="text-gray-500 text-center mb-4">
+                    Start by creating your first lead to see them appear here
+                  </p>
+                  <Link to="/new-lead">
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create First Lead
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            ) : (
+              <LeadsGrid
+                leads={leads}
+                onViewDetails={handleViewDetails}
+                onUpdateStatus={handleUpdateStatus}
+              />
+            )}
           </div>
         </div>
 
