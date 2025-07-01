@@ -1,12 +1,5 @@
-import { supabase } from '@/integrations/supabase/client';
-import { OperatorProfile, OperatorProfileUpdate } from '@/types/operator';
-
-interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  errors?: string[];
-}
+import { operatorService } from './OperatorService';
+import { adminService } from './AdminService';
 
 interface PaginatedResponse<T> {
   success: boolean;
@@ -19,151 +12,13 @@ interface PaginatedResponse<T> {
   };
 }
 
-interface Operator {
-  id: string;
-  name: string;
-  email: string;
-  company: string;
-  role: string;
-  specializations: string[];
-  is_active: boolean;
-  created_at?: string;
-  temporary_password?: string;
-}
-
 class ApiService {
-  // Mock current operator for demo purposes
-  async getCurrentOperator(): Promise<ApiResponse<{
-    id: string;
-    name: string;
-    email: string;
-    company: string;
-    role: string;
-    specializations: string[];
-    is_active: boolean;
-  }>> {
-    // Return demo data
-    return {
-      success: true,
-      data: {
-        id: 'demo-user-1',
-        name: 'Demo User',
-        email: 'demo@example.com',
-        company: 'Demo Safari Company',
-        role: 'operator',
-        specializations: ['Safari Tours', 'Wildlife Photography'],
-        is_active: true
-      }
-    };
-  }
-
-  // Mock operators data for demo
-  async getOperators(): Promise<ApiResponse<Operator[]>> {
-    const mockOperators: Operator[] = [
-      {
-        id: '1',
-        name: 'John Doe',
-        email: 'john@example.com',
-        company: 'Safari Adventures Ltd',
-        role: 'operator',
-        specializations: ['Safari Tours', 'Wildlife Photography'],
-        is_active: true,
-        created_at: '2024-01-15'
-      },
-      {
-        id: '2',
-        name: 'Jane Smith',
-        email: 'jane@example.com',
-        company: 'Mountain Expeditions',
-        role: 'operator',
-        specializations: ['Mountain Climbing', 'Trekking'],
-        is_active: true,
-        created_at: '2024-01-20'
-      }
-    ];
-
-    return {
-      success: true,
-      data: mockOperators
-    };
-  }
-
-  async createOperator(operatorData: {
-    name: string;
-    email: string;
-    company: string;
-    specializations?: string[];
-  }): Promise<ApiResponse<Operator & { temporary_password?: string }>> {
-    // Simulate creating operator
-    const newOperator: Operator & { temporary_password?: string } = {
-      id: Date.now().toString(),
-      name: operatorData.name,
-      email: operatorData.email,
-      company: operatorData.company,
-      specializations: operatorData.specializations || [],
-      role: 'operator',
-      is_active: true,
-      created_at: new Date().toISOString().split('T')[0],
-      temporary_password: 'demo123'
-    };
-
-    return {
-      success: true,
-      data: newOperator
-    };
-  }
-
-  // Operator Profile methods
-  async getOperatorProfile(): Promise<ApiResponse<OperatorProfile>> {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    const mockProfile: OperatorProfile = {
-      id: 'demo-operator-1',
-      name: 'Demo Operator',
-      email: 'demo@example.com',
-      company: 'Demo Safari Company',
-      company_name: 'Demo Safari Company Ltd',
-      registration_number: 'REG-123456',
-      address: '123 Safari Street, Wildlife District',
-      city: 'Nairobi',
-      country: 'Kenya',
-      contact_person_name: 'John Safari',
-      contact_person_phone: '+254-700-123456',
-      website_url: 'https://demosafari.com',
-      description: 'Leading safari operator in Kenya with over 15 years of experience providing unforgettable wildlife adventures.',
-      certificate_of_incorporation_url: '',
-      business_permit_url: '',
-      kato_membership_url: '',
-      specializations: ['Safari Tours', 'Wildlife Photography', 'Cultural Tours'],
-      is_active: true,
-      created_at: '2024-01-15T10:00:00Z',
-      updated_at: '2024-01-15T10:00:00Z'
-    };
-
-    return {
-      success: true,
-      data: mockProfile
-    };
-  }
-
-  async updateOperatorProfile(profileData: OperatorProfileUpdate): Promise<ApiResponse<OperatorProfile>> {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // For demo purposes, merge with existing data
-    const currentProfile = await this.getOperatorProfile();
-    const updatedProfile = { 
-      ...currentProfile.data, 
-      ...profileData,
-      updated_at: new Date().toISOString()
-    };
-
-    return {
-      success: true,
-      data: updatedProfile
-    };
-  }
+  // Delegate to specialized services
+  getCurrentOperator = operatorService.getCurrentOperator.bind(operatorService);
+  getOperators = adminService.getOperators.bind(adminService);
+  createOperator = adminService.createOperator.bind(adminService);
+  getOperatorProfile = operatorService.getOperatorProfile.bind(operatorService);
+  updateOperatorProfile = operatorService.updateOperatorProfile.bind(operatorService);
 
   // Mock leads data for demo
   async getLeads(params: {
@@ -203,7 +58,7 @@ class ApiService {
     };
   }
 
-  async getLeadById(leadId: string): Promise<ApiResponse<any>> {
+  async getLeadById(leadId: string): Promise<any> {
     const mockLead = {
       id: leadId,
       traveler_name: 'Demo Lead',
@@ -220,7 +75,7 @@ class ApiService {
     };
   }
 
-  async updateLeadStatus(leadId: string, status: string): Promise<ApiResponse<any>> {
+  async updateLeadStatus(leadId: string, status: string): Promise<any> {
     return {
       success: true,
       data: {
@@ -231,7 +86,7 @@ class ApiService {
     };
   }
 
-  async addLeadNote(leadId: string, note: string): Promise<ApiResponse<any>> {
+  async addLeadNote(leadId: string, note: string): Promise<any> {
     return {
       success: true,
       data: {
@@ -243,7 +98,7 @@ class ApiService {
     };
   }
 
-  async updateLeadQuote(leadId: string, quotedPrice: number, quotedCurrency: string): Promise<ApiResponse<any>> {
+  async updateLeadQuote(leadId: string, quotedPrice: number, quotedCurrency: string): Promise<any> {
     return {
       success: true,
       data: {
@@ -255,7 +110,7 @@ class ApiService {
     };
   }
 
-  async getLeadNotes(leadId: string): Promise<ApiResponse<any[]>> {
+  async getLeadNotes(leadId: string): Promise<any> {
     return {
       success: true,
       data: [
@@ -269,8 +124,7 @@ class ApiService {
     };
   }
 
-  // Mock packages data
-  async getOperatorPackages(): Promise<ApiResponse<any[]>> {
+  async getOperatorPackages(): Promise<any> {
     return {
       success: true,
       data: [
@@ -329,7 +183,7 @@ class ApiService {
     };
   }
 
-  async createOperatorPackage(packageData: any): Promise<ApiResponse<any>> {
+  async createOperatorPackage(packageData: any): Promise<any> {
     return {
       success: true,
       data: {
@@ -340,7 +194,7 @@ class ApiService {
     };
   }
 
-  async updateOperatorPackage(packageId: string, packageData: any): Promise<ApiResponse<any>> {
+  async updateOperatorPackage(packageId: string, packageData: any): Promise<any> {
     return {
       success: true,
       data: {
@@ -351,7 +205,7 @@ class ApiService {
     };
   }
 
-  async deleteOperatorPackage(packageId: string): Promise<ApiResponse<void>> {
+  async deleteOperatorPackage(packageId: string): Promise<any> {
     return {
       success: true,
       data: undefined

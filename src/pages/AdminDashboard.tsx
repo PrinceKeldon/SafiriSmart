@@ -4,14 +4,10 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Plus, Users, Package, Settings, Eye } from 'lucide-react';
-import { toast } from 'sonner';
+import { Plus, Users, Package, Settings } from 'lucide-react';
 import { ConfigLink } from '@/components/ui/navigation/ConfigLink';
-import { OperatorDetailView } from '@/components/admin/OperatorDetailView';
+import { OperatorsList } from '@/components/admin/OperatorsList';
+import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
 
 const AdminDashboard = () => {
   const [operators, setOperators] = useState([
@@ -61,47 +57,33 @@ const AdminDashboard = () => {
     }
   ]);
 
-  const [selectedOperator, setSelectedOperator] = useState(null);
-  const [isAddingOperator, setIsAddingOperator] = useState(false);
-  const [newOperator, setNewOperator] = useState({
-    name: '',
-    email: '',
-    company: '',
-    specializations: ''
-  });
-
-  const handleAddOperator = async () => {
-    setIsAddingOperator(true);
-    
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const operator = {
-        id: (operators.length + 1).toString(),
-        ...newOperator,
-        role: 'operator',
-        specializations: newOperator.specializations.split(',').map(s => s.trim()),
-        is_active: true,
-        created_at: new Date().toISOString().split('T')[0]
-      };
-      
-      setOperators([...operators, operator]);
-      setNewOperator({ name: '', email: '', company: '', specializations: '' });
-      toast.success('Operator created successfully');
-      
-    } catch (error) {
-      toast.error('Failed to create operator');
-    } finally {
-      setIsAddingOperator(false);
-    }
-  };
-
   const handleUpdateOperator = (updatedOperator) => {
     setOperators(operators.map(op => 
       op.id === updatedOperator.id ? updatedOperator : op
     ));
-    setSelectedOperator(null);
+  };
+
+  const handleCreateOperator = (newOperator) => {
+    const operatorWithDefaults = {
+      ...newOperator,
+      id: (operators.length + 1).toString(),
+      role: 'operator',
+      is_active: true,
+      created_at: new Date().toISOString().split('T')[0],
+      company_name: '',
+      registration_number: '',
+      address: '',
+      city: '',
+      country: 'Kenya',
+      contact_person_name: '',
+      contact_person_phone: '',
+      website_url: '',
+      description: '',
+      certificate_of_incorporation_url: '',
+      business_permit_url: '',
+      kato_membership_url: '',
+    };
+    setOperators([...operators, operatorWithDefaults]);
   };
 
   return (
@@ -171,126 +153,14 @@ const AdminDashboard = () => {
                 <CardDescription>Manage registered tour operators and their access</CardDescription>
               </div>
               
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Operator
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Add New Operator</DialogTitle>
-                    <DialogDescription>Create a new tour operator account</DialogDescription>
-                  </DialogHeader>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={newOperator.name}
-                        onChange={(e) => setNewOperator({ ...newOperator, name: e.target.value })}
-                        placeholder="Enter operator's full name"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="email">Email Address</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={newOperator.email}
-                        onChange={(e) => setNewOperator({ ...newOperator, email: e.target.value })}
-                        placeholder="Enter email address"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="company">Company Name</Label>
-                      <Input
-                        id="company"
-                        value={newOperator.company}
-                        onChange={(e) => setNewOperator({ ...newOperator, company: e.target.value })}
-                        placeholder="Enter company name"
-                      />
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="specializations">Specializations</Label>
-                      <Textarea
-                        id="specializations"
-                        value={newOperator.specializations}
-                        onChange={(e) => setNewOperator({ ...newOperator, specializations: e.target.value })}
-                        placeholder="e.g., Safari Tours, Mountain Climbing (comma-separated)"
-                        rows={3}
-                      />
-                    </div>
-                    
-                    <Button 
-                      onClick={handleAddOperator} 
-                      disabled={isAddingOperator}
-                      className="w-full"
-                    >
-                      {isAddingOperator ? 'Creating...' : 'Create Operator'}
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
+              <CreateOperatorDialog onCreateOperator={handleCreateOperator} />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {operators.map((operator) => (
-                <div key={operator.id} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-medium">{operator.name}</h3>
-                      <Badge variant={operator.is_active ? "default" : "secondary"}>
-                        {operator.is_active ? "Active" : "Inactive"}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-gray-600">{operator.email}</p>
-                    <p className="text-sm text-gray-500">{operator.company}</p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {operator.specializations.map((spec, index) => (
-                        <Badge key={index} variant="outline" className="text-xs">
-                          {spec}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Joined: {operator.created_at}</p>
-                    <div className="flex space-x-2 mt-2">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Eye className="h-4 w-4 mr-1" />
-                            View Details
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-                          <DialogHeader>
-                            <DialogTitle>Operator Details</DialogTitle>
-                            <DialogDescription>
-                              View and edit operator profile information
-                            </DialogDescription>
-                          </DialogHeader>
-                          <OperatorDetailView 
-                            operator={operator} 
-                            onUpdate={handleUpdateOperator}
-                          />
-                        </DialogContent>
-                      </Dialog>
-                      <Button variant="outline" size="sm">
-                        {operator.is_active ? "Deactivate" : "Activate"}
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <OperatorsList 
+              operators={operators} 
+              onUpdateOperator={handleUpdateOperator}
+            />
           </CardContent>
         </Card>
       </div>

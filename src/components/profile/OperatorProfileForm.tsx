@@ -4,16 +4,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { FileUploadField } from './FileUploadField';
+import { Form } from '@/components/ui/form';
 import { useOperatorProfile, useUpdateOperatorProfile } from '@/hooks/useOperatorProfile';
 import { OperatorProfileUpdate } from '@/types/operator';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { CompanyInformationSection } from './sections/CompanyInformationSection';
+import { ContactInformationSection } from './sections/ContactInformationSection';
+import { ComplianceDocumentsSection } from './sections/ComplianceDocumentsSection';
 
 const profileSchema = z.object({
   company_name: z.string().optional(),
@@ -109,224 +107,9 @@ export const OperatorProfileForm: React.FC = () => {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Company Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Company Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="company_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Company Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter company name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="registration_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Registration Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter registration number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company Description</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Describe your company, services, and expertise..." 
-                        className="min-h-24"
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="website_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Website URL</FormLabel>
-                    <FormControl>
-                      <Input placeholder="https://www.example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Contact Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
-                    <FormControl>
-                      <Textarea placeholder="Enter company address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>City</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter city" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Country</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select country" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Kenya">Kenya</SelectItem>
-                          <SelectItem value="Tanzania">Tanzania</SelectItem>
-                          <SelectItem value="Uganda">Uganda</SelectItem>
-                          <SelectItem value="Rwanda">Rwanda</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="contact_person_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Person Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter contact person name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="contact_person_phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contact Person Phone</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Enter phone number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Compliance Documents */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Compliance Documents</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <FormField
-                control={form.control}
-                name="certificate_of_incorporation_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FileUploadField
-                      label="Certificate of Incorporation"
-                      currentUrl={field.value}
-                      onUrlChange={(url) => field.onChange(url || '')}
-                      disabled={updateProfile.isPending}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="business_permit_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FileUploadField
-                      label="Business Permit"
-                      currentUrl={field.value}
-                      onUrlChange={(url) => field.onChange(url || '')}
-                      disabled={updateProfile.isPending}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="kato_membership_url"
-                render={({ field }) => (
-                  <FormItem>
-                    <FileUploadField
-                      label="KATO Membership Certificate"
-                      currentUrl={field.value}
-                      onUrlChange={(url) => field.onChange(url || '')}
-                      disabled={updateProfile.isPending}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+          <CompanyInformationSection form={form} />
+          <ContactInformationSection form={form} />
+          <ComplianceDocumentsSection form={form} isPending={updateProfile.isPending} />
 
           <div className="flex justify-end">
             <Button 
