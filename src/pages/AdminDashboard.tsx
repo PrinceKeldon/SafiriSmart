@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,8 +8,31 @@ import { ConfigLink } from '@/components/ui/navigation/ConfigLink';
 import { OperatorsList } from '@/components/admin/OperatorsList';
 import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
 
+interface Operator {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  company_name: string;
+  registration_number: string;
+  address: string;
+  city: string;
+  country: string;
+  contact_person_name: string;
+  contact_person_phone: string;
+  website_url: string;
+  description: string;
+  certificate_of_incorporation_url: string;
+  business_permit_url: string;
+  kato_membership_url: string;
+  role: string;
+  specializations: string[];
+  is_active: boolean;
+  created_at: string;
+}
+
 const AdminDashboard = () => {
-  const [operators, setOperators] = useState([
+  const [operators, setOperators] = useState<Operator[]>([
     {
       id: '1',
       name: 'John Doe',
@@ -57,16 +79,24 @@ const AdminDashboard = () => {
     }
   ]);
 
-  const handleUpdateOperator = (updatedOperator) => {
+  const handleUpdateOperator = (updatedOperator: Operator) => {
     setOperators(operators.map(op => 
       op.id === updatedOperator.id ? updatedOperator : op
     ));
   };
 
-  const handleCreateOperator = (newOperator) => {
-    const operatorWithDefaults = {
-      ...newOperator,
+  const handleCreateOperator = (newOperatorData: {
+    name: string;
+    email: string;
+    company: string;
+    specializations: string[];
+  }) => {
+    const operatorWithDefaults: Operator = {
       id: (operators.length + 1).toString(),
+      name: newOperatorData.name,
+      email: newOperatorData.email,
+      company: newOperatorData.company,
+      specializations: newOperatorData.specializations,
       role: 'operator',
       is_active: true,
       created_at: new Date().toISOString().split('T')[0],
