@@ -26,49 +26,39 @@ export const PreferenceWizard = () => {
     defaultValues: preferences
   });
 
-  // Sync form changes with preferences state
+  // Sync form changes with preferences state - only for specific form-based steps if needed
   useEffect(() => {
     const subscription = form.watch((value) => {
-      if (value) {
-        setPreferences(prev => ({
-          ...prev,
-          ...value,
-          schedule: {
-            ...prev.schedule,
-            ...value.schedule,
-            flexible: value.schedule?.flexible ?? prev.schedule.flexible
-          },
-          travel: {
-            ...prev.travel,
-            ...value.travel
-          },
-          dietary: {
-            ...prev.dietary,
-            ...value.dietary
-          }
-        }));
+      if (value && currentStep <= 6) { // Only sync for steps that might use form
+        console.log('Form value changed:', value);
+        // Handle any form-specific updates here if needed
       }
     });
     return () => subscription.unsubscribe();
-  }, [form]);
+  }, [form, currentStep]);
 
   const updatePreferences = (updates: Partial<TravelPreferences>) => {
-    setPreferences(prev => ({ ...prev, ...updates }));
-    // Also update the form values
-    Object.keys(updates).forEach(key => {
-      form.setValue(key as keyof TravelPreferences, updates[key as keyof TravelPreferences]);
+    console.log('Updating preferences with:', updates);
+    setPreferences(prev => {
+      const newPreferences = { ...prev, ...updates };
+      console.log('New preferences state:', newPreferences);
+      return newPreferences;
     });
   };
 
   const nextStep = () => {
+    console.log('Moving to next step from:', currentStep);
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
+      console.log('New step:', currentStep + 1);
     }
   };
 
   const prevStep = () => {
+    console.log('Moving to previous step from:', currentStep);
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
+      console.log('New step:', currentStep - 1);
     }
   };
 

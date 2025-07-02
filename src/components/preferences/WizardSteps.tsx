@@ -7,7 +7,7 @@ import { InterestsStep } from './steps/InterestsStep';
 import { GroupSizeStep } from './steps/GroupSizeStep';
 import { TravelPaceStep } from './steps/TravelPaceStep';
 import { LanguagesStep } from './steps/LanguagesStep';
-import { TravelScheduleForm } from './steps/TravelScheduleForm';
+import { TravelScheduleStep } from './steps/TravelScheduleStep';
 import { TravelLogisticsStep } from './steps/TravelLogisticsStep';
 import { DietaryStep } from './steps/DietaryStep';
 import { TravelPreferences } from './WizardTypes';
@@ -26,6 +26,7 @@ export const WizardSteps: React.FC<WizardStepsProps> = ({
   form,
 }) => {
   console.log('Rendering step:', currentStep);
+  console.log('Current preferences:', preferences);
   
   switch (currentStep) {
     case 1:
@@ -71,7 +72,12 @@ export const WizardSteps: React.FC<WizardStepsProps> = ({
         />
       );
     case 7:
-      return <TravelScheduleForm form={form} />;
+      return (
+        <TravelScheduleStep
+          value={preferences.schedule}
+          onChange={(schedule) => updatePreferences({ schedule })}
+        />
+      );
     case 8:
       return (
         <TravelLogisticsStep
