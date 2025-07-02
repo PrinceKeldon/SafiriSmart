@@ -77,7 +77,7 @@ export const OperatorsList: React.FC<OperatorsListProps> = ({
     <div className="space-y-4">
       {operators.map((operator) => (
         <div key={operator.id} className="flex items-center justify-between p-4 border rounded-lg">
-          <div className="flex-1" onClick={() => onSelectOperator(operator)} className="cursor-pointer">
+          <div className="flex-1 cursor-pointer" onClick={() => onSelectOperator(operator)}>
             <div className="flex items-center space-x-2">
               <h3 className="font-medium">{operator.name}</h3>
               <Badge variant={operator.is_active ? "default" : "secondary"}>
