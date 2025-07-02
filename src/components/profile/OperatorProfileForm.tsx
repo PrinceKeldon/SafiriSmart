@@ -12,6 +12,7 @@ import { Loader2 } from 'lucide-react';
 import { CompanyInformationSection } from './sections/CompanyInformationSection';
 import { ContactInformationSection } from './sections/ContactInformationSection';
 import { ComplianceDocumentsSection } from './sections/ComplianceDocumentsSection';
+import { ServicesDestinationsSection } from './sections/ServicesDestinationsSection';
 
 const profileSchema = z.object({
   company_name: z.string().optional(),
@@ -26,6 +27,8 @@ const profileSchema = z.object({
   certificate_of_incorporation_url: z.string().optional(),
   business_permit_url: z.string().optional(),
   kato_membership_url: z.string().optional(),
+  services_offered: z.array(z.string()).optional(),
+  destinations_covered: z.array(z.string()).optional(),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -49,6 +52,8 @@ export const OperatorProfileForm: React.FC = () => {
       certificate_of_incorporation_url: '',
       business_permit_url: '',
       kato_membership_url: '',
+      services_offered: [],
+      destinations_covered: [],
     },
   });
 
@@ -67,6 +72,8 @@ export const OperatorProfileForm: React.FC = () => {
         certificate_of_incorporation_url: profile.certificate_of_incorporation_url || '',
         business_permit_url: profile.business_permit_url || '',
         kato_membership_url: profile.kato_membership_url || '',
+        services_offered: Array.isArray(profile.services_offered) ? profile.services_offered as string[] : [],
+        destinations_covered: Array.isArray(profile.destinations_covered) ? profile.destinations_covered as string[] : [],
       });
     }
   }, [profile, form]);
@@ -77,8 +84,12 @@ export const OperatorProfileForm: React.FC = () => {
       
       // Only include fields that have values
       Object.entries(data).forEach(([key, value]) => {
-        if (value !== '' && value !== undefined) {
-          updateData[key as keyof OperatorProfileUpdate] = value;
+        if (key === 'services_offered' || key === 'destinations_covered') {
+          if (Array.isArray(value) && value.length > 0) {
+            (updateData as any)[key] = value;
+          }
+        } else if (value !== '' && value !== undefined) {
+          (updateData as any)[key] = value;
         }
       });
 
@@ -110,6 +121,7 @@ export const OperatorProfileForm: React.FC = () => {
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <CompanyInformationSection form={form} />
           <ContactInformationSection form={form} />
+          <ServicesDestinationsSection form={form} />
           <ComplianceDocumentsSection form={form} isPending={updateProfile.isPending} />
 
           <div className="flex justify-end">

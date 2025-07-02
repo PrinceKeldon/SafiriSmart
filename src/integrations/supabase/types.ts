@@ -176,6 +176,7 @@ export type Database = {
           country: string | null
           created_at: string | null
           description: string | null
+          destinations_covered: Json | null
           email: string
           id: string
           is_active: boolean | null
@@ -184,6 +185,7 @@ export type Database = {
           password_hash: string
           registration_number: string | null
           role: string
+          services_offered: Json | null
           specializations: string[] | null
           updated_at: string | null
           website_url: string | null
@@ -200,6 +202,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           description?: string | null
+          destinations_covered?: Json | null
           email: string
           id?: string
           is_active?: boolean | null
@@ -208,6 +211,7 @@ export type Database = {
           password_hash: string
           registration_number?: string | null
           role?: string
+          services_offered?: Json | null
           specializations?: string[] | null
           updated_at?: string | null
           website_url?: string | null
@@ -224,6 +228,7 @@ export type Database = {
           country?: string | null
           created_at?: string | null
           description?: string | null
+          destinations_covered?: Json | null
           email?: string
           id?: string
           is_active?: boolean | null
@@ -232,6 +237,7 @@ export type Database = {
           password_hash?: string
           registration_number?: string | null
           role?: string
+          services_offered?: Json | null
           specializations?: string[] | null
           updated_at?: string | null
           website_url?: string | null

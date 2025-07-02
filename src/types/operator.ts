@@ -17,6 +17,8 @@ export interface OperatorProfile {
   business_permit_url?: string;
   kato_membership_url?: string;
   specializations?: string[];
+  services_offered?: string[];
+  destinations_covered?: string[];
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -35,6 +37,8 @@ export interface OperatorProfileUpdate {
   certificate_of_incorporation_url?: string;
   business_permit_url?: string;
   kato_membership_url?: string;
+  services_offered?: string[];
+  destinations_covered?: string[];
 }
 
 export interface OperatorPackage {
