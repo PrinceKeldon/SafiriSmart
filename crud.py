@@ -15,8 +15,8 @@ def get_operator_by_id(db: Session, operator_id: uuid.UUID) -> Optional[Operator
 
 # Lead CRUD
 def create_lead(db: Session, lead_data: CreateLeadRequest, itinerary: Optional[Dict[str, Any]] = None) -> Lead:
-    # Simple round-robin assignment logic
-    assigned_operator = get_next_operator_for_assignment(db)
+    # Intelligent assignment based on preferences
+    assigned_operator = get_next_operator_for_assignment(db, lead_data.preferences)
     
     lead = Lead(
         traveler_name=lead_data.traveler.name,
@@ -100,10 +100,66 @@ def update_lead_quote(db: Session, lead_id: uuid.UUID, price: float, currency: s
         db.refresh(lead)
     return lead
 
-def get_next_operator_for_assignment(db: Session) -> Optional[Operator]:
-    """Simple round-robin assignment - get operator with fewest active leads"""
-    operator = db.query(Operator).filter(Operator.is_active == True).first()
-    return operator
+def get_next_operator_for_assignment(db: Session, lead_preferences: Optional[Dict[str, Any]] = None) -> Optional[Operator]:
+    """Intelligent lead assignment based on operator services and destinations"""
+    operators = db.query(Operator).filter(Operator.is_active == True).all()
+    
+    if not operators:
+        return None
+    
+    if not lead_preferences:
+        # Fallback to round-robin if no preferences
+        return operators[0]
+    
+    # Extract interests and destinations from lead preferences
+    interests = lead_preferences.get('interests', [])
+    itinerary = lead_preferences.get('itinerary', {})
+    destinations = []
+    
+    # Extract destinations from itinerary
+    if isinstance(itinerary, dict):
+        days = itinerary.get('days', [])
+        for day in days:
+            if isinstance(day, dict):
+                activities = day.get('activities', [])
+                for activity in activities:
+                    if isinstance(activity, dict):
+                        location = activity.get('location', '')
+                        if location:
+                            destinations.append(location)
+    
+    best_operators = []
+    max_score = 0
+    
+    for operator in operators:
+        score = 0
+        services = operator.services_offered or []
+        covered_destinations = operator.destinations_covered or []
+        
+        # Score based on matching interests with services
+        for interest in interests:
+            for service in services:
+                if interest.lower() in service.lower() or service.lower() in interest.lower():
+                    score += 2
+        
+        # Score based on matching destinations
+        for destination in destinations:
+            for covered in covered_destinations:
+                if destination.lower() in covered.lower() or covered.lower() in destination.lower():
+                    score += 3
+        
+        if score > max_score:
+            max_score = score
+            best_operators = [operator]
+        elif score == max_score:
+            best_operators.append(operator)
+    
+    # If we have matches, return one randomly (round-robin can be implemented later)
+    if best_operators:
+        return best_operators[0]
+    
+    # Fallback to first available operator
+    return operators[0]
 
 def get_lead_notes(db: Session, lead_id: uuid.UUID, operator_id: uuid.UUID) -> List[LeadNote]:
     # Verify the lead belongs to the operator

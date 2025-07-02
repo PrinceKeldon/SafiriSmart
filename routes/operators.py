@@ -41,6 +41,8 @@ async def get_operator_profile(
         business_permit_url=operator.business_permit_url,
         kato_membership_url=operator.kato_membership_url,
         specializations=operator.specializations or [],
+        services_offered=operator.services_offered or [],
+        destinations_covered=operator.destinations_covered or [],
         is_active=operator.is_active,
         created_at=operator.created_at,
         updated_at=operator.updated_at
@@ -79,6 +81,8 @@ async def update_operator_profile(
         business_permit_url=operator.business_permit_url,
         kato_membership_url=operator.kato_membership_url,
         specializations=operator.specializations or [],
+        services_offered=operator.services_offered or [],
+        destinations_covered=operator.destinations_covered or [],
         is_active=operator.is_active,
         created_at=operator.created_at,
         updated_at=operator.updated_at

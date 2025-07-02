@@ -96,6 +96,8 @@ class OperatorProfileUpdate(BaseModel):
     business_permit_url: Optional[str] = None
     kato_membership_url: Optional[str] = None
     specializations: Optional[List[str]] = None
+    services_offered: Optional[List[str]] = None
+    destinations_covered: Optional[List[str]] = None
     is_active: Optional[bool] = None
 
 class OperatorProfileResponse(BaseModel):
@@ -117,6 +119,8 @@ class OperatorProfileResponse(BaseModel):
     business_permit_url: Optional[str] = None
     kato_membership_url: Optional[str] = None
     specializations: List[str]
+    services_offered: List[str]
+    destinations_covered: List[str]
     is_active: bool
     created_at: datetime
     updated_at: datetime
