@@ -9,14 +9,17 @@ import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CreateOperatorDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onCreateOperator: (operator: any) => void;
 }
 
 export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({ 
+  open,
+  onOpenChange,
   onCreateOperator 
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
   const [newOperator, setNewOperator] = useState({
     name: '',
     email: '',
@@ -37,7 +40,9 @@ export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({
       
       await onCreateOperator(operatorData);
       setNewOperator({ name: '', email: '', company: '', specializations: '' });
-      setIsOpen(false);
+      if (onOpenChange) {
+        onOpenChange(false);
+      }
       
     } catch (error) {
       toast.error('Failed to create operator');
@@ -47,7 +52,7 @@ export const CreateOperatorDialog: React.FC<CreateOperatorDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />

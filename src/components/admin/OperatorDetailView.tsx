@@ -10,9 +10,10 @@ type Operator = Tables<'operators'>;
 
 interface OperatorDetailViewProps {
   operator: Operator | null;
+  onUpdate?: (updatedOperator: Operator) => void;
 }
 
-export const OperatorDetailView = ({ operator }: OperatorDetailViewProps) => {
+export const OperatorDetailView = ({ operator, onUpdate }: OperatorDetailViewProps) => {
   if (!operator) {
     return (
       <Card>

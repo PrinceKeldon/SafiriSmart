@@ -13,12 +13,14 @@ type Operator = Tables<'operators'>;
 
 interface OperatorsListProps {
   operators: Operator[];
+  onSelectOperator: (operator: Operator) => void;
   onUpdateOperator: (updatedOperator: Operator) => void;
   onDeleteOperator: (operatorId: string) => void;
 }
 
 export const OperatorsList: React.FC<OperatorsListProps> = ({ 
   operators, 
+  onSelectOperator,
   onUpdateOperator,
   onDeleteOperator
 }) => {
@@ -75,7 +77,7 @@ export const OperatorsList: React.FC<OperatorsListProps> = ({
     <div className="space-y-4">
       {operators.map((operator) => (
         <div key={operator.id} className="flex items-center justify-between p-4 border rounded-lg">
-          <div className="flex-1">
+          <div className="flex-1" onClick={() => onSelectOperator(operator)} className="cursor-pointer">
             <div className="flex items-center space-x-2">
               <h3 className="font-medium">{operator.name}</h3>
               <Badge variant={operator.is_active ? "default" : "secondary"}>
