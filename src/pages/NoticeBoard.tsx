@@ -87,13 +87,33 @@ const NoticeBoard = () => {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {leads?.map((lead) => (
-                <NoticeBoardCard
-                  key={lead.id}
-                  lead={lead as Lead}
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
+              {leads?.map((leadData) => {
+                // Convert Supabase data to Lead type
+                const lead: Lead = {
+                  id: leadData.id,
+                  status: leadData.status as Lead['status'],
+                  assigned_operator_id: leadData.assigned_operator_id,
+                  traveler_name: leadData.traveler_name,
+                  traveler_email: leadData.traveler_email,
+                  traveler_phone: leadData.traveler_phone,
+                  traveler_country: leadData.traveler_country,
+                  preferences: leadData.preferences as any,
+                  itinerary: leadData.itinerary as any,
+                  quoted_price: leadData.quoted_price,
+                  quoted_currency: leadData.quoted_currency,
+                  todo_checklist: (leadData.todo_checklist as any) || [],
+                  created_at: leadData.created_at,
+                  updated_at: leadData.updated_at,
+                };
+
+                return (
+                  <NoticeBoardCard
+                    key={lead.id}
+                    lead={lead}
+                    onViewDetails={handleViewDetails}
+                  />
+                );
+              })}
             </div>
           </>
         )}

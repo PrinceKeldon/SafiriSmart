@@ -1,3 +1,4 @@
+
 export interface TripItinerary {
   id: string;
   title: string;
@@ -106,4 +107,4 @@ export interface CreateLeadResponse {
 }
 
 // Re-export Lead from lead.ts to maintain compatibility
-export { Lead } from '@/types/lead';
+export type { Lead } from '@/types/lead';

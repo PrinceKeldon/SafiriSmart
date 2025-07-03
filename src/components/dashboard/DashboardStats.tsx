@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Eye, CheckCircle, Clock } from 'lucide-react';
-import { Lead } from '@/types/api';
+import { Lead } from '@/types/lead';
 
 interface DashboardStatsProps {
   leads: Lead[];
@@ -11,13 +11,14 @@ interface DashboardStatsProps {
 export const DashboardStats = ({ leads }: DashboardStatsProps) => {
   const stats = {
     total: leads.length,
-    new: leads.filter(lead => lead.status === 'new').length,
+    unclaimed: leads.filter(lead => lead.status === 'unclaimed').length,
+    claimed: leads.filter(lead => lead.status === 'claimed').length,
     contacted: leads.filter(lead => lead.status === 'contacted').length,
     quoted: leads.filter(lead => lead.status === 'quoted').length,
-    booked: leads.filter(lead => lead.status === 'booked').length,
+    confirmed: leads.filter(lead => lead.status === 'confirmed').length,
   };
 
-  const conversionRate = stats.total > 0 ? ((stats.booked / stats.total) * 100).toFixed(1) : '0';
+  const conversionRate = stats.total > 0 ? ((stats.confirmed / stats.total) * 100).toFixed(1) : '0';
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -36,13 +37,13 @@ export const DashboardStats = ({ leads }: DashboardStatsProps) => {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">New Leads</CardTitle>
+          <CardTitle className="text-sm font-medium">Claimed Leads</CardTitle>
           <Eye className="h-4 w-4 text-blue-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-blue-600">{stats.new}</div>
+          <div className="text-2xl font-bold text-blue-600">{stats.claimed}</div>
           <p className="text-xs text-muted-foreground">
-            Requiring attention
+            Currently working on
           </p>
         </CardContent>
       </Card>
@@ -68,7 +69,7 @@ export const DashboardStats = ({ leads }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-2xl font-bold text-green-600">{conversionRate}%</div>
           <p className="text-xs text-muted-foreground">
-            Leads to bookings
+            Leads to confirmations
           </p>
         </CardContent>
       </Card>
