@@ -3,18 +3,16 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Lead } from '@/types/api';
+import { Lead } from '@/types/lead';
 
 interface NotesActionsProps {
-  lead: Lead;
-  onUpdateStatus: (leadId: string, status: Lead['status']) => void;
+  leadId: string;
   onAddNote: (leadId: string, note: string) => void;
   isAddingNote?: boolean;
 }
 
 export const NotesActions = ({ 
-  lead, 
-  onUpdateStatus, 
+  leadId, 
   onAddNote, 
   isAddingNote = false 
 }: NotesActionsProps) => {
@@ -23,38 +21,12 @@ export const NotesActions = ({
   const handleAddNote = async () => {
     if (!newNote.trim()) return;
     
-    await onAddNote(lead.id, newNote);
+    await onAddNote(leadId, newNote);
     setNewNote('');
   };
 
   return (
     <div className="space-y-4">
-      {/* Status Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Update Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex space-x-2">
-            {lead.status === 'new' && (
-              <Button onClick={() => onUpdateStatus(lead.id, 'contacted')}>
-                Mark as Contacted
-              </Button>
-            )}
-            {lead.status === 'contacted' && (
-              <Button onClick={() => onUpdateStatus(lead.id, 'quoted')}>
-                Send Quote
-              </Button>
-            )}
-            {lead.status === 'quoted' && (
-              <Button onClick={() => onUpdateStatus(lead.id, 'booked')}>
-                Mark as Booked
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Add Note */}
       <Card>
         <CardHeader>

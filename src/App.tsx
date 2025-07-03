@@ -3,15 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
-import PrivateRoute from '@/components/auth/PrivateRoute';
+import { PrivateRoute } from '@/components/auth/PrivateRoute';
 
 // Pages
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import NoticeBoard from '@/pages/NoticeBoard';
-import PackageManagement from '@/components/packages/PackageManagement';
+import { PackageManagement } from '@/components/packages/PackageManagement';
 import Profile from '@/pages/Profile';
-import Config from '@/pages/Config';
 import AdminDashboard from '@/pages/AdminDashboard';
 import NewLead from '@/pages/NewLead';
 
@@ -63,14 +62,6 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Profile />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/config"
-                element={
-                  <PrivateRoute>
-                    <Config />
                   </PrivateRoute>
                 }
               />

@@ -90,7 +90,7 @@ const NoticeBoard = () => {
               {leads?.map((lead) => (
                 <NoticeBoardCard
                   key={lead.id}
-                  lead={lead}
+                  lead={lead as Lead}
                   onViewDetails={handleViewDetails}
                 />
               ))}

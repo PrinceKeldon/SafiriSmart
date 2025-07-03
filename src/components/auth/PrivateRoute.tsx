@@ -33,3 +33,5 @@ export const PrivateRoute = ({ children, requireAdmin = false }: PrivateRoutePro
 
   return <>{children}</>;
 };
+
+export default PrivateRoute;

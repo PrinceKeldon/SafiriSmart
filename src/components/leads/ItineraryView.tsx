@@ -14,21 +14,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Lead } from '@/types/api';
+import { TripItinerary } from '@/types/api';
 
 interface ItineraryViewProps {
-  lead: Lead;
-  onEditItinerary: () => void;
-  onSendItinerary: () => void;
-  isSendingItinerary: boolean;
+  itinerary: TripItinerary;
 }
 
-export const ItineraryView = ({ 
-  lead, 
-  onEditItinerary, 
-  onSendItinerary, 
-  isSendingItinerary 
-}: ItineraryViewProps) => {
+export const ItineraryView = ({ itinerary }: ItineraryViewProps) => {
   const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -36,7 +28,7 @@ export const ItineraryView = ({
     }).format(amount);
   };
 
-  if (!lead.itinerary) {
+  if (!itinerary) {
     return (
       <Card>
         <CardContent className="text-center py-8">
@@ -48,59 +40,23 @@ export const ItineraryView = ({
 
   return (
     <div className="space-y-4">
-      {/* Itinerary Actions */}
-      <div className="flex justify-end space-x-2">
-        <Button
-          onClick={onEditItinerary}
-          variant="outline"
-        >
-          <Edit className="h-4 w-4 mr-2" />
-          Edit Itinerary
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button disabled={!lead.itinerary}>
-              <Send className="h-4 w-4 mr-2" />
-              Send Itinerary
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Send Itinerary</AlertDialogTitle>
-              <AlertDialogDescription>
-                Are you sure you want to send the current itinerary to {lead.traveler_name} at {lead.traveler_email}?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={onSendItinerary}
-                disabled={isSendingItinerary}
-              >
-                {isSendingItinerary ? 'Sending...' : 'Send'}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
       {/* Itinerary Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>{lead.itinerary.title}</CardTitle>
+          <CardTitle>{itinerary.title}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-gray-600 mb-4">{lead.itinerary.overview}</p>
+          <p className="text-gray-600 mb-4">{itinerary.overview}</p>
           
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="flex items-center space-x-2">
               <Clock className="h-4 w-4 text-gray-400" />
-              <span>{lead.itinerary.totalDuration} days total</span>
+              <span>{itinerary.totalDuration} days total</span>
             </div>
             <div className="flex items-center space-x-2">
               <DollarSign className="h-4 w-4 text-gray-400" />
               <span>
-                Est. {formatCurrency(lead.itinerary.estimatedCost.amount, lead.itinerary.estimatedCost.currency)}
+                Est. {formatCurrency(itinerary.estimatedCost.amount, itinerary.estimatedCost.currency)}
               </span>
             </div>
           </div>
@@ -109,10 +65,10 @@ export const ItineraryView = ({
           <div className="bg-gray-50 p-4 rounded-lg">
             <p className="font-medium mb-2">Cost Breakdown:</p>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>Accommodation: {formatCurrency(lead.itinerary.estimatedCost.breakdown.accommodation, lead.itinerary.estimatedCost.currency)}</div>
-              <div>Transport: {formatCurrency(lead.itinerary.estimatedCost.breakdown.transport, lead.itinerary.estimatedCost.currency)}</div>
-              <div>Activities: {formatCurrency(lead.itinerary.estimatedCost.breakdown.activities, lead.itinerary.estimatedCost.currency)}</div>
-              <div>Meals: {formatCurrency(lead.itinerary.estimatedCost.breakdown.meals, lead.itinerary.estimatedCost.currency)}</div>
+              <div>Accommodation: {formatCurrency(itinerary.estimatedCost.breakdown.accommodation, itinerary.estimatedCost.currency)}</div>
+              <div>Transport: {formatCurrency(itinerary.estimatedCost.breakdown.transport, itinerary.estimatedCost.currency)}</div>
+              <div>Activities: {formatCurrency(itinerary.estimatedCost.breakdown.activities, itinerary.estimatedCost.currency)}</div>
+              <div>Meals: {formatCurrency(itinerary.estimatedCost.breakdown.meals, itinerary.estimatedCost.currency)}</div>
             </div>
           </div>
         </CardContent>
@@ -120,7 +76,7 @@ export const ItineraryView = ({
 
       {/* Daily Itinerary */}
       <div className="space-y-4">
-        {lead.itinerary.days.map((day) => (
+        {itinerary.days.map((day) => (
           <Card key={day.day}>
             <CardHeader>
               <CardTitle className="text-lg">Day {day.day} - {day.location}</CardTitle>
@@ -156,7 +112,7 @@ export const ItineraryView = ({
                           <p className="text-xs text-gray-500">Duration: {activity.duration}</p>
                         </div>
                         <Badge variant="outline" className="text-xs">
-                          {formatCurrency(activity.cost, lead.itinerary.estimatedCost.currency)}
+                          {formatCurrency(activity.cost, itinerary.estimatedCost.currency)}
                         </Badge>
                       </div>
                     </div>

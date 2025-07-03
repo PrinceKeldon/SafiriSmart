@@ -14,7 +14,7 @@ export const useUpdateLeadTodoList = () => {
       const { data, error } = await supabase
         .from('leads')
         .update({ 
-          todo_checklist: todoChecklist,
+          todo_checklist: todoChecklist as any,
           updated_at: new Date().toISOString()
         })
         .eq('id', leadId)

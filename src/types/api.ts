@@ -1,43 +1,3 @@
-
-export interface Lead {
-  id: string;
-  status: 'new' | 'contacted' | 'quoted' | 'booked' | 'cancelled';
-  created_at: string;
-  updated_at: string;
-  assigned_operator_id?: string;
-  traveler_name: string;
-  traveler_email: string;
-  traveler_phone?: string;
-  traveler_country?: string;
-  preferences: {
-    duration?: number;
-    budgetRange?: 'budget' | 'mid-range' | 'luxury';
-    interests?: string[];
-    groupSize?: number;
-    travelPace?: 'relaxed' | 'moderate' | 'active';
-    languages?: string[];
-    schedule?: {
-      startDate?: string;
-      endDate?: string;
-      flexible?: boolean;
-    };
-    travel?: {
-      portOfEntry?: string;
-      airportPickup?: boolean;
-      pickupTime?: string;
-      pickupLocation?: string;
-    };
-    dietary?: {
-      mealWishes?: string;
-      allergies?: string;
-      specialRequirements?: string;
-    };
-  };
-  itinerary?: TripItinerary;
-  quoted_price?: number;
-  quoted_currency?: string;
-}
-
 export interface TripItinerary {
   id: string;
   title: string;
@@ -129,7 +89,7 @@ export interface ApiResponse<T> {
 }
 
 export interface LeadListResponse {
-  leads: Lead[];
+  leads: any[];
   total: number;
   page: number;
   limit: number;
@@ -144,3 +104,6 @@ export interface CreateLeadResponse {
     email: string;
   } | null;
 }
+
+// Re-export Lead from lead.ts to maintain compatibility
+export { Lead } from '@/types/lead';

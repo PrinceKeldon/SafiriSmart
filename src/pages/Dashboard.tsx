@@ -9,7 +9,7 @@ import { LeadsGrid } from '@/components/dashboard/LeadsGrid';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
 import { useLeads, useUpdateLeadStatus } from '@/hooks/useLeads';
-import { Lead } from '@/types/api';
+import { Lead } from '@/types/lead';
 import { toast } from 'sonner';
 
 const Dashboard = () => {
