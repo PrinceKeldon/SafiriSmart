@@ -119,8 +119,8 @@ serve(async (req) => {
 
     console.log('Inserting lead into database...');
 
-    // Insert the lead into Supabase
-    const { data, error } = await supabaseClient
+    // Insert the lead into Supabase with status 'unclaimed' and no assigned operator
+    const { data: leadData, error } = await supabaseClient
       .from('leads')
       .insert({
         traveler_name: traveler.name,
@@ -129,7 +129,9 @@ serve(async (req) => {
         traveler_country: traveler.country || null,
         preferences: enhancedPreferences,
         itinerary: mockItinerary,
-        status: 'new'
+        status: 'unclaimed',
+        assigned_operator_id: null,
+        todo_checklist: []
       })
       .select()
       .single();
@@ -139,17 +141,97 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log('Lead created successfully:', data);
+    console.log('Lead created successfully:', leadData);
+
+    // Now perform intelligent matching to find best operators
+    console.log('Starting intelligent operator matching...');
+    
+    const { data: operators, error: operatorsError } = await supabaseClient
+      .from('operators')
+      .select('id, services_offered, destinations_covered')
+      .eq('is_active', true);
+
+    if (operatorsError) {
+      console.error('Error fetching operators:', operatorsError);
+      // Don't fail the whole request, just log the error
+    } else if (operators && operators.length > 0) {
+      // Intelligent matching algorithm
+      const interests = enhancedPreferences.interests || [];
+      const destinations = extractDestinationsFromItinerary(mockItinerary);
+      
+      console.log('Matching criteria:', { interests, destinations });
+      
+      const operatorScores = operators.map(operator => {
+        let score = 0;
+        const services = operator.services_offered || [];
+        const covered_destinations = operator.destinations_covered || [];
+        
+        // Score based on matching interests with services
+        for (const interest of interests) {
+          for (const service of services) {
+            if (interest.toLowerCase().includes(service.toLowerCase()) || 
+                service.toLowerCase().includes(interest.toLowerCase())) {
+              score += 2;
+            }
+          }
+        }
+        
+        // Score based on matching destinations
+        for (const destination of destinations) {
+          for (const covered of covered_destinations) {
+            if (destination.toLowerCase().includes(covered.toLowerCase()) || 
+                covered.toLowerCase().includes(destination.toLowerCase())) {
+              score += 3;
+            }
+          }
+        }
+        
+        return { operator_id: operator.id, score };
+      });
+
+      // Sort by score and take top 3-5 operators
+      const topOperators = operatorScores
+        .filter(op => op.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5)
+        .map(op => op.operator_id);
+
+      console.log('Top matched operators:', topOperators);
+
+      // If no operators scored, fall back to first few active operators
+      const selectedOperators = topOperators.length > 0 
+        ? topOperators 
+        : operators.slice(0, 3).map(op => op.id);
+
+      // Insert into lead_visibility table
+      if (selectedOperators.length > 0) {
+        const visibilityEntries = selectedOperators.map(operatorId => ({
+          lead_id: leadData.id,
+          operator_id: operatorId
+        }));
+
+        const { error: visibilityError } = await supabaseClient
+          .from('lead_visibility')
+          .insert(visibilityEntries);
+
+        if (visibilityError) {
+          console.error('Error creating lead visibility entries:', visibilityError);
+          // Don't fail the whole request
+        } else {
+          console.log(`Lead visibility created for ${selectedOperators.length} operators`);
+        }
+      }
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         data: {
-          lead_id: data.id,
-          status: data.status,
+          lead_id: leadData.id,
+          status: leadData.status,
           assigned_operator: null
         },
-        message: 'Lead created successfully with enhanced itinerary'
+        message: 'Lead created successfully and matched to operators'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -171,3 +253,25 @@ serve(async (req) => {
     );
   }
 });
+
+// Helper function to extract destinations from itinerary
+function extractDestinationsFromItinerary(itinerary: any): string[] {
+  const destinations: string[] = [];
+  
+  if (itinerary?.days) {
+    for (const day of itinerary.days) {
+      if (day.location && !destinations.includes(day.location)) {
+        destinations.push(day.location);
+      }
+      if (day.activities) {
+        for (const activity of day.activities) {
+          if (activity.location && !destinations.includes(activity.location)) {
+            destinations.push(activity.location);
+          }
+        }
+      }
+    }
+  }
+  
+  return destinations;
+}

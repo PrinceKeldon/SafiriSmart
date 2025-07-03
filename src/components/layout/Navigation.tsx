@@ -1,89 +1,96 @@
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
+  Users, 
   Package, 
-  UserCircle, 
-  MapPin
+  User, 
+  Bell,
+  LogOut,
+  Settings
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
   const location = useLocation();
+  const { logout } = useAuth();
 
   const navigationItems = [
     {
+      name: 'Dashboard',
       href: '/dashboard',
-      label: 'Dashboard',
       icon: LayoutDashboard,
-      active: location.pathname === '/dashboard'
     },
     {
-      href: '/packages',
-      label: 'Packages',
+      name: 'Notice Board',
+      href: '/dashboard/notice-board',
+      icon: Bell,
+    },
+    {
+      name: 'Packages',
+      href: '/dashboard/packages',
       icon: Package,
-      active: location.pathname === '/packages'
     },
     {
-      href: '/profile',
-      label: 'Profile',
-      icon: UserCircle,
-      active: location.pathname === '/profile'
-    }
+      name: 'Profile',
+      href: '/dashboard/profile',
+      icon: User,
+    },
+    {
+      name: 'Config',
+      href: '/config',
+      icon: Settings,
+    },
   ];
 
-  return (
-    <nav className="bg-white/95 backdrop-blur-sm shadow-sm border-b border-orange-200/60 sticky top-0 z-50">
-      <div className="container mx-auto px-6">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-8">
-            <Link 
-              to="/" 
-              className="flex items-center space-x-3 text-xl font-bold text-gray-900 hover:text-orange-600 transition-colors"
-            >
-              <div className="relative">
-                <MapPin className="h-6 w-6 text-orange-600" />
-                <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full"></div>
-              </div>
-              <div>
-                <span className="bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-                  TourMaster AI
-                </span>
-                <div className="text-xs text-gray-500 font-normal">by SafiriSmart</div>
-              </div>
-            </Link>
-            
-            <div className="hidden md:flex items-center space-x-1">
-              {navigationItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    item.active
-                      ? 'bg-orange-50 text-orange-700 shadow-sm border border-orange-100'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50/80'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
+  const handleLogout = () => {
+    logout();
+  };
 
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:block">
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
-                Demo Mode
-              </span>
-            </div>
-            <Link
-              to="/safari-guide"
-              className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
-            >
-              SafariGuide AI →
-            </Link>
-          </div>
+  return (
+    <nav className="bg-white shadow-sm border-r">
+      <div className="flex flex-col h-full">
+        <div className="p-6">
+          <h2 className="text-xl font-bold text-gray-900">TourMaster AI</h2>
+          <p className="text-sm text-gray-600">B2B Dashboard</p>
+        </div>
+        
+        <div className="flex-1 px-4">
+          <ul className="space-y-2">
+            {navigationItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <li key={item.name}>
+                  <Link
+                    to={item.href}
+                    className={cn(
+                      'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                      isActive
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    )}
+                  >
+                    <item.icon className="mr-3 h-5 w-5" />
+                    {item.name}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        
+        <div className="p-4 border-t">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-full justify-start text-gray-600 hover:text-gray-900"
+          >
+            <LogOut className="mr-3 h-5 w-5" />
+            Logout
+          </Button>
         </div>
       </div>
     </nav>

@@ -1,7 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Lead } from '@/types/api';
+import { Lead } from '@/types/lead';
 
 export const useLeads = (params: {
   page?: number;
@@ -17,6 +16,7 @@ export const useLeads = (params: {
       let query = supabase
         .from('leads')
         .select('*')
+        .not('assigned_operator_id', 'is', null) // Only show assigned/claimed leads
         .order('created_at', { ascending: false });
 
       if (params.status) {

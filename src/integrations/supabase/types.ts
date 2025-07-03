@@ -48,6 +48,42 @@ export type Database = {
           },
         ]
       }
+      lead_visibility: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          operator_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          operator_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          operator_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_visibility_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_visibility_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           assigned_operator_id: string | null
@@ -58,6 +94,7 @@ export type Database = {
           quoted_currency: string | null
           quoted_price: number | null
           status: string
+          todo_checklist: Json | null
           traveler_country: string | null
           traveler_email: string
           traveler_name: string
@@ -73,6 +110,7 @@ export type Database = {
           quoted_currency?: string | null
           quoted_price?: number | null
           status?: string
+          todo_checklist?: Json | null
           traveler_country?: string | null
           traveler_email: string
           traveler_name: string
@@ -88,6 +126,7 @@ export type Database = {
           quoted_currency?: string | null
           quoted_price?: number | null
           status?: string
+          todo_checklist?: Json | null
           traveler_country?: string | null
           traveler_email?: string
           traveler_name?: string
