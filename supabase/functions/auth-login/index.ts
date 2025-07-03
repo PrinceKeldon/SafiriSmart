@@ -14,9 +14,13 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting login process...')
+    
     const { email, password } = await req.json()
+    console.log('Login request for email:', email)
 
     if (!email || !password) {
+      console.error('Missing email or password')
       return new Response(
         JSON.stringify({
           success: false,
@@ -30,11 +34,32 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey
+    })
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing environment variables')
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Server configuration error'
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
     // Check if user exists in operators table first
+    console.log('Checking operator existence...')
     const { data: operator, error: operatorError } = await supabase
       .from('operators')
       .select('*')
@@ -55,6 +80,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log('Operator found, attempting authentication...')
 
     // Authenticate user with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -77,6 +104,7 @@ serve(async (req) => {
     }
 
     if (!authData.user || !authData.session) {
+      console.error('No user or session returned from auth')
       return new Response(
         JSON.stringify({
           success: false,
@@ -89,6 +117,7 @@ serve(async (req) => {
       )
     }
 
+    console.log('Login successful')
     return new Response(
       JSON.stringify({
         success: true,
@@ -116,7 +145,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error')
       }),
       {
         status: 500,

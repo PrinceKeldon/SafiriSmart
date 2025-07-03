@@ -14,9 +14,13 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Starting operator signup process...')
+    
     const { email, password, name, company, specializations = [] } = await req.json()
+    console.log('Received signup request for email:', email)
 
     if (!email || !password || !name || !company) {
+      console.error('Missing required fields:', { email: !!email, password: !!password, name: !!name, company: !!company })
       return new Response(
         JSON.stringify({
           success: false,
@@ -30,11 +34,50 @@ serve(async (req) => {
     }
 
     // Initialize Supabase client with service role key for admin operations
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    
+    console.log('Environment check:', {
+      hasSupabaseUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey
+    })
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.error('Missing environment variables')
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Server configuration error'
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
+    // Check if user already exists in auth
+    console.log('Checking if user already exists...')
+    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email)
+    
+    if (existingUser?.user) {
+      console.log('User already exists in auth system')
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'A user with this email address has already been registered'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
     // Create user in Supabase Auth
+    console.log('Creating user in auth system...')
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
@@ -50,7 +93,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: authError.message
+          message: authError.message || 'Failed to create user account'
         }),
         {
           status: 400,
@@ -60,6 +103,7 @@ serve(async (req) => {
     }
 
     if (!authData.user) {
+      console.error('No user returned from auth creation')
       return new Response(
         JSON.stringify({
           success: false,
@@ -71,6 +115,8 @@ serve(async (req) => {
         }
       )
     }
+
+    console.log('User created in auth, creating operator record...')
 
     // Create operator record
     const { data: operator, error: operatorError } = await supabase
@@ -96,7 +142,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: 'Failed to create operator profile'
+          message: 'Failed to create operator profile: ' + operatorError.message
         }),
         {
           status: 400,
@@ -105,6 +151,7 @@ serve(async (req) => {
       )
     }
 
+    console.log('Operator signup completed successfully')
     return new Response(
       JSON.stringify({
         success: true,
@@ -130,7 +177,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        message: 'Internal server error'
+        message: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error')
       }),
       {
         status: 500,
