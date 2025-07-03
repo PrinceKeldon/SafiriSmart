@@ -6,6 +6,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { PrivateRoute } from '@/components/auth/PrivateRoute';
 
 // Pages
+import Index from '@/pages/Index';
+import SafariGuide from '@/pages/SafariGuide';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import NoticeBoard from '@/pages/NoticeBoard';
@@ -32,7 +34,12 @@ function App() {
         <Router>
           <div className="min-h-screen bg-gray-50">
             <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/safari-guide" element={<SafariGuide />} />
               <Route path="/login" element={<Login />} />
+              
+              {/* Protected Routes */}
               <Route
                 path="/dashboard"
                 element={
@@ -81,7 +88,6 @@ function App() {
                   </PrivateRoute>
                 }
               />
-              <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Routes>
             <Toaster />
           </div>
