@@ -58,11 +58,28 @@ serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    // Check if user already exists in auth
+    // Check if user already exists in auth using the correct method
     console.log('Checking if user already exists...')
-    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email)
+    const { data: { users }, error: listUsersError } = await supabase.auth.admin.listUsers()
+
+    if (listUsersError) {
+      console.error('Error listing users:', listUsersError)
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: 'Error checking for existing user'
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Check if any user has the same email
+    const existingUser = users?.find(user => user.email === email)
     
-    if (existingUser?.user) {
+    if (existingUser) {
       console.log('User already exists in auth system')
       return new Response(
         JSON.stringify({
@@ -70,7 +87,7 @@ serve(async (req) => {
           message: 'A user with this email address has already been registered'
         }),
         {
-          status: 400,
+          status: 409,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       )
