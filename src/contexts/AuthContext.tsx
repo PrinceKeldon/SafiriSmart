@@ -137,7 +137,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string) => {
     try {
-      // Check if operator exists and is active first
+      console.log('Attempting login for email:', email);
+      
+      // First, try to sign in with Supabase Auth directly
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      console.log('Supabase Auth response:', { 
+        hasData: !!data, 
+        hasUser: !!data?.user, 
+        hasSession: !!data?.session,
+        error: error?.message,
+        errorCode: error?.code,
+        fullError: error
+      });
+
+      if (error) {
+        console.error('Supabase Auth login error:', error);
+        // Return the actual Supabase error message for better debugging
+        return { success: false, error: `Auth Error: ${error.message} (Code: ${error.code || 'unknown'})` };
+      }
+
+      if (!data.user || !data.session) {
+        console.error('No user or session returned from Supabase Auth');
+        return { success: false, error: 'Authentication failed - no user or session returned' };
+      }
+
+      console.log('Supabase Auth login successful, checking operator record...');
+
+      // After successful auth, check if operator exists and is active
       const { data: operator, error: operatorError } = await supabase
         .from('operators')
         .select('*')
@@ -146,24 +176,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .single();
 
       if (operatorError || !operator) {
-        return { success: false, error: 'Invalid email or password' };
+        console.error('Operator check failed:', operatorError);
+        // Sign out the user since they don't have a valid operator record
+        await supabase.auth.signOut();
+        return { success: false, error: 'No active operator account found for this email' };
       }
 
-      // Sign in with Supabase Auth
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        console.error('Login error:', error);
-        return { success: false, error: error.message };
-      }
-
-      if (!data.user || !data.session) {
-        return { success: false, error: 'Authentication failed' };
-      }
-
+      console.log('Login successful for operator:', operator.name);
       // User and session will be set by the auth state change listener
       return { success: true };
     } catch (error) {
