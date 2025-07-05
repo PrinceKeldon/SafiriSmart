@@ -22,13 +22,15 @@ export const PrivateRoute = ({ children, requireAdmin = false }: PrivateRoutePro
   }
 
   if (!user) {
-    // Redirect to login page with return url
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // Redirect to appropriate login page based on route
+    const loginPath = location.pathname.startsWith('/admin') ? '/admin/login' : '/login';
+    return <Navigate to={loginPath} state={{ from: location }} replace />;
   }
 
   if (requireAdmin && !isAdmin()) {
-    // Redirect to dashboard if user is not admin but route requires admin
-    return <Navigate to="/dashboard" replace />;
+    // Redirect admins to admin dashboard, operators to regular dashboard
+    const redirectPath = user.role === 'admin' ? '/admin/dashboard' : '/dashboard';
+    return <Navigate to={redirectPath} replace />;
   }
 
   return <>{children}</>;

@@ -60,7 +60,7 @@ const Login = () => {
     setError(null);
     setSuccessMessage(null);
 
-    const result = await login(data.email, data.password);
+    const result = await login(data.email, data.password, 'operator');
 
     if (result.success) {
       navigate(from, { replace: true });

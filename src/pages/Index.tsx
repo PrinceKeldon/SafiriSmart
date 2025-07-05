@@ -255,7 +255,7 @@ const Index = () => {
             <div className="flex justify-center gap-6 text-sm text-gray-400">
               <span>© 2025 SafiriSmart</span>
               <span>•</span>
-              <Link to="/admin" className="hover:text-gray-300 transition-colors">
+              <Link to="/admin/login" className="hover:text-gray-300 transition-colors">
                 Admin Access
               </Link>
               <span>•</span>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -15,7 +14,7 @@ interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string, expectedRole?: 'operator' | 'admin') => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string, company: string, specializations?: string[]) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -87,6 +86,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       if (error || !operator) {
         console.error('Failed to fetch operator details:', error);
         setUser(null);
+        // If user is not active or doesn't exist, sign them out
+        await supabase.auth.signOut();
         return;
       }
 
@@ -101,6 +102,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     } catch (error) {
       console.error('Error fetching operator details:', error);
       setUser(null);
+      await supabase.auth.signOut();
     }
   };
 
@@ -135,9 +137,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, expectedRole: 'operator' | 'admin' = 'operator') => {
     try {
-      console.log('Attempting login for email:', email);
+      console.log('Attempting login for email:', email, 'with expected role:', expectedRole);
       
       // First, try to sign in with Supabase Auth directly
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -182,7 +184,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         return { success: false, error: 'No active operator account found for this email' };
       }
 
-      console.log('Login successful for operator:', operator.name);
+      // Check if the operator's role matches the expected role for this login portal
+      if (operator.role !== expectedRole) {
+        console.error(`Role mismatch: expected ${expectedRole}, got ${operator.role}`);
+        // Immediately sign them out from Supabase Auth
+        await supabase.auth.signOut();
+        return { success: false, error: `Access denied. This portal is for ${expectedRole}s.` };
+      }
+
+      console.log('Login successful for operator:', operator.name, 'with role:', operator.role);
       // User and session will be set by the auth state change listener
       return { success: true };
     } catch (error) {

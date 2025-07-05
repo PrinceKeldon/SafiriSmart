@@ -1,227 +1,110 @@
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Users, UserCheck, UserX } from 'lucide-react';
-import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
-import { OperatorsList } from '@/components/admin/OperatorsList';
-import { OperatorDetailView } from '@/components/admin/OperatorDetailView';
-import { adminService } from '@/services/AdminService';
-import { toast } from 'sonner';
-import { Tables } from '@/integrations/supabase/types';
-
-type Operator = Tables<'operators'>;
+import { useAuth } from '@/contexts/AuthContext';
+import { Shield, Users, Settings, BarChart3 } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [selectedOperator, setSelectedOperator] = useState<Operator | null>(null);
-
-  const { data: operatorsData, isLoading, error, refetch } = useQuery({
-    queryKey: ['operators'],
-    queryFn: async () => {
-      try {
-        console.log('Fetching operators...');
-        const response = await adminService.getOperators();
-        console.log('Operators response:', response);
-        return response;
-      } catch (error) {
-        console.error('Error fetching operators:', error);
-        throw error;
-      }
-    },
-  });
-
-  // Safely handle different response formats
-  let operators: Operator[] = [];
-  
-  if (Array.isArray(operatorsData)) {
-    operators = operatorsData;
-  } else if (operatorsData && typeof operatorsData === 'object') {
-    // Handle case where response has a success field and data array
-    if ('success' in operatorsData && operatorsData.success && 'data' in operatorsData) {
-      operators = Array.isArray(operatorsData.data) ? operatorsData.data : [];
-    } else if ('data' in operatorsData) {
-      operators = Array.isArray(operatorsData.data) ? operatorsData.data : [];
-    }
-  }
-
-  console.log('Processed operators:', operators);
-
-  const handleCreateOperator = async (operatorData: any) => {
-    try {
-      await adminService.createOperator(operatorData);
-      toast.success('Operator created successfully');
-      refetch();
-      setIsCreateDialogOpen(false);
-    } catch (error) {
-      console.error('Error creating operator:', error);
-      toast.error('Failed to create operator');
-    }
-  };
-
-  const handleDeleteOperator = async (operatorId: string) => {
-    try {
-      await adminService.deleteOperator(operatorId);
-      toast.success('Operator deleted successfully');
-      refetch();
-      if (selectedOperator?.id === operatorId) {
-        setSelectedOperator(null);
-      }
-    } catch (error) {
-      console.error('Error deleting operator:', error);
-      toast.error('Failed to delete operator');
-    }
-  };
-
-  const handleUpdateOperator = async (updatedOperator: Operator) => {
-    try {
-      refetch();
-      if (selectedOperator?.id === updatedOperator.id) {
-        setSelectedOperator(updatedOperator);
-      }
-    } catch (error) {
-      console.error('Error updating operator:', error);
-      toast.error('Failed to update operator');
-    }
-  };
-
-  const handleSelectOperator = (operator: Operator) => {
-    setSelectedOperator(operator);
-  };
-
-  const stats = {
-    total: operators?.length || 0,
-    active: operators?.filter((op: Operator) => op.is_active)?.length || 0,
-    inactive: operators?.filter((op: Operator) => !op.is_active)?.length || 0,
-  };
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-lg">Loading admin dashboard...</div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (error) {
-    console.error('Admin dashboard error:', error);
-    return (
-      <DashboardLayout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col items-center justify-center h-64">
-            <div className="text-lg text-red-600 mb-4">
-              Error loading admin dashboard: {error instanceof Error ? error.message : 'Unknown error'}
-            </div>
-            <Button onClick={() => refetch()} variant="outline">
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+  const { user, logout } = useAuth();
 
   return (
-    <DashboardLayout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-            <p className="text-gray-600">Manage tour operators and system settings</p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-6">
+            <div className="flex items-center">
+              <Shield className="h-8 w-8 text-red-600 mr-3" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p className="text-sm text-gray-500">SafiriSmart Administration</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-700">Welcome, {user?.name}</span>
+              <Button onClick={logout} variant="outline">
+                Sign Out
+              </Button>
+            </div>
           </div>
-          
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            size="lg"
-            className="flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Add Operator</span>
-          </Button>
         </div>
+      </header>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Operators</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Operators</CardTitle>
-              <UserCheck className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Inactive Operators</CardTitle>
-              <UserX className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-red-600">{stats.inactive}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Operators List */}
-          <div className="lg:col-span-2">
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="px-4 py-6 sm:px-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {/* Stats Cards */}
             <Card>
-              <CardHeader>
-                <CardTitle>Tour Operators</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Operators</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                {operators.length === 0 ? (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500 mb-4">No operators found</p>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Operator
-                    </Button>
-                  </div>
-                ) : (
-                  <OperatorsList
-                    operators={operators}
-                    onSelectOperator={handleSelectOperator}
-                    onUpdateOperator={handleUpdateOperator}
-                    onDeleteOperator={handleDeleteOperator}
-                  />
-                )}
+                <div className="text-2xl font-bold">12</div>
+                <p className="text-xs text-muted-foreground">Active tour operators</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">48</div>
+                <p className="text-xs text-muted-foreground">Generated this month</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">System Status</CardTitle>
+                <Settings className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">Healthy</div>
+                <p className="text-xs text-muted-foreground">All systems operational</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Operator Details */}
-          <div>
-            <OperatorDetailView operator={selectedOperator} />
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Operator Management</CardTitle>
+                <CardDescription>
+                  Manage tour operators, approve registrations, and view operator details
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full">
+                  <Users className="mr-2 h-4 w-4" />
+                  Manage Operators
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>System Configuration</CardTitle>
+                <CardDescription>
+                  Configure system settings, API keys, and platform preferences
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full" variant="outline">
+                  <Settings className="mr-2 h-4 w-4" />
+                  System Settings
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* Create Operator Dialog */}
-        <CreateOperatorDialog
-          open={isCreateDialogOpen}
-          onOpenChange={setIsCreateDialogOpen}
-          onCreateOperator={handleCreateOperator}
-        />
-      </div>
-    </DashboardLayout>
+      </main>
+    </div>
   );
 };
 

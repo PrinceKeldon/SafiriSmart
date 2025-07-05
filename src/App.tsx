@@ -9,6 +9,7 @@ import { PrivateRoute } from '@/components/auth/PrivateRoute';
 import Index from '@/pages/Index';
 import SafariGuide from '@/pages/SafariGuide';
 import Login from '@/pages/Login';
+import AdminLogin from '@/pages/AdminLogin';
 import Dashboard from '@/pages/Dashboard';
 import NoticeBoard from '@/pages/NoticeBoard';
 import { PackageManagement } from '@/components/packages/PackageManagement';
@@ -38,8 +39,9 @@ function App() {
               <Route path="/" element={<Index />} />
               <Route path="/safari-guide" element={<SafariGuide />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/admin/login" element={<AdminLogin />} />
               
-              {/* Protected Routes */}
+              {/* Protected Operator Routes */}
               <Route
                 path="/dashboard"
                 element={
@@ -73,20 +75,28 @@ function App() {
                 }
               />
               <Route
-                path="/admin"
-                element={
-                  <PrivateRoute>
-                    <AdminDashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
                 path="/new-lead"
                 element={
                   <PrivateRoute>
                     <NewLead />
                   </PrivateRoute>
                 }
+              />
+
+              {/* Protected Admin Routes */}
+              <Route
+                path="/admin/dashboard"
+                element={
+                  <PrivateRoute requireAdmin={true}>
+                    <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+
+              {/* Legacy admin route - redirect to new admin dashboard */}
+              <Route
+                path="/admin"
+                element={<Navigate to="/admin/dashboard" replace />}
               />
             </Routes>
             <Toaster />
