@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { User, Session } from '@supabase/supabase-js';
@@ -42,18 +43,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Set up auth state listener and check for existing session
   useEffect(() => {
+    console.log('🔧 AuthProvider: Setting up auth state listener');
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
+        console.log('🔄 Auth state changed:', {
+          event,
+          userEmail: session?.user?.email,
+          hasSession: !!session,
+          hasUser: !!session?.user,
+          timestamp: new Date().toISOString()
+        });
+        
         setSession(session);
         
         if (session?.user) {
+          console.log('👤 Auth state change: User found, fetching operator details for:', session.user.email);
           // Fetch operator details from the operators table
           setTimeout(async () => {
             await fetchOperatorDetails(session.user.email!);
           }, 0);
         } else {
+          console.log('❌ Auth state change: No user, clearing state');
           setUser(null);
         }
         
@@ -62,19 +74,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     );
 
     // THEN check for existing session
+    console.log('🔍 AuthProvider: Checking for existing session');
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('📋 Existing session check:', {
+        hasSession: !!session,
+        userEmail: session?.user?.email,
+        timestamp: new Date().toISOString()
+      });
+      
       setSession(session);
       if (session?.user) {
+        console.log('👤 Existing session: User found, fetching operator details for:', session.user.email);
         fetchOperatorDetails(session.user.email!);
       } else {
+        console.log('❌ Existing session: No user found');
         setIsLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      console.log('🧹 AuthProvider: Cleaning up auth state listener');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchOperatorDetails = async (email: string) => {
+    console.log('🔍 fetchOperatorDetails: Starting fetch for email:', email);
+    
     try {
       const { data: operator, error } = await supabase
         .from('operators')
@@ -83,13 +109,42 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .eq('is_active', true)
         .single();
 
+      console.log('📊 fetchOperatorDetails: Database query result:', {
+        email,
+        hasOperator: !!operator,
+        error: error?.message,
+        operatorData: operator ? {
+          id: operator.id,
+          email: operator.email,
+          role: operator.role,
+          is_active: operator.is_active,
+          name: operator.name,
+          company: operator.company
+        } : null
+      });
+
       if (error || !operator) {
-        console.error('Failed to fetch operator details:', error);
+        console.error('❌ fetchOperatorDetails: Failed to fetch operator details:', {
+          email,
+          error: error?.message,
+          errorCode: error?.code,
+          hasOperator: !!operator
+        });
+        
         setUser(null);
-        // If user is not active or doesn't exist, sign them out
+        console.log('🚪 fetchOperatorDetails: Signing out user due to missing/inactive operator record');
         await supabase.auth.signOut();
         return;
       }
+
+      console.log('✅ fetchOperatorDetails: Successfully fetched operator, setting user state:', {
+        id: operator.id,
+        name: operator.name,
+        email: operator.email,
+        role: operator.role,
+        company: operator.company,
+        is_active: operator.is_active
+      });
 
       setUser({
         id: operator.id,
@@ -100,8 +155,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         specializations: operator.specializations || []
       });
     } catch (error) {
-      console.error('Error fetching operator details:', error);
+      console.error('💥 fetchOperatorDetails: Unexpected error:', {
+        email,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      });
+      
       setUser(null);
+      console.log('🚪 fetchOperatorDetails: Signing out user due to unexpected error');
       await supabase.auth.signOut();
     }
   };
@@ -138,38 +199,46 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const login = async (email: string, password: string, expectedRole: 'operator' | 'admin' = 'operator') => {
+    console.log('🚀 LOGIN: Starting login process', {
+      email,
+      expectedRole,
+      timestamp: new Date().toISOString()
+    });
+    
     try {
-      console.log('Attempting login for email:', email, 'with expected role:', expectedRole);
-      
       // First, try to sign in with Supabase Auth directly
+      console.log('🔐 LOGIN: Attempting Supabase Auth signInWithPassword for:', email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      console.log('Supabase Auth response:', { 
+      console.log('📋 LOGIN: Supabase Auth response:', { 
         hasData: !!data, 
         hasUser: !!data?.user, 
         hasSession: !!data?.session,
+        userEmail: data?.user?.email,
         error: error?.message,
         errorCode: error?.code,
         fullError: error
       });
 
       if (error) {
-        console.error('Supabase Auth login error:', error);
-        // Return the actual Supabase error message for better debugging
+        console.error('❌ LOGIN: Supabase Auth login error:', error);
         return { success: false, error: `Auth Error: ${error.message} (Code: ${error.code || 'unknown'})` };
       }
 
       if (!data.user || !data.session) {
-        console.error('No user or session returned from Supabase Auth');
+        console.error('❌ LOGIN: No user or session returned from Supabase Auth');
         return { success: false, error: 'Authentication failed - no user or session returned' };
       }
 
-      console.log('Supabase Auth login successful, checking operator record...');
+      console.log('✅ LOGIN: Supabase Auth login successful, checking operator record...');
 
       // After successful auth, check if operator exists and is active
+      console.log('🔍 LOGIN: Querying operators table for email:', email);
+      
       const { data: operator, error: operatorError } = await supabase
         .from('operators')
         .select('*')
@@ -177,26 +246,71 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         .eq('is_active', true)
         .single();
 
+      console.log('📊 LOGIN: Operators table query result:', {
+        email,
+        hasOperator: !!operator,
+        error: operatorError?.message,
+        errorCode: operatorError?.code,
+        operatorData: operator ? {
+          id: operator.id,
+          email: operator.email,
+          role: operator.role,
+          is_active: operator.is_active,
+          name: operator.name
+        } : null
+      });
+
       if (operatorError || !operator) {
-        console.error('Operator check failed:', operatorError);
-        // Sign out the user since they don't have a valid operator record
+        console.error('❌ LOGIN: Operator check failed:', {
+          email,
+          error: operatorError?.message,
+          errorCode: operatorError?.code,
+          hasOperator: !!operator
+        });
+        
+        console.log('🚪 LOGIN: Signing out user due to missing operator record');
         await supabase.auth.signOut();
         return { success: false, error: 'No active operator account found for this email' };
       }
 
       // Check if the operator's role matches the expected role for this login portal
+      console.log('🔒 LOGIN: Role validation check:', {
+        operatorRole: operator.role,
+        expectedRole,
+        rolesMatch: operator.role === expectedRole
+      });
+
       if (operator.role !== expectedRole) {
-        console.error(`Role mismatch: expected ${expectedRole}, got ${operator.role}`);
-        // Immediately sign them out from Supabase Auth
+        console.error('❌ LOGIN: Role mismatch detected:', {
+          email,
+          operatorRole: operator.role,
+          expectedRole,
+          portalType: expectedRole === 'admin' ? 'Admin Portal' : 'Operator Portal'
+        });
+        
+        console.log('🚪 LOGIN: Signing out user due to role mismatch');
         await supabase.auth.signOut();
         return { success: false, error: `Access denied. This portal is for ${expectedRole}s.` };
       }
 
-      console.log('Login successful for operator:', operator.name, 'with role:', operator.role);
+      console.log('🎉 LOGIN: Login successful for operator:', {
+        name: operator.name,
+        email: operator.email,
+        role: operator.role,
+        company: operator.company
+      });
+      
       // User and session will be set by the auth state change listener
       return { success: true };
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('💥 LOGIN: Unexpected login error:', {
+        email,
+        expectedRole,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Login failed. Please try again.' 
@@ -205,17 +319,25 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const logout = async () => {
+    console.log('🚪 LOGOUT: Starting logout process');
+    
     try {
       await supabase.auth.signOut();
       setUser(null);
       setSession(null);
+      console.log('✅ LOGOUT: Logout successful');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ LOGOUT: Logout error:', error);
     }
   };
 
   const isAdmin = () => {
-    return user?.role === 'admin';
+    const result = user?.role === 'admin';
+    console.log('🔑 isAdmin check:', {
+      userRole: user?.role,
+      isAdmin: result
+    });
+    return result;
   };
 
   const value = {

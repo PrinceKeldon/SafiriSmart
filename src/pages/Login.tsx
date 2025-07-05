@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -56,15 +55,30 @@ const Login = () => {
   });
 
   const onLogin = async (data: LoginFormData) => {
+    console.log('🎯 Login.tsx: onLogin called with:', {
+      email: data.email,
+      expectedRole: 'operator',
+      timestamp: new Date().toISOString()
+    });
+    
     setIsSubmitting(true);
     setError(null);
     setSuccessMessage(null);
 
+    // EXPLICITLY call login with 'operator' role
     const result = await login(data.email, data.password, 'operator');
 
+    console.log('📋 Login.tsx: Login result:', {
+      success: result.success,
+      error: result.error,
+      timestamp: new Date().toISOString()
+    });
+
     if (result.success) {
+      console.log('✅ Login.tsx: Login successful, navigating to:', from);
       navigate(from, { replace: true });
     } else {
+      console.error('❌ Login.tsx: Login failed:', result.error);
       setError(result.error || 'Login failed');
     }
 
@@ -266,6 +280,15 @@ const Login = () => {
                 </form>
               </TabsContent>
             </Tabs>
+
+            <div className="mt-4 text-center">
+              <Link 
+                to="/admin/login" 
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Admin Login →
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
