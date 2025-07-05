@@ -11,7 +11,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Shield } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -33,18 +33,18 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const { login, signup, user } = useAuth();
+  const { login, signup, user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // Redirect if already logged in
+  // Redirect if already logged in as operator
   React.useEffect(() => {
-    if (user) {
+    if (user && !isAdmin()) {
       navigate(from, { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, isAdmin, navigate, from]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -106,6 +106,14 @@ const Login = () => {
     setIsSubmitting(false);
   };
 
+  const handleSwitchToAdminLogin = async () => {
+    // If user is logged in as admin, log them out first
+    if (user && isAdmin()) {
+      await logout();
+    }
+    navigate('/admin/login');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -116,9 +124,32 @@ const Login = () => {
             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to SafariGuide AI
+            Back to SafiriSmart
           </Link>
         </div>
+
+        {/* Show different content if user is logged in as admin */}
+        {user && isAdmin() && (
+          <Card className="border-2 border-blue-200 mb-6">
+            <CardContent className="pt-6">
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  You are currently logged in as an admin ({user.email}). 
+                  To access the operator portal, you need to log out and sign in with operator credentials.
+                </AlertDescription>
+              </Alert>
+              <div className="mt-4 flex gap-2">
+                <Button onClick={handleSwitchToAdminLogin} variant="outline" className="flex-1">
+                  Switch to Admin Login
+                </Button>
+                <Button onClick={logout} variant="outline" className="flex-1">
+                  Logout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className="text-center">
@@ -282,12 +313,12 @@ const Login = () => {
             </Tabs>
 
             <div className="mt-4 text-center">
-              <Link 
-                to="/admin/login" 
-                className="text-sm text-gray-600 hover:text-gray-900"
+              <button 
+                onClick={handleSwitchToAdminLogin}
+                className="text-sm text-gray-600 hover:text-gray-900 underline"
               >
                 Admin Login →
-              </Link>
+              </button>
             </div>
           </CardContent>
         </Card>

@@ -22,36 +22,59 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const AdminLogin = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { login, user } = useAuth();
+  const { login, user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const from = location.state?.from?.pathname || '/admin/dashboard';
 
-  // Redirect if already logged in
+  // If user is already logged in and is an admin, redirect to admin dashboard
   React.useEffect(() => {
-    if (user) {
-      navigate(from, { replace: true });
+    if (user && isAdmin()) {
+      navigate('/admin/dashboard', { replace: true });
     }
-  }, [user, navigate, from]);
+  }, [user, isAdmin, navigate]);
 
   const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onLogin = async (data: LoginFormData) => {
+    console.log('🎯 AdminLogin.tsx: onLogin called with:', {
+      email: data.email,
+      expectedRole: 'admin',
+      timestamp: new Date().toISOString()
+    });
+    
     setIsSubmitting(true);
     setError(null);
 
+    // EXPLICITLY call login with 'admin' role
     const result = await login(data.email, data.password, 'admin');
 
+    console.log('📋 AdminLogin.tsx: Login result:', {
+      success: result.success,
+      error: result.error,
+      timestamp: new Date().toISOString()
+    });
+
     if (result.success) {
+      console.log('✅ AdminLogin.tsx: Admin login successful, navigating to:', from);
       navigate(from, { replace: true });
     } else {
+      console.error('❌ AdminLogin.tsx: Admin login failed:', result.error);
       setError(result.error || 'Login failed');
     }
 
     setIsSubmitting(false);
+  };
+
+  const handleSwitchToOperatorLogin = async () => {
+    // If user is logged in as operator, log them out first
+    if (user && !isAdmin()) {
+      await logout();
+    }
+    navigate('/login');
   };
 
   return (
@@ -64,9 +87,32 @@ const AdminLogin = () => {
             className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
-            Back to SafariGuide AI
+            Back to SafiriSmart
           </Link>
         </div>
+
+        {/* Show different content if user is logged in as operator */}
+        {user && !isAdmin() && (
+          <Card className="border-2 border-yellow-200 mb-6">
+            <CardContent className="pt-6">
+              <Alert>
+                <Shield className="h-4 w-4" />
+                <AlertDescription>
+                  You are currently logged in as an operator ({user.email}). 
+                  To access the admin portal, you need to log out and sign in with admin credentials.
+                </AlertDescription>
+              </Alert>
+              <div className="mt-4 flex gap-2">
+                <Button onClick={handleSwitchToOperatorLogin} variant="outline" className="flex-1">
+                  Switch to Operator Login
+                </Button>
+                <Button onClick={logout} variant="outline" className="flex-1">
+                  Logout
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="border-2 border-red-200">
           <CardHeader className="text-center bg-gradient-to-r from-red-600 to-orange-600 text-white rounded-t-lg">
@@ -134,12 +180,12 @@ const AdminLogin = () => {
             </form>
 
             <div className="mt-4 text-center">
-              <Link 
-                to="/login" 
-                className="text-sm text-gray-600 hover:text-gray-900"
+              <button 
+                onClick={handleSwitchToOperatorLogin}
+                className="text-sm text-gray-600 hover:text-gray-900 underline"
               >
                 Operator Login →
-              </Link>
+              </button>
             </div>
           </CardContent>
         </Card>
