@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminService } from '@/services/AdminService';
-import { Shield, Users, Settings, BarChart3, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { Shield, Users, Settings, BarChart3, Eye, Edit } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
+import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
+import { toast } from 'sonner';
 
 type Operator = Tables<'operators'>;
 
@@ -15,6 +17,7 @@ const AdminDashboard = () => {
   const [operators, setOperators] = useState<Operator[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Fetch operators data
   useEffect(() => {
@@ -52,12 +55,41 @@ const AdminDashboard = () => {
               : op
           )
         );
+        toast.success(`Operator ${!currentStatus ? 'activated' : 'deactivated'} successfully`);
       } else {
         setError(result.errors?.join(', ') || 'Failed to update operator status');
+        toast.error('Failed to update operator status');
       }
     } catch (err) {
       setError('An unexpected error occurred while updating operator status');
       console.error('Error updating operator status:', err);
+      toast.error('An unexpected error occurred');
+    }
+  };
+
+  const handleCreateOperator = async (operatorData: any) => {
+    try {
+      const result = await adminService.createOperator(operatorData);
+      
+      if (result.success) {
+        // Add the new operator to the local state
+        setOperators(prev => [result.data, ...prev]);
+        toast.success('Operator created successfully!');
+        
+        // Show temporary password if provided
+        if (result.data.temporary_password) {
+          toast.info(`Temporary password: ${result.data.temporary_password}`, {
+            duration: 10000,
+          });
+        }
+      } else {
+        const errorMessage = result.errors?.join(', ') || 'Failed to create operator';
+        toast.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+    } catch (err) {
+      console.error('Error creating operator:', err);
+      throw err; // Re-throw to let the dialog handle the error
     }
   };
 
@@ -153,10 +185,11 @@ const AdminDashboard = () => {
                     Manage tour operators, approve registrations, and view operator details
                   </CardDescription>
                 </div>
-                <Button className="flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  Add Operator
-                </Button>
+                <CreateOperatorDialog
+                  open={isCreateDialogOpen}
+                  onOpenChange={setIsCreateDialogOpen}
+                  onCreateOperator={handleCreateOperator}
+                />
               </div>
             </CardHeader>
             <CardContent>

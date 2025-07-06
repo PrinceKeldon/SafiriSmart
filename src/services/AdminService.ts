@@ -16,10 +16,9 @@ type OperatorUpdate = TablesUpdate<'operators'>;
 class AdminService {
   async getOperators(): Promise<ApiResponse<Operator[]>> {
     try {
-      const { data, error } = await supabase
-        .from('operators')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.functions.invoke('admin-operators', {
+        method: 'GET'
+      });
 
       if (error) {
         console.error('Error fetching operators:', error);
@@ -30,15 +29,45 @@ class AdminService {
         };
       }
 
-      return {
-        success: true,
-        data: data || []
-      };
+      return data;
     } catch (error) {
       console.error('Unexpected error fetching operators:', error);
       return {
         success: false,
         data: [],
+        errors: ['An unexpected error occurred']
+      };
+    }
+  }
+
+  async createOperator(operatorData: {
+    name: string;
+    email: string;
+    company: string;
+    specializations?: string[];
+    role?: string;
+  }): Promise<ApiResponse<Operator & { temporary_password?: string }>> {
+    try {
+      const { data, error } = await supabase.functions.invoke('admin-operators', {
+        method: 'POST',
+        body: JSON.stringify(operatorData)
+      });
+
+      if (error) {
+        console.error('Error creating operator:', error);
+        return {
+          success: false,
+          data: {} as Operator & { temporary_password?: string },
+          errors: [error.message]
+        };
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Unexpected error creating operator:', error);
+      return {
+        success: false,
+        data: {} as Operator & { temporary_password?: string },
         errors: ['An unexpected error occurred']
       };
     }
@@ -70,59 +99,6 @@ class AdminService {
       return {
         success: false,
         data: null,
-        errors: ['An unexpected error occurred']
-      };
-    }
-  }
-
-  async createOperator(operatorData: {
-    name: string;
-    email: string;
-    company: string;
-    specializations?: string[];
-    password?: string;
-  }): Promise<ApiResponse<Operator & { temporary_password?: string }>> {
-    try {
-      // Generate a temporary password if not provided
-      const temporaryPassword = operatorData.password || Math.random().toString(36).slice(-8);
-
-      const newOperatorData = {
-        name: operatorData.name,
-        email: operatorData.email,
-        company: operatorData.company,
-        password_hash: temporaryPassword, // Store plain text for demo - in production use proper hashing
-        specializations: operatorData.specializations || [],
-        role: 'operator',
-        is_active: true
-      };
-
-      const { data, error } = await supabase
-        .from('operators')
-        .insert([newOperatorData])
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating operator:', error);
-        return {
-          success: false,
-          data: {} as Operator & { temporary_password?: string },
-          errors: [error.message]
-        };
-      }
-
-      return {
-        success: true,
-        data: {
-          ...data,
-          temporary_password: temporaryPassword
-        }
-      };
-    } catch (error) {
-      console.error('Unexpected error creating operator:', error);
-      return {
-        success: false,
-        data: {} as Operator & { temporary_password?: string },
         errors: ['An unexpected error occurred']
       };
     }
