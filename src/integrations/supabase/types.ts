@@ -48,6 +48,42 @@ export type Database = {
           },
         ]
       }
+      lead_selected_packages: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          package_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          package_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          package_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_selected_packages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_selected_packages_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "operator_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_visibility: {
         Row: {
           created_at: string
@@ -93,6 +129,7 @@ export type Database = {
           preferences: Json
           quoted_currency: string | null
           quoted_price: number | null
+          selection_type: string | null
           status: string
           todo_checklist: Json | null
           traveler_country: string | null
@@ -109,6 +146,7 @@ export type Database = {
           preferences: Json
           quoted_currency?: string | null
           quoted_price?: number | null
+          selection_type?: string | null
           status?: string
           todo_checklist?: Json | null
           traveler_country?: string | null
@@ -125,6 +163,7 @@ export type Database = {
           preferences?: Json
           quoted_currency?: string | null
           quoted_price?: number | null
+          selection_type?: string | null
           status?: string
           todo_checklist?: Json | null
           traveler_country?: string | null

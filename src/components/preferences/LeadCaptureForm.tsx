@@ -4,238 +4,190 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Mail, Phone, User, MessageCircle, ArrowLeft, Send, Loader2 } from 'lucide-react';
-import { TravelPreferences, TourOutput } from './WizardTypes';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { b2cApiService } from '@/services/B2CApiService';
 
 interface LeadCaptureFormProps {
-  itinerary: TourOutput;
-  preferences: TravelPreferences;
-  onBackToPreferences: () => void;
+  preferences: any;
+  schedule: any;
+  travel: any;
+  dietary: any;
+  selectedPackages: string[];
+  itinerary?: any;
+  onComplete: (result: any) => void;
+  onBack: () => void;
 }
 
-export const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({ itinerary, preferences, onBackToPreferences }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState('');
-  const [message, setMessage] = useState('');
-  const [subscribe, setSubscribe] = useState(false);
+const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
+  preferences,
+  schedule,
+  travel,
+  dietary,
+  selectedPackages,
+  itinerary,
+  onComplete,
+  onBack
+}) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    country: ''
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmissionStatus('idle');
-    setErrorMessage('');
-
-    // Basic form validation
-    if (!name || !email) {
-      setSubmissionStatus('error');
-      setErrorMessage('Please fill in your name and email.');
-      setIsSubmitting(false);
+    
+    if (!formData.name || !formData.email) {
+      toast.error('Please fill in all required fields');
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
-      console.log('Submitting lead to B2B Backend...');
-      
       const leadData = {
         traveler: {
-          name: name.trim(),
-          email: email.trim(),
-          phone: phone.trim() || undefined,
-          country: country.trim() || undefined,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || undefined,
+          country: formData.country || undefined
         },
         preferences: {
-          duration: preferences.duration,
-          budgetRange: preferences.budgetRange,
-          interests: preferences.interests,
-          groupSize: preferences.groupSize,
-          travelPace: preferences.travelPace,
-          languages: preferences.languages,
+          ...preferences,
+          selectedPackages: selectedPackages.length > 0 ? selectedPackages : undefined
         },
-        schedule: preferences.schedule,
-        travel: preferences.travel,
-        dietary: preferences.dietary,
-        itinerary: itinerary,
-        additionalNotes: message.trim() || undefined,
-        marketingConsent: subscribe,
+        schedule,
+        travel,
+        dietary,
+        itinerary
       };
 
-      const response = await b2cApiService.createLead(leadData);
+      console.log('Submitting lead with selected packages:', selectedPackages);
+
+      const result = await b2cApiService.createLead(leadData);
       
-      console.log('Lead created successfully:', response);
-      setSubmissionStatus('success');
-      
-      // Reset form fields
-      setName('');
-      setEmail('');
-      setPhone('');
-      setCountry('');
-      setMessage('');
-      setSubscribe(false);
+      toast.success('Your safari inquiry has been submitted successfully!');
+      onComplete(result);
       
     } catch (error) {
-      console.error('Lead submission error:', error);
-      setSubmissionStatus('error');
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to submit your inquiry. Please try again.');
+      console.error('Error submitting lead:', error);
+      toast.error('Failed to submit your inquiry. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card className="max-w-2xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-2xl font-bold">
-          Let's Start Planning!
-        </CardTitle>
-        <Button variant="outline" size="icon" onClick={onBackToPreferences}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-      </CardHeader>
-      <CardContent>
-        {submissionStatus === 'success' ? (
-          <div className="text-center p-6">
-            <h4 className="text-xl font-semibold text-green-600 mb-4">
-              Thank You!
-            </h4>
-            <p className="text-gray-600 mb-4">
-              We've received your safari inquiry and will be in touch soon to discuss your adventure.
-            </p>
-            <p className="text-sm text-gray-500">
-              A safari expert will contact you within 24 hours to customize your {preferences.duration}-day {itinerary.tour_name}.
-            </p>
-          </div>
-        ) : (
+    <div className="max-w-2xl mx-auto">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-center">
+            {selectedPackages.length > 0 
+              ? `Complete Your Request - ${selectedPackages.length} Package${selectedPackages.length !== 1 ? 's' : ''} Selected`
+              : 'Complete Your Safari Request'
+            }
+          </CardTitle>
+          <p className="text-center text-gray-600">
+            {selectedPackages.length > 0
+              ? 'Your selected operators will receive your customized inquiry directly.'
+              : 'We\'ll match you with the best safari operators for your needs.'
+            }
+          </p>
+        </CardHeader>
+        <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-sm font-medium block mb-2">
-                Your Name *
-              </Label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="text"
-                  id="name"
-                  placeholder="John Doe"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="email" className="text-sm font-medium block mb-2">
-                Your Email *
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="email"
-                  id="email"
-                  placeholder="john.doe@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="phone" className="text-sm font-medium block mb-2">
-                Phone Number (Optional)
-              </Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <Input
-                  type="tel"
-                  id="phone"
-                  placeholder="+1234567890"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <Label htmlFor="country" className="text-sm font-medium block mb-2">
-                Country (Optional)
-              </Label>
+              <Label htmlFor="name">Full Name *</Label>
               <Input
+                id="name"
                 type="text"
-                id="country"
-                placeholder="United States"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
+                placeholder="Enter your full name"
+                required
               />
             </div>
-            
+
             <div>
-              <Label htmlFor="message" className="text-sm font-medium block mb-2">
-                Additional Notes
-              </Label>
-              <div className="relative">
-                <MessageCircle className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                <Textarea
-                  id="message"
-                  placeholder="Anything else we should know about your safari preferences?"
-                  rows={4}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="subscribe"
-                checked={subscribe}
-                onCheckedChange={(checked) => setSubscribe(!!checked)}
+              <Label htmlFor="email">Email Address *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="Enter your email address"
+                required
               />
-              <Label htmlFor="subscribe" className="text-sm font-medium cursor-pointer">
-                Subscribe to our newsletter for safari tips and exclusive offers
-              </Label>
             </div>
-            
+
             <div>
-              <Button disabled={isSubmitting} className="w-full">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
+                placeholder="Enter your phone number"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="country">Country</Label>
+              <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your country" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="US">United States</SelectItem>
+                  <SelectItem value="UK">United Kingdom</SelectItem>
+                  <SelectItem value="CA">Canada</SelectItem>
+                  <SelectItem value="AU">Australia</SelectItem>
+                  <SelectItem value="DE">Germany</SelectItem>
+                  <SelectItem value="FR">France</SelectItem>
+                  <SelectItem value="KE">Kenya</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex justify-between pt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onBack}
+                disabled={isSubmitting}
+              >
+                Back
+              </Button>
+              
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting Inquiry...
+                    Submitting...
                   </>
                 ) : (
-                  <>
-                    Send Safari Inquiry
-                    <Send className="ml-2 h-4 w-4" />
-                  </>
+                  'Submit Safari Request'
                 )}
               </Button>
-              
-              {submissionStatus === 'error' && (
-                <p className="text-sm text-red-500 mt-2">
-                  {errorMessage}
-                </p>
-              )}
-            </div>
-            
-            <div className="text-xs text-gray-500 text-center">
-              By submitting this form, you agree to be contacted by our safari experts regarding your inquiry.
             </div>
           </form>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
+
+export default LeadCaptureForm;

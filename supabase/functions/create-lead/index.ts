@@ -35,6 +35,12 @@ serve(async (req) => {
       throw new Error('Preferences are required');
     }
 
+    // Check if user selected specific packages
+    const selectedPackages = preferences.selectedPackages || [];
+    const selectionType = selectedPackages.length > 0 ? 'user_selected' : 'system_matched';
+
+    console.log('Selection type:', selectionType, 'Selected packages:', selectedPackages);
+
     // Process dates properly
     const processedSchedule = schedule ? {
       startDate: schedule.startDate ? new Date(schedule.startDate).toISOString() : null,
@@ -78,6 +84,8 @@ serve(async (req) => {
         specialRequirements: dietary?.specialRequirements || null
       },
       languages: preferences?.languages || ['English'],
+      selectionType,
+      selectedPackages: selectedPackages,
       days: Array.from({ length: preferences.duration }, (_, i) => ({
         day: i + 1,
         location: i === 0 ? (travel?.portOfEntry || 'Safari Location') : 'Safari Location',
@@ -119,7 +127,7 @@ serve(async (req) => {
 
     console.log('Inserting lead into database...');
 
-    // Insert the lead into Supabase with status 'unclaimed' and no assigned operator
+    // Insert the lead into Supabase with selection type
     const { data: leadData, error } = await supabaseClient
       .from('leads')
       .insert({
@@ -131,6 +139,7 @@ serve(async (req) => {
         itinerary: mockItinerary,
         status: 'unclaimed',
         assigned_operator_id: null,
+        selection_type: selectionType,
         todo_checklist: []
       })
       .select()
@@ -143,83 +152,121 @@ serve(async (req) => {
 
     console.log('Lead created successfully:', leadData);
 
-    // Now perform intelligent matching to find best operators
-    console.log('Starting intelligent operator matching...');
-    
-    const { data: operators, error: operatorsError } = await supabaseClient
-      .from('operators')
-      .select('id, services_offered, destinations_covered')
-      .eq('is_active', true);
+    let targetOperators: string[] = [];
 
-    if (operatorsError) {
-      console.error('Error fetching operators:', operatorsError);
-      // Don't fail the whole request, just log the error
-    } else if (operators && operators.length > 0) {
-      // Intelligent matching algorithm
-      const interests = enhancedPreferences.interests || [];
-      const destinations = extractDestinationsFromItinerary(mockItinerary);
+    if (selectionType === 'user_selected' && selectedPackages.length > 0) {
+      // User selected specific packages - get operators for those packages
+      console.log('Processing user-selected packages...');
       
-      console.log('Matching criteria:', { interests, destinations });
-      
-      const operatorScores = operators.map(operator => {
-        let score = 0;
-        const services = operator.services_offered || [];
-        const covered_destinations = operator.destinations_covered || [];
-        
-        // Score based on matching interests with services
-        for (const interest of interests) {
-          for (const service of services) {
-            if (interest.toLowerCase().includes(service.toLowerCase()) || 
-                service.toLowerCase().includes(interest.toLowerCase())) {
-              score += 2;
-            }
-          }
-        }
-        
-        // Score based on matching destinations
-        for (const destination of destinations) {
-          for (const covered of covered_destinations) {
-            if (destination.toLowerCase().includes(covered.toLowerCase()) || 
-                covered.toLowerCase().includes(destination.toLowerCase())) {
-              score += 3;
-            }
-          }
-        }
-        
-        return { operator_id: operator.id, score };
-      });
+      const { data: packages, error: packagesError } = await supabaseClient
+        .from('operator_packages')
+        .select('operator_id')
+        .in('id', selectedPackages);
 
-      // Sort by score and take top 3-5 operators
-      const topOperators = operatorScores
-        .filter(op => op.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5)
-        .map(op => op.operator_id);
+      if (packagesError) {
+        console.error('Error fetching selected packages:', packagesError);
+        // Don't fail the whole request, fall back to system matching
+      } else if (packages && packages.length > 0) {
+        targetOperators = [...new Set(packages.map(p => p.operator_id))];
+        console.log('Target operators from selected packages:', targetOperators);
 
-      console.log('Top matched operators:', topOperators);
-
-      // If no operators scored, fall back to first few active operators
-      const selectedOperators = topOperators.length > 0 
-        ? topOperators 
-        : operators.slice(0, 3).map(op => op.id);
-
-      // Insert into lead_visibility table
-      if (selectedOperators.length > 0) {
-        const visibilityEntries = selectedOperators.map(operatorId => ({
+        // Insert selected packages into lead_selected_packages table
+        const packageEntries = selectedPackages.map(packageId => ({
           lead_id: leadData.id,
-          operator_id: operatorId
+          package_id: packageId
         }));
 
-        const { error: visibilityError } = await supabaseClient
-          .from('lead_visibility')
-          .insert(visibilityEntries);
+        const { error: selectedPackagesError } = await supabaseClient
+          .from('lead_selected_packages')
+          .insert(packageEntries);
 
-        if (visibilityError) {
-          console.error('Error creating lead visibility entries:', visibilityError);
+        if (selectedPackagesError) {
+          console.error('Error creating selected packages entries:', selectedPackagesError);
           // Don't fail the whole request
         } else {
-          console.log(`Lead visibility created for ${selectedOperators.length} operators`);
+          console.log(`Created ${packageEntries.length} selected package entries`);
         }
+      }
+    }
+
+    // If no target operators from user selection, fall back to intelligent matching
+    if (targetOperators.length === 0) {
+      console.log('Falling back to intelligent operator matching...');
+      
+      const { data: operators, error: operatorsError } = await supabaseClient
+        .from('operators')
+        .select('id, services_offered, destinations_covered')
+        .eq('is_active', true);
+
+      if (operatorsError) {
+        console.error('Error fetching operators:', operatorsError);
+      } else if (operators && operators.length > 0) {
+        // Intelligent matching algorithm
+        const interests = enhancedPreferences.interests || [];
+        const destinations = extractDestinationsFromItinerary(mockItinerary);
+        
+        console.log('Matching criteria:', { interests, destinations });
+        
+        const operatorScores = operators.map(operator => {
+          let score = 0;
+          const services = operator.services_offered || [];
+          const covered_destinations = operator.destinations_covered || [];
+          
+          // Score based on matching interests with services
+          for (const interest of interests) {
+            for (const service of services) {
+              if (interest.toLowerCase().includes(service.toLowerCase()) || 
+                  service.toLowerCase().includes(interest.toLowerCase())) {
+                score += 2;
+              }
+            }
+          }
+          
+          // Score based on matching destinations
+          for (const destination of destinations) {
+            for (const covered of covered_destinations) {
+              if (destination.toLowerCase().includes(covered.toLowerCase()) || 
+                  covered.toLowerCase().includes(destination.toLowerCase())) {
+                score += 3;
+              }
+            }
+          }
+          
+          return { operator_id: operator.id, score };
+        });
+
+        // Sort by score and take top 3-5 operators
+        const topOperators = operatorScores
+          .filter(op => op.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5)
+          .map(op => op.operator_id);
+
+        console.log('Top matched operators:', topOperators);
+
+        // If no operators scored, fall back to first few active operators
+        targetOperators = topOperators.length > 0 
+          ? topOperators 
+          : operators.slice(0, 3).map(op => op.id);
+      }
+    }
+
+    // Insert into lead_visibility table for target operators
+    if (targetOperators.length > 0) {
+      const visibilityEntries = targetOperators.map(operatorId => ({
+        lead_id: leadData.id,
+        operator_id: operatorId
+      }));
+
+      const { error: visibilityError } = await supabaseClient
+        .from('lead_visibility')
+        .insert(visibilityEntries);
+
+      if (visibilityError) {
+        console.error('Error creating lead visibility entries:', visibilityError);
+        // Don't fail the whole request
+      } else {
+        console.log(`Lead visibility created for ${targetOperators.length} operators`);
       }
     }
 
@@ -229,9 +276,11 @@ serve(async (req) => {
         data: {
           lead_id: leadData.id,
           status: leadData.status,
+          selection_type: selectionType,
+          operators_notified: targetOperators.length,
           assigned_operator: null
         },
-        message: 'Lead created successfully and matched to operators'
+        message: `Lead created successfully and ${selectionType === 'user_selected' ? 'sent to selected' : 'matched to'} operators`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
