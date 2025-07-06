@@ -59,7 +59,12 @@ export const usePackageFilters = (packages: OperatorPackage[]) => {
     });
   }, [packages, searchTerm, budgetFilter, durationFilter, locationFilter]);
 
-  const hasActiveFilters = searchTerm || budgetFilter !== 'all' || durationFilter !== 'all' || locationFilter !== 'all';
+  const hasActiveFilters = Boolean(
+    searchTerm || 
+    budgetFilter !== 'all' || 
+    durationFilter !== 'all' || 
+    locationFilter !== 'all'
+  );
 
   const clearFilters = () => {
     setSearchTerm('');
