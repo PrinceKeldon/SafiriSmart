@@ -1,196 +1,148 @@
 
 import React from 'react';
-import { Search, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Search, Filter, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Label } from '@/components/ui/label';
-import { PackageFilters, usePackageFilters } from '../hooks/usePackageFilters';
-import { POPULAR_LOCATIONS, POPULAR_ACTIVITIES } from '../constants/PackageFormConstants';
 
 interface PackageFiltersProps {
-  filters: PackageFilters;
-  onUpdateFilter: (key: keyof PackageFilters, value: any) => void;
+  searchTerm: string;
+  onSearchChange: (term: string) => void;
+  budgetFilter: string;
+  onBudgetFilterChange: (budget: string) => void;
+  durationFilter: string;
+  onDurationFilterChange: (duration: string) => void;
+  locationFilter: string;
+  onLocationFilterChange: (location: string) => void;
   onClearFilters: () => void;
   hasActiveFilters: boolean;
 }
 
-export const PackageFiltersComponent: React.FC<PackageFiltersProps> = ({
-  filters,
-  onUpdateFilter,
+export const PackageFilters: React.FC<PackageFiltersProps> = ({
+  searchTerm,
+  onSearchChange,
+  budgetFilter,
+  onBudgetFilterChange,
+  durationFilter,
+  onDurationFilterChange,
+  locationFilter,
+  onLocationFilterChange,
   onClearFilters,
   hasActiveFilters,
 }) => {
-  const handleLocationChange = (location: string, checked: boolean) => {
-    const updatedLocations = checked
-      ? [...filters.includedLocations, location]
-      : filters.includedLocations.filter(loc => loc !== location);
-    onUpdateFilter('includedLocations', updatedLocations);
-  };
-
-  const handleActivityChange = (activity: string, checked: boolean) => {
-    const updatedActivities = checked
-      ? [...filters.includedActivities, activity]
-      : filters.includedActivities.filter(act => act !== activity);
-    onUpdateFilter('includedActivities', updatedActivities);
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="flex items-center space-x-2">
-            <Filter className="w-4 h-4" />
-            <span>Filter Packages</span>
-          </CardTitle>
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onClearFilters}
-              className="flex items-center space-x-2"
-            >
-              <X className="w-4 h-4" />
-              <span>Clear Filters</span>
-            </Button>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {/* Search */}
-        <div>
-          <Label htmlFor="search">Search Packages</Label>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              id="search"
-              placeholder="Search by name or description..."
-              value={filters.search}
-              onChange={(e) => onUpdateFilter('search', e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
-
-        {/* Budget Tier */}
-        <div>
-          <Label>Budget Tier</Label>
-          <Select
-            value={filters.budgetTier}
-            onValueChange={(value) => onUpdateFilter('budgetTier', value === 'all' ? '' : value)}
+    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+      <div className="flex items-center space-x-2">
+        <Filter className="w-4 h-4 text-gray-500" />
+        <h3 className="font-medium text-gray-900">Filters</h3>
+        {hasActiveFilters && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClearFilters}
+            className="text-gray-500 hover:text-gray-700"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="All budget tiers" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Budget Tiers</SelectItem>
-              <SelectItem value="budget">Budget</SelectItem>
-              <SelectItem value="mid-range">Mid-range</SelectItem>
-              <SelectItem value="luxury">Luxury</SelectItem>
-            </SelectContent>
-          </Select>
+            <X className="w-4 h-4 mr-1" />
+            Clear All
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Search packages..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
-        {/* Duration Range */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label htmlFor="minDuration">Min Duration (days)</Label>
-            <Input
-              id="minDuration"
-              type="number"
-              min="1"
-              placeholder="Min days"
-              value={filters.minDuration || ''}
-              onChange={(e) => onUpdateFilter('minDuration', e.target.value ? parseInt(e.target.value) : null)}
-            />
-          </div>
-          <div>
-            <Label htmlFor="maxDuration">Max Duration (days)</Label>
-            <Input
-              id="maxDuration"
-              type="number"
-              min="1"
-              placeholder="Max days"
-              value={filters.maxDuration || ''}
-              onChange={(e) => onUpdateFilter('maxDuration', e.target.value ? parseInt(e.target.value) : null)}
-            />
-          </div>
-        </div>
+        <Select value={budgetFilter} onValueChange={onBudgetFilterChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Budget Tier" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Budget Tiers</SelectItem>
+            <SelectItem value="budget">Budget</SelectItem>
+            <SelectItem value="mid-range">Mid-range</SelectItem>
+            <SelectItem value="luxury">Luxury</SelectItem>
+          </SelectContent>
+        </Select>
 
-        {/* Included Locations */}
-        <div>
-          <Label>Included Locations</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto">
-            {POPULAR_LOCATIONS.map((location) => (
-              <div key={location} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`location-${location}`}
-                  checked={filters.includedLocations.includes(location)}
-                  onCheckedChange={(checked) => handleLocationChange(location, !!checked)}
-                />
-                <Label
-                  htmlFor={`location-${location}`}
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  {location}
-                </Label>
-              </div>
-            ))}
-          </div>
-          {filters.includedLocations.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {filters.includedLocations.map((location) => (
-                <Badge key={location} variant="secondary" className="text-xs">
-                  {location}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() => handleLocationChange(location, false)}
-                  />
-                </Badge>
-              ))}
-            </div>
+        <Select value={durationFilter} onValueChange={onDurationFilterChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Duration" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Durations</SelectItem>
+            <SelectItem value="1-3">1-3 days</SelectItem>
+            <SelectItem value="4-7">4-7 days</SelectItem>
+            <SelectItem value="8-14">8-14 days</SelectItem>
+            <SelectItem value="15+">15+ days</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={locationFilter} onValueChange={onLocationFilterChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            <SelectItem value="Nairobi">Nairobi</SelectItem>
+            <SelectItem value="Masai Mara">Masai Mara</SelectItem>
+            <SelectItem value="Amboseli">Amboseli</SelectItem>
+            <SelectItem value="Tsavo">Tsavo</SelectItem>
+            <SelectItem value="Samburu">Samburu</SelectItem>
+            <SelectItem value="Lake Nakuru">Lake Nakuru</SelectItem>
+            <SelectItem value="Mombasa">Mombasa</SelectItem>
+            <SelectItem value="Diani Beach">Diani Beach</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {hasActiveFilters && (
+        <div className="flex flex-wrap gap-2">
+          {searchTerm && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Search: {searchTerm}
+              <X 
+                className="w-3 h-3 cursor-pointer hover:text-red-500" 
+                onClick={() => onSearchChange('')}
+              />
+            </Badge>
+          )}
+          {budgetFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Budget: {budgetFilter}
+              <X 
+                className="w-3 h-3 cursor-pointer hover:text-red-500" 
+                onClick={() => onBudgetFilterChange('all')}
+              />
+            </Badge>
+          )}
+          {durationFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Duration: {durationFilter} days
+              <X 
+                className="w-3 h-3 cursor-pointer hover:text-red-500" 
+                onClick={() => onDurationFilterChange('all')}
+              />
+            </Badge>
+          )}
+          {locationFilter !== 'all' && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              Location: {locationFilter}
+              <X 
+                className="w-3 h-3 cursor-pointer hover:text-red-500" 
+                onClick={() => onLocationFilterChange('all')}
+              />
+            </Badge>
           )}
         </div>
-
-        {/* Included Activities */}
-        <div>
-          <Label>Included Activities</Label>
-          <div className="grid grid-cols-2 gap-2 mt-2 max-h-40 overflow-y-auto">
-            {POPULAR_ACTIVITIES.map((activity) => (
-              <div key={activity} className="flex items-center space-x-2">
-                <Checkbox
-                  id={`activity-${activity}`}
-                  checked={filters.includedActivities.includes(activity)}
-                  onCheckedChange={(checked) => handleActivityChange(activity, !!checked)}
-                />
-                <Label
-                  htmlFor={`activity-${activity}`}
-                  className="text-sm font-normal cursor-pointer"
-                >
-                  {activity}
-                </Label>
-              </div>
-            ))}
-          </div>
-          {filters.includedActivities.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {filters.includedActivities.map((activity) => (
-                <Badge key={activity} variant="secondary" className="text-xs">
-                  {activity}
-                  <X
-                    className="w-3 h-3 ml-1 cursor-pointer"
-                    onClick={() => handleActivityChange(activity, false)}
-                  />
-                </Badge>
-              ))}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 };

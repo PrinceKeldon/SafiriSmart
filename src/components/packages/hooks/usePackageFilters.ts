@@ -2,89 +2,83 @@
 import { useState, useMemo } from 'react';
 import { OperatorPackage } from '@/types/operator';
 
-export interface PackageFilters {
-  search: string;
-  budgetTier: string;
-  minDuration: number | null;
-  maxDuration: number | null;
-  includedLocations: string[];
-  includedActivities: string[];
-}
-
-const initialFilters: PackageFilters = {
-  search: '',
-  budgetTier: '',
-  minDuration: null,
-  maxDuration: null,
-  includedLocations: [],
-  includedActivities: [],
-};
-
 export const usePackageFilters = (packages: OperatorPackage[]) => {
-  const [filters, setFilters] = useState<PackageFilters>(initialFilters);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [budgetFilter, setBudgetFilter] = useState('all');
+  const [durationFilter, setDurationFilter] = useState('all');
+  const [locationFilter, setLocationFilter] = useState('all');
 
   const filteredPackages = useMemo(() => {
     return packages.filter((pkg) => {
       // Search filter
-      if (filters.search) {
-        const searchTerm = filters.search.toLowerCase();
-        const matchesName = pkg.package_name?.toLowerCase().includes(searchTerm);
-        const matchesDescription = pkg.description?.toLowerCase().includes(searchTerm);
-        if (!matchesName && !matchesDescription) return false;
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesSearch = 
+          pkg.package_name?.toLowerCase().includes(searchLower) ||
+          pkg.description?.toLowerCase().includes(searchLower);
+        if (!matchesSearch) return false;
       }
 
-      // Budget tier filter
-      if (filters.budgetTier && pkg.budget_tier !== filters.budgetTier) {
+      // Budget filter
+      if (budgetFilter !== 'all' && pkg.budget_tier !== budgetFilter) {
         return false;
       }
 
-      // Duration filters
-      if (filters.minDuration !== null && pkg.min_duration < filters.minDuration) {
-        return false;
-      }
-      if (filters.maxDuration !== null && pkg.max_duration > filters.maxDuration) {
-        return false;
+      // Duration filter
+      if (durationFilter !== 'all') {
+        const minDuration = pkg.min_duration || 1;
+        const maxDuration = pkg.max_duration || 1;
+        
+        switch (durationFilter) {
+          case '1-3':
+            if (maxDuration > 3) return false;
+            break;
+          case '4-7':
+            if (minDuration > 7 || maxDuration < 4) return false;
+            break;
+          case '8-14':
+            if (minDuration > 14 || maxDuration < 8) return false;
+            break;
+          case '15+':
+            if (maxDuration < 15) return false;
+            break;
+        }
       }
 
       // Location filter
-      if (filters.includedLocations.length > 0) {
-        const hasMatchingLocation = filters.includedLocations.some(location =>
-          pkg.included_locations?.includes(location)
-        );
-        if (!hasMatchingLocation) return false;
-      }
-
-      // Activity filter
-      if (filters.includedActivities.length > 0) {
-        const hasMatchingActivity = filters.includedActivities.some(activity =>
-          pkg.included_activities?.includes(activity)
-        );
-        if (!hasMatchingActivity) return false;
+      if (locationFilter !== 'all') {
+        const locations = pkg.included_locations || [];
+        if (!locations.some(location => 
+          location.toLowerCase().includes(locationFilter.toLowerCase())
+        )) {
+          return false;
+        }
       }
 
       return true;
     });
-  }, [packages, filters]);
+  }, [packages, searchTerm, budgetFilter, durationFilter, locationFilter]);
 
-  const updateFilter = (key: keyof PackageFilters, value: any) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
+  const hasActiveFilters = searchTerm || budgetFilter !== 'all' || durationFilter !== 'all' || locationFilter !== 'all';
 
   const clearFilters = () => {
-    setFilters(initialFilters);
+    setSearchTerm('');
+    setBudgetFilter('all');
+    setDurationFilter('all');
+    setLocationFilter('all');
   };
 
-  const hasActiveFilters = Object.values(filters).some(value => {
-    if (Array.isArray(value)) return value.length > 0;
-    if (typeof value === 'string') return value !== '';
-    return value !== null;
-  });
-
   return {
-    filters,
+    searchTerm,
+    setSearchTerm,
+    budgetFilter,
+    setBudgetFilter,
+    durationFilter,
+    setDurationFilter,
+    locationFilter,
+    setLocationFilter,
     filteredPackages,
-    updateFilter,
-    clearFilters,
     hasActiveFilters,
+    clearFilters,
   };
 };

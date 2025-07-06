@@ -51,7 +51,7 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-r">
+    <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-64 z-10">
       <div className="flex flex-col h-full">
         <div className="p-6">
           <h2 className="text-xl font-bold text-gray-900">TourMaster AI</h2>

@@ -12,7 +12,7 @@ import Login from '@/pages/Login';
 import AdminLogin from '@/pages/AdminLogin';
 import Dashboard from '@/pages/Dashboard';
 import NoticeBoard from '@/pages/NoticeBoard';
-import { PackageManagement } from '@/components/packages/PackageManagement';
+import Packages from '@/pages/Packages';
 import Profile from '@/pages/Profile';
 import AdminDashboard from '@/pages/AdminDashboard';
 import NewLead from '@/pages/NewLead';
@@ -62,7 +62,7 @@ function App() {
                 path="/dashboard/packages"
                 element={
                   <PrivateRoute>
-                    <PackageManagement />
+                    <Packages />
                   </PrivateRoute>
                 }
               />
