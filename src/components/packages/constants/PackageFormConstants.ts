@@ -2,7 +2,8 @@
 export const POPULAR_LOCATIONS = [
   'Masai Mara', 'Serengeti', 'Amboseli', 'Tsavo East', 'Tsavo West',
   'Lake Nakuru', 'Samburu', 'Diani Beach', 'Watamu', 'Malindi',
-  'Mount Kenya', 'Hell\'s Gate', 'Naivasha', 'Ngorongoro Crater'
+  'Mount Kenya', 'Hell\'s Gate', 'Naivasha', 'Ngorongoro Crater',
+  'Nairobi National Park'
 ];
 
 export const POPULAR_ACTIVITIES = [

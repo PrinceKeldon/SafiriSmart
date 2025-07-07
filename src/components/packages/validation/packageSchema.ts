@@ -4,14 +4,14 @@ import { z } from 'zod';
 export const packageSchema = z.object({
   package_name: z.string().min(1, 'Package name is required').max(255, 'Package name is too long'),
   description: z.string().optional(),
-  min_duration: z.number().min(1, 'Minimum duration must be at least 1 day'),
-  max_duration: z.number().min(1, 'Maximum duration must be at least 1 day'),
-  min_group_size: z.number().min(1, 'Minimum group size must be at least 1 person'),
-  max_group_size: z.number().min(1, 'Maximum group size must be at least 1 person'),
+  min_duration: z.coerce.number().min(1, 'Minimum duration must be at least 1 day'),
+  max_duration: z.coerce.number().min(1, 'Maximum duration must be at least 1 day'),
+  min_group_size: z.coerce.number().min(1, 'Minimum group size must be at least 1 person'),
+  max_group_size: z.coerce.number().min(1, 'Maximum group size must be at least 1 person'),
   budget_tier: z.enum(['budget', 'mid-range', 'luxury'], {
     required_error: 'Budget tier is required',
   }),
-  estimated_cost_per_person_per_day: z.number().min(0.01, 'Cost must be greater than 0'),
+  estimated_cost_per_person_per_day: z.coerce.number().min(0.01, 'Cost must be greater than 0'),
   included_locations: z.array(z.object({
     value: z.string().min(1, 'Location cannot be empty'),
   })).default([]),

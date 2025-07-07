@@ -21,6 +21,7 @@ export const DurationGroupFields: React.FC<DurationGroupFieldsProps> = ({ regist
           min="1"
           {...register('min_duration', { 
             required: 'Min duration is required',
+            valueAsNumber: true,
             min: { value: 1, message: 'Must be at least 1 day' }
           })}
         />
@@ -37,6 +38,7 @@ export const DurationGroupFields: React.FC<DurationGroupFieldsProps> = ({ regist
           min="1"
           {...register('max_duration', { 
             required: 'Max duration is required',
+            valueAsNumber: true,
             min: { value: 1, message: 'Must be at least 1 day' }
           })}
         />
@@ -53,6 +55,7 @@ export const DurationGroupFields: React.FC<DurationGroupFieldsProps> = ({ regist
           min="1"
           {...register('min_group_size', { 
             required: 'Min group size is required',
+            valueAsNumber: true,
             min: { value: 1, message: 'Must be at least 1 person' }
           })}
         />
@@ -69,6 +72,7 @@ export const DurationGroupFields: React.FC<DurationGroupFieldsProps> = ({ regist
           min="1"
           {...register('max_group_size', { 
             required: 'Max group size is required',
+            valueAsNumber: true,
             min: { value: 1, message: 'Must be at least 1 person' }
           })}
         />

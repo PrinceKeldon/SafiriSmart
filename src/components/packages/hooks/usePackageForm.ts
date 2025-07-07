@@ -52,20 +52,23 @@ export const usePackageForm = (editPackage: OperatorPackage | null, onClose: () 
 
   const onSubmit = async (data: PackageFormData) => {
     try {
-      console.log('Submitting package data:', data);
+      console.log('Submitting package data (before conversion):', data);
       
+      // Explicit type conversion to ensure numbers are sent to backend
       const packageData: OperatorPackageCreate = {
         package_name: data.package_name,
         description: data.description,
-        min_duration: data.min_duration,
-        max_duration: data.max_duration,
-        min_group_size: data.min_group_size,
-        max_group_size: data.max_group_size,
+        min_duration: Number(data.min_duration), // Explicit conversion
+        max_duration: Number(data.max_duration), // Explicit conversion
+        min_group_size: Number(data.min_group_size), // Explicit conversion
+        max_group_size: Number(data.max_group_size), // Explicit conversion
         budget_tier: data.budget_tier,
-        estimated_cost_per_person_per_day: data.estimated_cost_per_person_per_day,
+        estimated_cost_per_person_per_day: parseFloat(String(data.estimated_cost_per_person_per_day)), // Explicit conversion
         included_locations: data.included_locations.map(loc => loc.value).filter(Boolean),
         included_activities: data.included_activities.map(act => act.value).filter(Boolean),
       };
+
+      console.log('Package data after type conversion:', packageData);
 
       if (isEditing && editPackage) {
         await updatePackage.mutateAsync({ id: editPackage.id, ...packageData });

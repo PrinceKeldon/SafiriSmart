@@ -38,7 +38,8 @@ export const BudgetPricingFields: React.FC<BudgetPricingFieldsProps> = ({ regist
           step="0.01"
           {...register('estimated_cost_per_person_per_day', { 
             required: 'Cost is required',
-            min: { value: 0, message: 'Cost must be positive' }
+            valueAsNumber: true,
+            min: { value: 0.01, message: 'Cost must be positive' }
           })}
         />
         {errors.estimated_cost_per_person_per_day && (
