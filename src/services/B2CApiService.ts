@@ -45,13 +45,14 @@ class B2CApiService {
     });
   }
 
-  // B2B Backend - Create Lead
+  // B2B Backend - Create Lead with Enhanced Traveler Data
   async createLead(leadData: {
     traveler: {
       name: string;
       email: string;
       phone?: string;
-      country?: string;
+      country: string;
+      message?: string;
     };
     preferences: {
       duration: number;
@@ -60,6 +61,7 @@ class B2CApiService {
       groupSize: number;
       travelPace: string;
       languages: string[];
+      selectedPackages?: string[];
     };
     schedule?: {
       startDate?: Date;
@@ -79,6 +81,12 @@ class B2CApiService {
     };
     itinerary?: any;
   }): Promise<any> {
+    console.log('B2CApiService: Creating lead with enhanced data:', {
+      travelerInfo: leadData.traveler,
+      selectedPackages: leadData.preferences.selectedPackages,
+      hasItinerary: !!leadData.itinerary
+    });
+
     return this.makeRequest(`${this.b2bBackendUrl}/api/leads`, {
       method: 'POST',
       body: JSON.stringify(leadData),

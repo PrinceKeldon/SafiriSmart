@@ -4,10 +4,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { b2cApiService } from '@/services/B2CApiService';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const leadCaptureSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+  email: z.string().email('Please enter a valid email address'),
+  phone: z.string().optional(),
+  country: z.string().min(2, 'Please select or enter your country'),
+  message: z.string().optional(),
+});
+
+type LeadCaptureFormData = z.infer<typeof leadCaptureSchema>;
 
 interface LeadCaptureFormProps {
   preferences: any;
@@ -20,6 +34,13 @@ interface LeadCaptureFormProps {
   onBack: () => void;
 }
 
+const POPULAR_COUNTRIES = [
+  'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 
+  'France', 'Netherlands', 'Switzerland', 'Sweden', 'Norway', 'Denmark',
+  'South Africa', 'Kenya', 'Tanzania', 'Uganda', 'Rwanda', 'Botswana',
+  'Namibia', 'Zimbabwe', 'Zambia', 'India', 'China', 'Japan', 'Brazil'
+];
+
 const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
   preferences,
   schedule,
@@ -30,26 +51,22 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
   onComplete,
   onBack
 }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    country: ''
-  });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCountryInput, setShowCountryInput] = useState(false);
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors }
+  } = useForm<LeadCaptureFormData>({
+    resolver: zodResolver(leadCaptureSchema)
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!formData.name || !formData.email) {
-      toast.error('Please fill in all required fields');
-      return;
-    }
+  const watchedCountry = watch('country');
 
+  const onSubmit = async (formData: LeadCaptureFormData) => {
     setIsSubmitting(true);
 
     try {
@@ -58,7 +75,8 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
           name: formData.name,
           email: formData.email,
           phone: formData.phone || undefined,
-          country: formData.country || undefined
+          country: formData.country,
+          message: formData.message || undefined
         },
         preferences: {
           ...preferences,
@@ -70,7 +88,10 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
         itinerary
       };
 
-      console.log('Submitting lead with selected packages:', selectedPackages);
+      console.log('Submitting lead with enquirer details:', {
+        selectedPackages,
+        travelerInfo: leadData.traveler
+      });
 
       const result = await b2cApiService.createLead(leadData);
       
@@ -103,60 +124,124 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
           </p>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            {/* Name Field */}
             <div>
               <Label htmlFor="name">Full Name *</Label>
               <Input
                 id="name"
                 type="text"
-                value={formData.name}
-                onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Enter your full name"
-                required
+                {...register('name')}
+                className={errors.name ? 'border-red-500' : ''}
               />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              )}
             </div>
 
+            {/* Email Field */}
             <div>
               <Label htmlFor="email">Email Address *</Label>
               <Input
                 id="email"
                 type="email"
-                value={formData.email}
-                onChange={(e) => handleInputChange('email', e.target.value)}
                 placeholder="Enter your email address"
-                required
+                {...register('email')}
+                className={errors.email ? 'border-red-500' : ''}
               />
+              {errors.email && (
+                <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+              )}
             </div>
 
+            {/* Phone Field */}
             <div>
               <Label htmlFor="phone">Phone Number</Label>
               <Input
                 id="phone"
                 type="tel"
-                value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="Enter your phone number"
+                placeholder="Enter your phone number (optional)"
+                {...register('phone')}
               />
             </div>
 
+            {/* Country Field */}
             <div>
-              <Label htmlFor="country">Country</Label>
-              <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your country" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="US">United States</SelectItem>
-                  <SelectItem value="UK">United Kingdom</SelectItem>
-                  <SelectItem value="CA">Canada</SelectItem>
-                  <SelectItem value="AU">Australia</SelectItem>
-                  <SelectItem value="DE">Germany</SelectItem>
-                  <SelectItem value="FR">France</SelectItem>
-                  <SelectItem value="KE">Kenya</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="country">Country *</Label>
+              {!showCountryInput ? (
+                <Select 
+                  value={watchedCountry} 
+                  onValueChange={(value) => {
+                    if (value === 'other') {
+                      setShowCountryInput(true);
+                      setValue('country', '');
+                    } else {
+                      setValue('country', value);
+                    }
+                  }}
+                >
+                  <SelectTrigger className={errors.country ? 'border-red-500' : ''}>
+                    <SelectValue placeholder="Select your country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {POPULAR_COUNTRIES.map((country) => (
+                      <SelectItem key={country} value={country}>
+                        {country}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="other">Other (type manually)</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter your country"
+                    {...register('country')}
+                    className={errors.country ? 'border-red-500' : ''}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setShowCountryInput(false);
+                      setValue('country', '');
+                    }}
+                  >
+                    Back to List
+                  </Button>
+                </div>
+              )}
+              {errors.country && (
+                <p className="text-red-500 text-sm mt-1">{errors.country.message}</p>
+              )}
             </div>
+
+            {/* Additional Message Field */}
+            <div>
+              <Label htmlFor="message">Additional Notes or Special Requests</Label>
+              <Textarea
+                id="message"
+                placeholder="Any special requests, dietary requirements, accessibility needs, or additional information you'd like to share..."
+                rows={4}
+                {...register('message')}
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                Optional: Help us personalize your safari experience
+              </p>
+            </div>
+
+            {/* Selected Packages Summary */}
+            {selectedPackages.length > 0 && (
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2">
+                  Selected Packages ({selectedPackages.length})
+                </h4>
+                <p className="text-sm text-blue-700">
+                  Your inquiry will be sent directly to the operators of your selected packages.
+                </p>
+              </div>
+            )}
 
             <div className="flex justify-between pt-6">
               <Button
