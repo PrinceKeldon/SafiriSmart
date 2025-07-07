@@ -1,7 +1,8 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { Coffee, Zap, Target } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Clock, MapPin, Camera } from 'lucide-react';
 
 interface TravelPaceStepProps {
   value: 'relaxed' | 'moderate' | 'active';
@@ -13,44 +14,26 @@ export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange 
     {
       id: 'relaxed' as const,
       title: 'Relaxed',
-      icon: Coffee,
-      subtitle: 'Take it easy and enjoy',
-      description: 'Slower pace with plenty of time to rest and soak in the experience',
-      features: [
-        'Leisurely game drives',
-        'Longer stays at lodges',
-        'Flexible schedule',
-        'More downtime',
-      ],
-      timeExample: '2-3 activities per day',
+      icon: Clock,
+      description: 'Take your time, enjoy the moment',
+      features: ['Longer stays at each location', 'More leisure time', 'Fewer daily activities', 'Flexible schedule'],
+      popular: false,
     },
     {
       id: 'moderate' as const,
       title: 'Moderate',
-      icon: Target,
-      subtitle: 'Balanced adventure',
-      description: 'Perfect balance of activity and relaxation for most travelers',
-      features: [
-        'Mix of activities',
-        'Reasonable schedule',
-        'Some flexibility',
-        'Good variety',
-      ],
-      timeExample: '3-4 activities per day',
+      icon: MapPin,
+      description: 'Balanced mix of activities and relaxation',
+      features: ['Good balance of activities', 'Some leisure time', 'Moderate daily schedule', 'Mix of active and relaxed'],
+      popular: true,
     },
     {
       id: 'active' as const,
       title: 'Active',
-      icon: Zap,
-      subtitle: 'Action-packed adventure',
-      description: 'Fast-paced itinerary with maximum wildlife viewing and experiences',
-      features: [
-        'Early morning starts',
-        'Full day activities',
-        'Maximum wildlife viewing',
-        'Action-packed schedule',
-      ],
-      timeExample: '4-5+ activities per day',
+      icon: Camera,
+      description: 'Pack in as much as possible',
+      features: ['Action-packed itinerary', 'Early morning starts', 'Multiple activities daily', 'Maximum wildlife viewing'],
+      popular: false,
     },
   ];
 
@@ -58,7 +41,7 @@ export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange 
     <div className="space-y-6">
       <div className="text-center">
         <p className="text-gray-600">
-          What kind of travel pace do you prefer for your safari adventure?
+          Choose the pace that matches your travel style
         </p>
       </div>
 
@@ -70,32 +53,28 @@ export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange 
           return (
             <Card 
               key={option.id}
-              className={`p-6 cursor-pointer transition-all ${
+              className={`p-6 cursor-pointer transition-all relative ${
                 isSelected 
                   ? 'ring-2 ring-primary bg-primary/5 shadow-md' 
                   : 'hover:bg-gray-50 hover:shadow-sm'
               }`}
               onClick={() => onChange(option.id)}
             >
+              {option.popular && (
+                <Badge className="absolute -top-2 left-6 bg-primary">
+                  Most Popular
+                </Badge>
+              )}
+              
               <div className="flex items-start space-x-4">
-                <div className={`p-3 rounded-lg ${
+                <div className={`p-2 rounded-lg ${
                   isSelected ? 'bg-primary text-primary-foreground' : 'bg-gray-100'
                 }`}>
                   <Icon className="w-6 h-6" />
                 </div>
                 
                 <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
-                      <h3 className="text-xl font-semibold">{option.title}</h3>
-                      <p className="text-sm text-gray-500">{option.subtitle}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-medium text-primary">
-                        {option.timeExample}
-                      </p>
-                    </div>
-                  </div>
+                  <h3 className="text-lg font-semibold mb-2">{option.title}</h3>
                   
                   <p className="text-gray-600 mb-4">
                     {option.description}
@@ -110,12 +89,6 @@ export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange 
                     ))}
                   </div>
                 </div>
-
-                {isSelected && (
-                  <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full" />
-                  </div>
-                )}
               </div>
             </Card>
           );

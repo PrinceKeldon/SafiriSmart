@@ -1,14 +1,14 @@
 
 import React from 'react';
-import InterestsStep from './steps/InterestsStep';
-import DurationStep from './steps/DurationStep';
-import GroupSizeStep from './steps/GroupSizeStep';
-import BudgetStep from './steps/BudgetStep';
-import TravelPaceStep from './steps/TravelPaceStep';
-import LanguagesStep from './steps/LanguagesStep';
-import TravelScheduleStep from './steps/TravelScheduleStep';
-import TravelLogisticsStep from './steps/TravelLogisticsStep';
-import DietaryStep from './steps/DietaryStep';
+import { InterestsStep } from './steps/InterestsStep';
+import { DurationStep } from './steps/DurationStep';
+import { GroupSizeStep } from './steps/GroupSizeStep';
+import { BudgetStep } from './steps/BudgetStep';
+import { TravelPaceStep } from './steps/TravelPaceStep';
+import { LanguagesStep } from './steps/LanguagesStep';
+import { TravelScheduleStep } from './steps/TravelScheduleStep';
+import { TravelLogisticsStep } from './steps/TravelLogisticsStep';
+import { DietaryStep } from './steps/DietaryStep';
 import OperatorSelectionStep from './steps/OperatorSelectionStep';
 
 export interface WizardStepsProps {
@@ -47,82 +47,64 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
       case 1:
         return (
           <InterestsStep
-            selectedInterests={preferences.interests || []}
-            onInterestsChange={(interests) => onPreferenceChange('interests', interests)}
-            onNext={onNext}
-            onBack={onBack}
+            value={preferences.interests || []}
+            onChange={(interests) => onPreferenceChange('interests', interests)}
           />
         );
       case 2:
         return (
           <DurationStep
-            duration={preferences.duration || 7}
-            onDurationChange={(duration) => onPreferenceChange('duration', duration)}
-            onNext={onNext}
-            onBack={onBack}
+            value={preferences.duration || 7}
+            onChange={(duration) => onPreferenceChange('duration', duration)}
           />
         );
       case 3:
         return (
           <GroupSizeStep
-            groupSize={preferences.groupSize || 2}
-            onGroupSizeChange={(size) => onPreferenceChange('groupSize', size)}
-            onNext={onNext}
-            onBack={onBack}
+            value={preferences.groupSize || 2}
+            onChange={(size) => onPreferenceChange('groupSize', size)}
           />
         );
       case 4:
         return (
           <BudgetStep
-            budgetRange={preferences.budgetRange || 'mid-range'}
-            onBudgetChange={(budget) => onPreferenceChange('budgetRange', budget)}
-            onNext={onNext}
-            onBack={onBack}
+            value={preferences.budgetRange || 'mid-range'}
+            onChange={(budget) => onPreferenceChange('budgetRange', budget)}
           />
         );
       case 5:
         return (
           <TravelPaceStep
-            travelPace={preferences.travelPace || 'moderate'}
-            onTravelPaceChange={(pace) => onPreferenceChange('travelPace', pace)}
-            onNext={onNext}
-            onBack={onBack}
+            value={preferences.travelPace || 'moderate'}
+            onChange={(pace) => onPreferenceChange('travelPace', pace)}
           />
         );
       case 6:
         return (
           <LanguagesStep
-            selectedLanguages={preferences.languages || ['English']}
-            onLanguagesChange={(languages) => onPreferenceChange('languages', languages)}
-            onNext={onNext}
-            onBack={onBack}
+            value={preferences.languages || ['English']}
+            onChange={(languages) => onPreferenceChange('languages', languages)}
           />
         );
       case 7:
         return (
           <TravelScheduleStep
-            schedule={schedule}
-            onScheduleChange={onScheduleChange}
-            onNext={onNext}
-            onBack={onBack}
+            value={schedule}
+            onChange={onScheduleChange}
           />
         );
       case 8:
         return (
           <TravelLogisticsStep
-            travel={travel}
-            onTravelChange={onTravelChange}
-            onNext={onNext}
-            onBack={onBack}
+            preferences={{ travel }}
+            updatePreferences={(updates) => onTravelChange(updates.travel)}
           />
         );
       case 9:
         return (
           <DietaryStep
-            dietary={dietary}
-            onDietaryChange={onDietaryChange}
-            onNext={onNext}
-            onBack={onBack}
+            preferences={{ dietary }}
+            updatePreferences={(updates) => onDietaryChange(updates.dietary)}
           />
         );
       case 10:
@@ -140,7 +122,28 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
     }
   };
 
-  return <div>{renderStep()}</div>;
+  return (
+    <div>
+      {renderStep()}
+      {currentStep < 10 && (
+        <div className="flex justify-between pt-6">
+          <button
+            onClick={onBack}
+            disabled={currentStep === 1}
+            className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+          >
+            Back
+          </button>
+          <button
+            onClick={onNext}
+            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default WizardSteps;

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,7 @@ import { DayItineraryCard } from './itinerary/DayItineraryCard';
 import { InclusionsExclusions } from './itinerary/InclusionsExclusions';
 import { ImportantNotes } from './itinerary/ImportantNotes';
 import { CallToAction } from './itinerary/CallToAction';
-import { LeadCaptureForm } from './LeadCaptureForm';
+import LeadCaptureForm from './LeadCaptureForm';
 
 interface ItineraryDisplayProps {
   itinerary: TourOutput;
@@ -37,9 +36,14 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, p
   if (showLeadCapture) {
     return (
       <LeadCaptureForm
-        itinerary={itinerary}
         preferences={preferences}
-        onBackToPreferences={onBackToPreferences}
+        schedule={preferences.schedule}
+        travel={preferences.travel}
+        dietary={preferences.dietary}
+        selectedPackages={[]}
+        itinerary={itinerary}
+        onComplete={() => {}}
+        onBack={handleBackToItinerary}
       />
     );
   }

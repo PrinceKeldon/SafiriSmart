@@ -1,10 +1,15 @@
 
-import { PreferenceWizard } from '@/components/preferences/PreferenceWizard';
+import PreferenceWizard from '@/components/preferences/PreferenceWizard';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Compass } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SafariGuide = () => {
+  const handleWizardComplete = (data: any) => {
+    console.log('Wizard completed with data:', data);
+    // Handle completion logic here
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-emerald-50 to-blue-50">
       {/* Header */}
@@ -43,7 +48,7 @@ const SafariGuide = () => {
         </div>
 
         {/* Preference Wizard */}
-        <PreferenceWizard />
+        <PreferenceWizard onComplete={handleWizardComplete} />
       </div>
     </div>
   );

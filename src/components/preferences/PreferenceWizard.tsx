@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import WizardProgress from './WizardProgress';
+import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
-import WizardNavigation from './WizardNavigation';
+import { WizardNavigation } from './WizardNavigation';
 import ItineraryGenerator from './ItineraryGenerator';
 
 interface PreferenceWizardProps {
@@ -96,9 +96,22 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     );
   }
 
+  const wizardSteps = [
+    { id: 1, title: 'Your Interests', description: 'What type of experiences are you looking for?' },
+    { id: 2, title: 'Duration', description: 'How long would you like your safari to be?' },
+    { id: 3, title: 'Group Size', description: 'How many people will be traveling?' },
+    { id: 4, title: 'Budget', description: 'What\'s your preferred budget range?' },
+    { id: 5, title: 'Travel Pace', description: 'What pace do you prefer for your journey?' },
+    { id: 6, title: 'Languages', description: 'What languages would you like your guide to speak?' },
+    { id: 7, title: 'Schedule', description: 'When would you like to travel?' },
+    { id: 8, title: 'Travel Details', description: 'Let us know about your travel logistics' },
+    { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' },
+    { id: 10, title: 'Choose Operators', description: 'Select safari operators for your inquiry' }
+  ];
+
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <WizardProgress currentStep={currentStep} totalSteps={totalSteps} />
+      <WizardProgress currentStep={currentStep} steps={wizardSteps} />
       
       <Card className="mt-8">
         <CardContent className="p-8">
