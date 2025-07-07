@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
 import { WizardNavigation } from './WizardNavigation';
-import ItineraryGenerator from './ItineraryGenerator';
+import { generateItinerary } from './ItineraryGenerator';
 
 interface PreferenceWizardProps {
   onComplete: (data: {
@@ -84,15 +84,25 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   };
 
   if (showItineraryGenerator) {
+    // Show a simple loading state for itinerary generation
     return (
-      <ItineraryGenerator
-        preferences={preferences}
-        schedule={schedule}
-        travel={travel}
-        dietary={dietary}
-        onComplete={handleItineraryComplete}
-        onBack={handleBack}
-      />
+      <div className="max-w-4xl mx-auto p-6">
+        <Card className="mt-8">
+          <CardContent className="p-8 text-center">
+            <div className="space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <h3 className="text-lg font-semibold">Generating Your Safari Itinerary</h3>
+              <p className="text-gray-600">Please wait while we create your personalized safari experience...</p>
+              <button
+                onClick={handleItineraryComplete}
+                className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+              >
+                Continue to Operator Selection
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 

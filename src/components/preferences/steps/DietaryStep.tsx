@@ -1,15 +1,18 @@
 
 import React from 'react';
-import { TravelPreferences } from '../WizardTypes';
 
 interface DietaryStepProps {
-  preferences: TravelPreferences;
-  updatePreferences: (updates: Partial<TravelPreferences>) => void;
+  dietary: {
+    mealWishes?: string;
+    allergies?: string;
+    specialRequirements?: string;
+  };
+  onDietaryChange: (dietary: any) => void;
 }
 
 export const DietaryStep: React.FC<DietaryStepProps> = ({ 
-  preferences, 
-  updatePreferences 
+  dietary, 
+  onDietaryChange 
 }) => {
   return (
     <div className="space-y-6">
@@ -21,9 +24,10 @@ export const DietaryStep: React.FC<DietaryStepProps> = ({
             className="w-full px-3 py-2 border rounded-md"
             rows={3}
             placeholder="e.g., Vegetarian, Halal, local cuisine preferences..."
-            value={preferences.dietary.mealWishes}
-            onChange={(e) => updatePreferences({
-              dietary: { ...preferences.dietary, mealWishes: e.target.value }
+            value={dietary.mealWishes || ''}
+            onChange={(e) => onDietaryChange({
+              ...dietary,
+              mealWishes: e.target.value
             })}
           />
         </div>
@@ -33,9 +37,10 @@ export const DietaryStep: React.FC<DietaryStepProps> = ({
             className="w-full px-3 py-2 border rounded-md"
             rows={3}
             placeholder="e.g., Nut allergies, gluten intolerance, lactose intolerance..."
-            value={preferences.dietary.allergies}
-            onChange={(e) => updatePreferences({
-              dietary: { ...preferences.dietary, allergies: e.target.value }
+            value={dietary.allergies || ''}
+            onChange={(e) => onDietaryChange({
+              ...dietary,
+              allergies: e.target.value
             })}
           />
         </div>
@@ -45,9 +50,10 @@ export const DietaryStep: React.FC<DietaryStepProps> = ({
             className="w-full px-3 py-2 border rounded-md"
             rows={2}
             placeholder="Any other special dietary needs or medical requirements..."
-            value={preferences.dietary.specialRequirements}
-            onChange={(e) => updatePreferences({
-              dietary: { ...preferences.dietary, specialRequirements: e.target.value }
+            value={dietary.specialRequirements || ''}
+            onChange={(e) => onDietaryChange({
+              ...dietary,
+              specialRequirements: e.target.value
             })}
           />
         </div>

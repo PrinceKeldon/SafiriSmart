@@ -96,15 +96,15 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
       case 8:
         return (
           <TravelLogisticsStep
-            preferences={{ travel }}
-            updatePreferences={(updates) => onTravelChange(updates.travel)}
+            travel={travel}
+            onTravelChange={onTravelChange}
           />
         );
       case 9:
         return (
           <DietaryStep
-            preferences={{ dietary }}
-            updatePreferences={(updates) => onDietaryChange(updates.dietary)}
+            dietary={dietary}
+            onDietaryChange={onDietaryChange}
           />
         );
       case 10:

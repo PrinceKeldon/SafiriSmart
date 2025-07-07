@@ -1,15 +1,19 @@
 
 import React from 'react';
-import { TravelPreferences } from '../WizardTypes';
 
 interface TravelLogisticsStepProps {
-  preferences: TravelPreferences;
-  updatePreferences: (updates: Partial<TravelPreferences>) => void;
+  travel: {
+    portOfEntry?: string;
+    airportPickup: boolean;
+    pickupTime?: string;
+    pickupLocation?: string;
+  };
+  onTravelChange: (travel: any) => void;
 }
 
 export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({ 
-  preferences, 
-  updatePreferences 
+  travel, 
+  onTravelChange 
 }) => {
   return (
     <div className="space-y-6">
@@ -21,9 +25,10 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
             type="text"
             className="w-full px-3 py-2 border rounded-md"
             placeholder="e.g., Jomo Kenyatta International Airport (NBO)"
-            value={preferences.travel.portOfEntry}
-            onChange={(e) => updatePreferences({
-              travel: { ...preferences.travel, portOfEntry: e.target.value }
+            value={travel.portOfEntry || ''}
+            onChange={(e) => onTravelChange({
+              ...travel,
+              portOfEntry: e.target.value
             })}
           />
         </div>
@@ -31,25 +36,27 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
           <input
             type="checkbox"
             id="airportPickup"
-            checked={preferences.travel.airportPickup}
-            onChange={(e) => updatePreferences({
-              travel: { ...preferences.travel, airportPickup: e.target.checked }
+            checked={travel.airportPickup}
+            onChange={(e) => onTravelChange({
+              ...travel,
+              airportPickup: e.target.checked
             })}
           />
           <label htmlFor="airportPickup" className="text-sm font-medium">
             Airport Pickup Required
           </label>
         </div>
-        {preferences.travel.airportPickup && (
+        {travel.airportPickup && (
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2">Pickup Time</label>
               <input
                 type="time"
                 className="w-full px-3 py-2 border rounded-md"
-                value={preferences.travel.pickupTime}
-                onChange={(e) => updatePreferences({
-                  travel: { ...preferences.travel, pickupTime: e.target.value }
+                value={travel.pickupTime || ''}
+                onChange={(e) => onTravelChange({
+                  ...travel,
+                  pickupTime: e.target.value
                 })}
               />
             </div>
@@ -59,9 +66,10 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
                 type="text"
                 className="w-full px-3 py-2 border rounded-md"
                 placeholder="e.g., Terminal 1A, Gate 5"
-                value={preferences.travel.pickupLocation}
-                onChange={(e) => updatePreferences({
-                  travel: { ...preferences.travel, pickupLocation: e.target.value }
+                value={travel.pickupLocation || ''}
+                onChange={(e) => onTravelChange({
+                  ...travel,
+                  pickupLocation: e.target.value
                 })}
               />
             </div>
