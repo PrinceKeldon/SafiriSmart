@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { OperatorPackage, OperatorPackageCreate } from '@/types/operator';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const useOperatorPackages = () => {
   return useQuery({
@@ -45,20 +46,21 @@ export const useOperatorPackages = () => {
 
 export const useCreateOperatorPackage = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   
   return useMutation({
     mutationFn: async (packageData: OperatorPackageCreate) => {
       console.log('Creating operator package:', packageData);
       
-      // For demo purposes, we'll use a placeholder operator_id
-      // In a real app, this would come from the authenticated user
-      const placeholderOperatorId = 'demo-operator-id';
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
 
       const { data, error } = await supabase
         .from('operator_packages')
         .insert({
           ...packageData,
-          operator_id: placeholderOperatorId
+          operator_id: user.id
         })
         .select()
         .single();
