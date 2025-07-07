@@ -1,85 +1,125 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { TravelPreferences, TourOutput } from './WizardTypes';
-import { ItineraryHeader } from './itinerary/ItineraryHeader';
+import { Clock, MapPin, Users, DollarSign, Utensils, Plane, CheckCircle, Calendar } from 'lucide-react';
 import { DayItineraryCard } from './itinerary/DayItineraryCard';
+import { ItineraryHeader } from './itinerary/ItineraryHeader';
 import { InclusionsExclusions } from './itinerary/InclusionsExclusions';
 import { ImportantNotes } from './itinerary/ImportantNotes';
 import { CallToAction } from './itinerary/CallToAction';
 import LeadCaptureForm from './LeadCaptureForm';
 
 interface ItineraryDisplayProps {
-  itinerary: TourOutput;
-  preferences: TravelPreferences;
-  onBackToPreferences: () => void;
+  itinerary: any;
+  preferences: any;
+  schedule: any;
+  travel: any;
+  dietary: any;
+  selectedPackages: string[];
+  onBack: () => void;
+  onComplete: (result: any) => void;
 }
 
-export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, preferences, onBackToPreferences }) => {
+const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
+  itinerary,
+  preferences,
+  schedule,
+  travel,
+  dietary,
+  selectedPackages,
+  onBack,
+  onComplete
+}) => {
   const [showLeadCapture, setShowLeadCapture] = useState(false);
 
-  const handleConnectExpert = () => {
-    console.log('Connect with expert clicked');
+  console.log('ItineraryDisplay: Rendering with selectedPackages:', selectedPackages);
+
+  const handleProceedToBooking = () => {
+    console.log('ItineraryDisplay: Proceeding to lead capture with packages:', selectedPackages);
     setShowLeadCapture(true);
   };
 
-  const handleRequestQuote = () => {
-    console.log('Request quote clicked');
-    setShowLeadCapture(true);
-  };
-
-  const handleBackToItinerary = () => {
+  const handleLeadCaptureBack = () => {
     setShowLeadCapture(false);
   };
 
-  // Show lead capture form if requested
+  const handleLeadCaptureComplete = (result: any) => {
+    console.log('ItineraryDisplay: Lead capture completed:', result);
+    onComplete(result);
+  };
+
   if (showLeadCapture) {
     return (
       <LeadCaptureForm
         preferences={preferences}
-        schedule={preferences.schedule}
-        travel={preferences.travel}
-        dietary={preferences.dietary}
-        selectedPackages={[]}
+        schedule={schedule}
+        travel={travel}
+        dietary={dietary}
+        selectedPackages={selectedPackages}
         itinerary={itinerary}
-        onComplete={() => {}}
-        onBack={handleBackToItinerary}
+        onComplete={handleLeadCaptureComplete}
+        onBack={handleLeadCaptureBack}
       />
     );
   }
 
-  return (
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
-      <Button variant="outline" onClick={onBackToPreferences} className="w-full md:w-auto">
-        ← Back to Preferences
-      </Button>
-
-      <ItineraryHeader itinerary={itinerary} preferences={preferences} />
-
+  if (!itinerary) {
+    return (
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">{itinerary.tour_name}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-gray-600">{itinerary.summary}</p>
+        <CardContent className="p-6">
+          <p className="text-center text-gray-500">No itinerary available</p>
         </CardContent>
       </Card>
+    );
+  }
 
-      {itinerary.itinerary_details.map((day) => (
-        <DayItineraryCard key={day.day_number} day={day} />
-      ))}
-
-      <InclusionsExclusions 
-        inclusions={itinerary.inclusions_suggestions}
-        exclusions={itinerary.exclusions_suggestions}
+  return (
+    <div className="space-y-6">
+      <ItineraryHeader 
+        title={itinerary.title}
+        overview={itinerary.overview}
+        duration={itinerary.totalDuration}
+        estimatedCost={itinerary.estimatedCost}
       />
 
-      <ImportantNotes notes={itinerary.important_notes} />
+      {/* Selected Packages Summary */}
+      {selectedPackages.length > 0 && (
+        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-3">
+              <CheckCircle className="w-5 h-5 text-blue-600" />
+              <h3 className="font-semibold text-blue-900">
+                Selected Safari Packages ({selectedPackages.length})
+              </h3>
+            </div>
+            <p className="text-blue-700 text-sm">
+              You've selected {selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''} from our operators. 
+              Your inquiry will be sent directly to these operators for personalized quotes and availability.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
+      {/* Itinerary Days */}
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Daily Itinerary</h2>
+        {itinerary.days?.map((day: any, index: number) => (
+          <DayItineraryCard key={index} day={day} />
+        ))}
+      </div>
+
+      <InclusionsExclusions />
+      <ImportantNotes />
+      
       <CallToAction 
-        onConnectExpert={handleConnectExpert}
-        onRequestQuote={handleRequestQuote}
+        selectedPackages={selectedPackages}
+        onProceed={handleProceedToBooking}
+        onBack={onBack}
       />
     </div>
   );
 };
+
+export default ItineraryDisplay;
