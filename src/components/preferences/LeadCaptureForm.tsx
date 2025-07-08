@@ -87,7 +87,7 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
 
       const result = await b2cApiService.createLead(leadData);
       
-      toast.success('Your safari inquiry has been submitted successfully!');
+      toast.success('Your safari inquiry has been submitted successfully! Our network of operators will review your request.');
       onComplete(result);
       
     } catch (error) {
@@ -106,7 +106,7 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
             Complete Your Safari Request
           </CardTitle>
           <p className="text-center text-gray-600">
-            Fill in your details to receive personalized quotes
+            Fill in your details to receive personalized quotes from our network of safari experts
           </p>
         </CardHeader>
         <CardContent>
@@ -216,6 +216,15 @@ const LeadCaptureForm: React.FC<LeadCaptureFormProps> = ({
               />
               <p className="text-sm text-gray-500 mt-1">
                 Optional: Help us personalize your safari experience
+              </p>
+            </div>
+
+            {/* Information Box */}
+            <div className="bg-blue-50 p-4 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>What happens next?</strong> Your safari inquiry will be shared with our entire network of 
+                active safari operators. This ensures you receive multiple personalized quotes and can choose 
+                the best option for your adventure.
               </p>
             </div>
 

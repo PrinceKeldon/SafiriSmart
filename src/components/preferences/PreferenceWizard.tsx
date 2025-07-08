@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
 import ItineraryDisplay from './ItineraryDisplay';
+import LeadCaptureForm from './LeadCaptureForm';
 import { UserDetails, steps } from './WizardTypes';
 
 interface PreferenceWizardProps {
@@ -50,8 +51,9 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     message: ''
   });
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
+  const [showLeadCaptureForm, setShowLeadCaptureForm] = useState(false);
 
-  const totalSteps = 11;
+  const totalSteps = 9; // Simplified to 9 steps
 
   console.log('PreferenceWizard: Current step:', currentStep);
 
@@ -72,14 +74,14 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       // After dietary step (step 9), show itinerary display
       console.log('PreferenceWizard: Moving to itinerary display');
       setShowItineraryDisplay(true);
-    } else if (currentStep === 10) {
-      // From user details to operator selection
-      setCurrentStep(11);
     }
   };
 
   const handleBack = () => {
-    if (showItineraryDisplay) {
+    if (showLeadCaptureForm) {
+      setShowLeadCaptureForm(false);
+      setShowItineraryDisplay(true);
+    } else if (showItineraryDisplay) {
       setShowItineraryDisplay(false);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
@@ -87,9 +89,9 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   };
 
   const handleItineraryComplete = () => {
-    console.log('PreferenceWizard: Moving from itinerary to user details step');
+    console.log('PreferenceWizard: Moving from itinerary to lead capture form');
     setShowItineraryDisplay(false);
-    setCurrentStep(10);
+    setShowLeadCaptureForm(true);
   };
 
   const handleItineraryBack = () => {
@@ -106,6 +108,41 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       userDetails
     });
   };
+
+  if (showLeadCaptureForm) {
+    // Create a mock itinerary for the lead capture form
+    const mockItinerary = {
+      title: `${preferences.duration}-Day Safari Adventure`,
+      overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
+      duration: preferences.duration,
+      estimatedCost: {
+        amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
+        currency: 'USD'
+      },
+      itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
+        day: i + 1,
+        location: i === 0 ? 'Arrival' : 'Safari Location',
+        activities: [
+          i === 0 ? 'Airport Transfer' : 'Game Drive',
+          i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
+        ],
+        accommodation: `Safari Lodge ${i + 1}`,
+        meals: ['Breakfast', 'Lunch', 'Dinner']
+      }))
+    };
+
+    return (
+      <LeadCaptureForm
+        preferences={preferences}
+        schedule={schedule}
+        travel={travel}
+        dietary={dietary}
+        itinerary={mockItinerary}
+        onComplete={handleFinalComplete}
+        onBack={handleBack}
+      />
+    );
+  }
 
   if (showItineraryDisplay) {
     // Create a mock itinerary for display - fix the activities structure
@@ -155,7 +192,6 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
             travel={travel}
             dietary={dietary}
             userDetails={userDetails}
-            itinerary={showItineraryDisplay ? undefined : {}}
             onPreferenceChange={handlePreferenceChange}
             onScheduleChange={setSchedule}
             onTravelChange={setTravel}

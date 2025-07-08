@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -13,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Create lead function called with enhanced enquirer data');
+    console.log('Create lead function called - simplified routing to all operators');
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -34,13 +35,7 @@ serve(async (req) => {
       throw new Error('Preferences are required');
     }
 
-    // Check if user selected specific packages
-    const selectedPackages = preferences.selectedPackages || [];
-    const selectionType = selectedPackages.length > 0 ? 'user_selected' : 'system_matched';
-
-    console.log('Enhanced lead processing:', {
-      selectionType,
-      selectedPackages,
+    console.log('Processing lead for all active operators:', {
       travelerInfo: {
         name: traveler.name,
         email: traveler.email,
@@ -61,7 +56,7 @@ serve(async (req) => {
       flexible: true
     };
 
-    // Enhanced mock itinerary with all traveler information
+    // Create simplified itinerary
     const mockItinerary = {
       id: crypto.randomUUID(),
       title: `${preferences.duration}-Day Safari Adventure for ${traveler.name}`,
@@ -93,8 +88,6 @@ serve(async (req) => {
         specialRequirements: dietary?.specialRequirements || null
       },
       languages: preferences?.languages || ['English'],
-      selectionType,
-      selectedPackages: selectedPackages,
       travelerInfo: {
         name: traveler.name,
         country: traveler.country,
@@ -141,9 +134,9 @@ serve(async (req) => {
       message: traveler.message || null
     };
 
-    console.log('Inserting enhanced lead into database...');
+    console.log('Inserting lead into database...');
 
-    // Insert the lead into Supabase with all enquirer details
+    // Insert the lead into Supabase
     const { data: leadData, error } = await supabaseClient
       .from('leads')
       .insert({
@@ -155,7 +148,7 @@ serve(async (req) => {
         itinerary: mockItinerary,
         status: 'unclaimed',
         assigned_operator_id: null,
-        selection_type: selectionType,
+        selection_type: 'all_operators',
         todo_checklist: []
       })
       .select()
@@ -166,128 +159,29 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log('Enhanced lead created successfully:', {
+    console.log('Lead created successfully:', {
       leadId: leadData.id,
       travelerName: leadData.traveler_name,
-      travelerCountry: leadData.traveler_country,
-      selectionType: leadData.selection_type
+      travelerCountry: leadData.traveler_country
     });
 
-    let targetOperators: string[] = [];
+    // Get all active operators
+    console.log('Fetching all active operators...');
+    const { data: operators, error: operatorsError } = await supabaseClient
+      .from('operators')
+      .select('id, company')
+      .eq('is_active', true);
 
-    if (selectionType === 'user_selected' && selectedPackages.length > 0) {
-      // User selected specific packages - get operators for those packages
-      console.log('Processing user-selected packages for enhanced targeting...');
-      
-      const { data: packages, error: packagesError } = await supabaseClient
-        .from('operator_packages')
-        .select('operator_id, package_name')
-        .in('id', selectedPackages);
+    if (operatorsError) {
+      console.error('Error fetching operators:', operatorsError);
+      // Don't fail the whole request, just log the error
+    } else if (operators && operators.length > 0) {
+      console.log(`Found ${operators.length} active operators, posting lead to all`);
 
-      if (packagesError) {
-        console.error('Error fetching selected packages:', packagesError);
-        // Don't fail the whole request, fall back to system matching
-      } else if (packages && packages.length > 0) {
-        targetOperators = [...new Set(packages.map(p => p.operator_id))];
-        console.log('Target operators from selected packages:', {
-          operatorCount: targetOperators.length,
-          packageNames: packages.map(p => p.package_name)
-        });
-
-        // Insert selected packages into lead_selected_packages table
-        const packageEntries = selectedPackages.map(packageId => ({
-          lead_id: leadData.id,
-          package_id: packageId
-        }));
-
-        const { error: selectedPackagesError } = await supabaseClient
-          .from('lead_selected_packages')
-          .insert(packageEntries);
-
-        if (selectedPackagesError) {
-          console.error('Error creating selected packages entries:', selectedPackagesError);
-          // Don't fail the whole request
-        } else {
-          console.log(`Created ${packageEntries.length} selected package entries for enhanced tracking`);
-        }
-      }
-    }
-
-    // If no target operators from user selection, fall back to intelligent matching
-    if (targetOperators.length === 0) {
-      console.log('Falling back to intelligent operator matching with enhanced criteria...');
-      
-      const { data: operators, error: operatorsError } = await supabaseClient
-        .from('operators')
-        .select('id, company, services_offered, destinations_covered')
-        .eq('is_active', true);
-
-      if (operatorsError) {
-        console.error('Error fetching operators:', operatorsError);
-      } else if (operators && operators.length > 0) {
-        // Enhanced intelligent matching algorithm
-        const interests = enhancedPreferences.interests || [];
-        const destinations = extractDestinationsFromItinerary(mockItinerary);
-        
-        console.log('Enhanced matching criteria:', { 
-          interests, 
-          destinations, 
-          travelerCountry: traveler.country,
-          budget: preferences.budgetRange 
-        });
-        
-        const operatorScores = operators.map(operator => {
-          let score = 0;
-          const services = operator.services_offered || [];
-          const covered_destinations = operator.destinations_covered || [];
-          
-          // Score based on matching interests with services
-          for (const interest of interests) {
-            for (const service of services) {
-              if (interest.toLowerCase().includes(service.toLowerCase()) || 
-                  service.toLowerCase().includes(interest.toLowerCase())) {
-                score += 2;
-              }
-            }
-          }
-          
-          // Score based on matching destinations
-          for (const destination of destinations) {
-            for (const covered of covered_destinations) {
-              if (destination.toLowerCase().includes(covered.toLowerCase()) || 
-                  covered.toLowerCase().includes(destination.toLowerCase())) {
-                score += 3;
-              }
-            }
-          }
-          
-          return { 
-            operator_id: operator.id, 
-            company: operator.company,
-            score 
-          };
-        });
-
-        // Sort by score and take top 3-5 operators
-        const topOperators = operatorScores
-          .filter(op => op.score > 0)
-          .sort((a, b) => b.score - a.score)
-          .slice(0, 5);
-
-        console.log('Top matched operators for enhanced lead:', topOperators);
-
-        // If no operators scored, fall back to first few active operators
-        targetOperators = topOperators.length > 0 
-          ? topOperators.map(op => op.operator_id)
-          : operators.slice(0, 3).map(op => op.id);
-      }
-    }
-
-    // Insert into lead_visibility table for target operators
-    if (targetOperators.length > 0) {
-      const visibilityEntries = targetOperators.map(operatorId => ({
+      // Create visibility entries for all active operators
+      const visibilityEntries = operators.map(operator => ({
         lead_id: leadData.id,
-        operator_id: operatorId
+        operator_id: operator.id
       }));
 
       const { error: visibilityError } = await supabaseClient
@@ -298,8 +192,10 @@ serve(async (req) => {
         console.error('Error creating lead visibility entries:', visibilityError);
         // Don't fail the whole request
       } else {
-        console.log(`Enhanced lead visibility created for ${targetOperators.length} operators`);
+        console.log(`Lead visibility created for all ${operators.length} active operators`);
       }
+    } else {
+      console.log('No active operators found');
     }
 
     return new Response(
@@ -308,8 +204,8 @@ serve(async (req) => {
         data: {
           lead_id: leadData.id,
           status: leadData.status,
-          selection_type: selectionType,
-          operators_notified: targetOperators.length,
+          selection_type: 'all_operators',
+          operators_notified: operators ? operators.length : 0,
           traveler_info: {
             name: traveler.name,
             country: traveler.country,
@@ -318,7 +214,7 @@ serve(async (req) => {
           },
           assigned_operator: null
         },
-        message: `Enhanced lead created successfully for ${traveler.name} from ${traveler.country} and ${selectionType === 'user_selected' ? 'sent to selected' : 'matched to'} operators`
+        message: `Lead created successfully for ${traveler.name} from ${traveler.country} and posted to all active operators`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -327,11 +223,11 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating enhanced lead:', error);
+    console.error('Error creating lead:', error);
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Failed to create enhanced lead'
+        error: error.message || 'Failed to create lead'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -340,25 +236,3 @@ serve(async (req) => {
     );
   }
 });
-
-// Helper function to extract destinations from itinerary
-function extractDestinationsFromItinerary(itinerary: any): string[] {
-  const destinations: string[] = [];
-  
-  if (itinerary?.days) {
-    for (const day of itinerary.days) {
-      if (day.location && !destinations.includes(day.location)) {
-        destinations.push(day.location);
-      }
-      if (day.activities) {
-        for (const activity of day.activities) {
-          if (activity.location && !destinations.includes(activity.location)) {
-            destinations.push(activity.location);
-          }
-        }
-      }
-    }
-  }
-  
-  return destinations;
-}
