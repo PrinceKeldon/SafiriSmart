@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
 import ItineraryDisplay from './ItineraryDisplay';
+import { UserDetails, steps } from './WizardTypes';
 
 interface PreferenceWizardProps {
   onComplete: (data: {
@@ -11,6 +12,7 @@ interface PreferenceWizardProps {
     schedule: any;
     travel: any;
     dietary: any;
+    userDetails: UserDetails;
   }) => void;
 }
 
@@ -40,9 +42,16 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     allergies: '',
     specialRequirements: ''
   });
+  const [userDetails, setUserDetails] = useState<UserDetails>({
+    name: '',
+    email: '',
+    phone: '',
+    country: '',
+    message: ''
+  });
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
 
-  const totalSteps = 9;
+  const totalSteps = 11;
 
   console.log('PreferenceWizard: Current step:', currentStep);
 
@@ -50,15 +59,22 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleUserDetailsChange = (details: UserDetails) => {
+    setUserDetails(details);
+  };
+
   const handleNext = () => {
     console.log('PreferenceWizard: Moving from step', currentStep);
     
-    if (currentStep < totalSteps) {
+    if (currentStep < 9) {
       setCurrentStep(prev => prev + 1);
-    } else if (currentStep === totalSteps) {
-      // After dietary step (step 9), show itinerary display with lead capture
+    } else if (currentStep === 9) {
+      // After dietary step (step 9), show itinerary display
       console.log('PreferenceWizard: Moving to itinerary display');
       setShowItineraryDisplay(true);
+    } else if (currentStep === 10) {
+      // From user details to operator selection
+      setCurrentStep(11);
     }
   };
 
@@ -70,18 +86,25 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     }
   };
 
-  const handleItineraryComplete = (result: any) => {
-    console.log('PreferenceWizard: Itinerary completed with result:', result);
-    onComplete({
-      preferences,
-      schedule,
-      travel,
-      dietary
-    });
+  const handleItineraryComplete = () => {
+    console.log('PreferenceWizard: Moving from itinerary to user details step');
+    setShowItineraryDisplay(false);
+    setCurrentStep(10);
   };
 
   const handleItineraryBack = () => {
     setShowItineraryDisplay(false);
+  };
+
+  const handleFinalComplete = (result: any) => {
+    console.log('PreferenceWizard: Final completion with result:', result);
+    onComplete({
+      preferences,
+      schedule,
+      travel,
+      dietary,
+      userDetails
+    });
   };
 
   if (showItineraryDisplay) {
@@ -120,36 +143,28 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     );
   }
 
-  const wizardSteps = [
-    { id: 1, title: 'Your Interests', description: 'What type of experiences are you looking for?' },
-    { id: 2, title: 'Duration', description: 'How long would you like your safari to be?' },
-    { id: 3, title: 'Group Size', description: 'How many people will be traveling?' },
-    { id: 4, title: 'Budget', description: 'What\'s your preferred budget range?' },
-    { id: 5, title: 'Travel Pace', description: 'What pace do you prefer for your journey?' },
-    { id: 6, title: 'Languages', description: 'What languages would you like your guide to speak?' },
-    { id: 7, title: 'Schedule', description: 'When would you like to travel?' },
-    { id: 8, title: 'Travel Details', description: 'Let us know about your travel logistics' },
-    { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' }
-  ];
-
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <WizardProgress currentStep={currentStep} steps={wizardSteps} />
+      <WizardProgress currentStep={currentStep} steps={steps} />
       
       <Card className="mt-8">
         <CardContent className="p-8">
           <WizardSteps
             currentStep={currentStep}
-            preferences={preferences}
+            preferences={preferences}  
             schedule={schedule}
             travel={travel}
             dietary={dietary}
+            userDetails={userDetails}
+            itinerary={showItineraryDisplay ? undefined : {}}
             onPreferenceChange={handlePreferenceChange}
             onScheduleChange={setSchedule}
             onTravelChange={setTravel}
             onDietaryChange={setDietary}
+            onUserDetailsChange={handleUserDetailsChange}
             onNext={handleNext}
             onBack={handleBack}
+            onComplete={handleFinalComplete}
           />
         </CardContent>
       </Card>

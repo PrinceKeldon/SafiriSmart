@@ -9,6 +9,9 @@ import { LanguagesStep } from './steps/LanguagesStep';
 import { TravelScheduleStep } from './steps/TravelScheduleStep';
 import { TravelLogisticsStep } from './steps/TravelLogisticsStep';
 import { DietaryStep } from './steps/DietaryStep';
+import { UserDetailsStep } from './steps/UserDetailsStep';
+import { FinalOperatorSelectionStep } from './steps/FinalOperatorSelectionStep';
+import { UserDetails } from './WizardTypes';
 
 export interface WizardStepsProps {
   currentStep: number;
@@ -16,12 +19,16 @@ export interface WizardStepsProps {
   schedule: any;
   travel: any;
   dietary: any;
+  userDetails: UserDetails;
+  itinerary?: any;
   onPreferenceChange: (key: string, value: any) => void;
   onScheduleChange: (schedule: any) => void;
   onTravelChange: (travel: any) => void;
   onDietaryChange: (dietary: any) => void;
+  onUserDetailsChange: (details: UserDetails) => void;
   onNext: () => void;
   onBack: () => void;
+  onComplete?: (result: any) => void;
 }
 
 const WizardSteps: React.FC<WizardStepsProps> = ({
@@ -30,12 +37,16 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
   schedule,
   travel,
   dietary,
+  userDetails,
+  itinerary,
   onPreferenceChange,
   onScheduleChange,
   onTravelChange,
   onDietaryChange,
+  onUserDetailsChange,
   onNext,
   onBack,
+  onComplete
 }) => {
   const renderStep = () => {
     switch (currentStep) {
@@ -102,10 +113,37 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
             onDietaryChange={onDietaryChange}
           />
         );
+      case 10:
+        return (
+          <UserDetailsStep
+            value={userDetails}
+            onChange={onUserDetailsChange}
+            onNext={onNext}
+            onBack={onBack}
+          />
+        );
+      case 11:
+        return (
+          <FinalOperatorSelectionStep
+            preferences={preferences}
+            schedule={schedule}
+            travel={travel}
+            dietary={dietary}
+            userDetails={userDetails}
+            itinerary={itinerary}
+            onComplete={onComplete!}
+            onBack={onBack}
+          />
+        );
       default:
         return null;
     }
   };
+
+  // Don't render navigation buttons for steps 10 and 11 as they handle their own
+  if (currentStep === 10 || currentStep === 11) {
+    return <div>{renderStep()}</div>;
+  }
 
   return (
     <div>

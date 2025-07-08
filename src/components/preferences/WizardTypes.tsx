@@ -45,6 +45,14 @@ export interface TourOutput {
   important_notes: string[];
 }
 
+export interface UserDetails {
+  name: string;
+  email: string;
+  phone?: string;
+  country: string;
+  message?: string;
+}
+
 export const initialPreferences: TravelPreferences = {
   duration: 7,
   budgetRange: 'mid-range',
@@ -77,5 +85,7 @@ export const steps = [
   { id: 6, title: 'Languages', description: 'What languages would you like your guide to speak?' },
   { id: 7, title: 'Schedule', description: 'When would you like to travel?' },
   { id: 8, title: 'Travel Details', description: 'Let us know about your travel logistics' },
-  { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' }
+  { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' },
+  { id: 10, title: 'Your Details', description: 'Please provide your contact information' },
+  { id: 11, title: 'Select Operators', description: 'Choose safari operators for your inquiry' }
 ];
