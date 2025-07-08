@@ -45,6 +45,27 @@ class B2CApiService {
     });
   }
 
+  // B2B Backend - Get Matching Packages
+  async getMatchingPackages(preferences: {
+    duration: number;
+    budgetRange: string;
+    interests: string[];
+    groupSize: number;
+    travelPace: string;
+    languages: string[];
+  }): Promise<any[]> {
+    const params = new URLSearchParams({
+      duration: preferences.duration?.toString() || '7',
+      budget_range: preferences.budgetRange || 'mid-range',
+      interests: Array.isArray(preferences.interests) ? preferences.interests.join(',') : (preferences.interests || 'wildlife-safari'),
+      group_size: preferences.groupSize?.toString() || '2',
+      travel_pace: preferences.travelPace || 'moderate',
+      languages: Array.isArray(preferences.languages) ? preferences.languages.join(',') : (preferences.languages || 'English')
+    });
+
+    return this.makeRequest(`${this.b2bBackendUrl}/api/packages/match?${params}`);
+  }
+
   // B2B Backend - Create Lead with Enhanced Traveler Data
   async createLead(leadData: {
     traveler: {

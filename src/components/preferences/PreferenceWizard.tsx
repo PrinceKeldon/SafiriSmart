@@ -11,7 +11,6 @@ interface PreferenceWizardProps {
     schedule: any;
     travel: any;
     dietary: any;
-    selectedPackages: string[];
   }) => void;
 }
 
@@ -41,12 +40,11 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     allergies: '',
     specialRequirements: ''
   });
-  const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
 
-  const totalSteps = 10;
+  const totalSteps = 9;
 
-  console.log('PreferenceWizard: Current step:', currentStep, 'Selected packages:', selectedPackages);
+  console.log('PreferenceWizard: Current step:', currentStep);
 
   const handlePreferenceChange = (key: string, value: any) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
@@ -58,8 +56,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
     } else if (currentStep === totalSteps) {
-      // After operator selection (step 10), show itinerary display with lead capture
-      console.log('PreferenceWizard: Moving to itinerary display with packages:', selectedPackages);
+      // After dietary step (step 9), show itinerary display with lead capture
+      console.log('PreferenceWizard: Moving to itinerary display');
       setShowItineraryDisplay(true);
     }
   };
@@ -78,8 +76,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       preferences,
       schedule,
       travel,
-      dietary,
-      selectedPackages
+      dietary
     });
   };
 
@@ -117,7 +114,6 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
         schedule={schedule}
         travel={travel}
         dietary={dietary}
-        selectedPackages={selectedPackages}
         onBack={handleItineraryBack}
         onComplete={handleItineraryComplete}
       />
@@ -133,8 +129,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     { id: 6, title: 'Languages', description: 'What languages would you like your guide to speak?' },
     { id: 7, title: 'Schedule', description: 'When would you like to travel?' },
     { id: 8, title: 'Travel Details', description: 'Let us know about your travel logistics' },
-    { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' },
-    { id: 10, title: 'Choose Operators', description: 'Select safari operators for your inquiry' }
+    { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' }
   ];
 
   return (
@@ -149,12 +144,10 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
             schedule={schedule}
             travel={travel}
             dietary={dietary}
-            selectedPackages={selectedPackages}
             onPreferenceChange={handlePreferenceChange}
             onScheduleChange={setSchedule}
             onTravelChange={setTravel}
             onDietaryChange={setDietary}
-            onPackageSelectionChange={setSelectedPackages}
             onNext={handleNext}
             onBack={handleBack}
           />

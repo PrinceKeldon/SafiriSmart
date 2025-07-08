@@ -9,7 +9,6 @@ import { LanguagesStep } from './steps/LanguagesStep';
 import { TravelScheduleStep } from './steps/TravelScheduleStep';
 import { TravelLogisticsStep } from './steps/TravelLogisticsStep';
 import { DietaryStep } from './steps/DietaryStep';
-import OperatorSelectionStep from './steps/OperatorSelectionStep';
 
 export interface WizardStepsProps {
   currentStep: number;
@@ -17,12 +16,10 @@ export interface WizardStepsProps {
   schedule: any;
   travel: any;
   dietary: any;
-  selectedPackages: string[];
   onPreferenceChange: (key: string, value: any) => void;
   onScheduleChange: (schedule: any) => void;
   onTravelChange: (travel: any) => void;
   onDietaryChange: (dietary: any) => void;
-  onPackageSelectionChange: (packageIds: string[]) => void;
   onNext: () => void;
   onBack: () => void;
 }
@@ -33,12 +30,10 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
   schedule,
   travel,
   dietary,
-  selectedPackages,
   onPreferenceChange,
   onScheduleChange,
   onTravelChange,
   onDietaryChange,
-  onPackageSelectionChange,
   onNext,
   onBack,
 }) => {
@@ -107,16 +102,6 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
             onDietaryChange={onDietaryChange}
           />
         );
-      case 10:
-        return (
-          <OperatorSelectionStep
-            preferences={preferences}
-            selectedPackages={selectedPackages}
-            onPackageSelectionChange={onPackageSelectionChange}
-            onNext={onNext}
-            onBack={onBack}
-          />
-        );
       default:
         return null;
     }
@@ -125,23 +110,21 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
   return (
     <div>
       {renderStep()}
-      {currentStep < 10 && (
-        <div className="flex justify-between pt-6">
-          <button
-            onClick={onBack}
-            disabled={currentStep === 1}
-            className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-          >
-            Back
-          </button>
-          <button
-            onClick={onNext}
-            className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <div className="flex justify-between pt-6">
+        <button
+          onClick={onBack}
+          disabled={currentStep === 1}
+          className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+        >
+          Back
+        </button>
+        <button
+          onClick={onNext}
+          className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+        >
+          {currentStep === 9 ? 'Generate Safari' : 'Next'}
+        </button>
+      </div>
     </div>
   );
 };

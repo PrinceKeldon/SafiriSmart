@@ -69,13 +69,13 @@ export const initialPreferences: TravelPreferences = {
 };
 
 export const steps = [
-  { id: 1, title: 'Duration', description: 'How long is your ideal safari?' },
-  { id: 2, title: 'Budget', description: 'What\'s your budget preference?' },
-  { id: 3, title: 'Interests', description: 'What interests you most?' },
-  { id: 4, title: 'Group Size', description: 'How many travelers?' },
-  { id: 5, title: 'Travel Pace', description: 'What\'s your preferred pace?' },
-  { id: 6, title: 'Languages', description: 'Which languages should your guide speak?' },
+  { id: 1, title: 'Your Interests', description: 'What type of experiences are you looking for?' },
+  { id: 2, title: 'Duration', description: 'How long would you like your safari to be?' },
+  { id: 3, title: 'Group Size', description: 'How many people will be traveling?' },
+  { id: 4, title: 'Budget', description: 'What\'s your preferred budget range?' },
+  { id: 5, title: 'Travel Pace', description: 'What pace do you prefer for your journey?' },
+  { id: 6, title: 'Languages', description: 'What languages would you like your guide to speak?' },
   { id: 7, title: 'Schedule', description: 'When would you like to travel?' },
-  { id: 8, title: 'Travel Logistics', description: 'Airport and pickup details' },
-  { id: 9, title: 'Dietary', description: 'Any dietary requirements?' },
+  { id: 8, title: 'Travel Details', description: 'Let us know about your travel logistics' },
+  { id: 9, title: 'Dietary Needs', description: 'Any dietary requirements we should know about?' }
 ];
