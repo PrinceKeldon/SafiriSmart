@@ -78,10 +78,8 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   return (
     <div className="space-y-6">
       <ItineraryHeader 
-        title={itinerary.title}
-        overview={itinerary.overview}
-        duration={itinerary.totalDuration}
-        estimatedCost={itinerary.estimatedCost}
+        itinerary={itinerary}
+        preferences={preferences}
       />
 
       {/* Selected Packages Summary */}
@@ -105,19 +103,46 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
       {/* Itinerary Days */}
       <div className="space-y-4">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Daily Itinerary</h2>
-        {itinerary.days?.map((day: any, index: number) => (
+        {itinerary.itinerary_details?.map((day: any, index: number) => (
           <DayItineraryCard key={index} day={day} />
         ))}
       </div>
 
-      <InclusionsExclusions />
-      <ImportantNotes />
-      
-      <CallToAction 
-        selectedPackages={selectedPackages}
-        onProceed={handleProceedToBooking}
-        onBack={onBack}
+      <InclusionsExclusions 
+        inclusions={itinerary.inclusions_suggestions || []}
+        exclusions={itinerary.exclusions_suggestions || []}
       />
+      
+      <ImportantNotes 
+        notes={itinerary.important_notes || []}
+      />
+      
+      {/* Custom Call to Action for Lead Capture */}
+      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
+        <CardContent className="pt-6">
+          <div className="text-center">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Ready to Make This Safari a Reality?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {selectedPackages.length > 0 
+                ? `Connect with your selected ${selectedPackages.length} operator${selectedPackages.length !== 1 ? 's' : ''} to get personalized quotes.`
+                : 'Connect with our local experts to customize your itinerary and get detailed pricing.'
+              }
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="flex items-center" onClick={handleProceedToBooking}>
+                <Users className="w-5 h-5 mr-2" />
+                {selectedPackages.length > 0 ? 'Submit Inquiry to Selected Operators' : 'Connect with Local Expert'}
+              </Button>
+              <Button size="lg" variant="outline" className="flex items-center" onClick={onBack}>
+                <Calendar className="w-5 h-5 mr-2" />
+                Back to Preferences
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
