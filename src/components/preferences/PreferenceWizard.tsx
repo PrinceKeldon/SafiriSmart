@@ -108,7 +108,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   };
 
   if (showItineraryDisplay) {
-    // Create a mock itinerary for display
+    // Create a mock itinerary for display - fix the activities structure
     const mockItinerary = {
       title: `${preferences.duration}-Day Safari Adventure`,
       overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
@@ -120,11 +120,10 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
         day: i + 1,
         location: i === 0 ? 'Arrival' : 'Safari Location',
-        activities: [{
-          name: i === 0 ? 'Airport Transfer' : 'Game Drive',
-          duration: '3-4 hours',
-          description: i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
-        }],
+        activities: [
+          i === 0 ? 'Airport Transfer' : 'Game Drive',
+          i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
+        ],
         accommodation: `Safari Lodge ${i + 1}`,
         meals: ['Breakfast', 'Lunch', 'Dinner']
       }))
