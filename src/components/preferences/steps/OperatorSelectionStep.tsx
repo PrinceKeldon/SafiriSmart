@@ -2,33 +2,24 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, MapPin, Users, Calendar, DollarSign, Star } from 'lucide-react';
-import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { AlertCircle, MapPin, Users, Clock, DollarSign, Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface PackageMatch {
-  package: {
-    id: string;
-    package_name: string;
-    description: string;
-    min_duration: number;
-    max_duration: number;
-    min_group_size: number;
-    max_group_size: number;
-    budget_tier: string;
-    estimated_cost_per_person_per_day: number;
-    included_locations: string[];
-    included_activities: string[];
-  };
-  operator: {
-    id: string;
-    name: string;
-    company: string;
-    services_offered: string[];
-    destinations_covered: string[];
-  };
-  match_score: number;
+interface Package {
+  id: string;
+  package_name: string;
+  operator_company: string;
+  description?: string;
+  budget_tier: string;
+  min_duration: number;
+  max_duration: number;
+  min_group_size: number;
+  max_group_size: number;
+  estimated_cost_per_person_per_day: number;
+  included_locations?: string[];
+  included_activities?: string[];
 }
 
 interface OperatorSelectionStepProps {
@@ -44,62 +35,61 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
   selectedPackages,
   onPackageSelectionChange,
   onNext,
-  onBack
+  onBack,
 }) => {
-  const [matchingPackages, setMatchingPackages] = useState<PackageMatch[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const fetchMatchingPackages = async () => {
+      try {
+        console.log('OperatorSelectionStep: Fetching packages with preferences:', preferences);
+        setLoading(true);
+        setError(null);
+
+        const params = new URLSearchParams({
+          duration: preferences.duration?.toString() || '7',
+          budget_range: preferences.budgetRange || 'mid-range',
+          interests: Array.isArray(preferences.interests) ? preferences.interests.join(',') : (preferences.interests || 'wildlife-safari'),
+          group_size: preferences.groupSize?.toString() || '2',
+          travel_pace: preferences.travelPace || 'moderate',
+          languages: Array.isArray(preferences.languages) ? preferences.languages.join(',') : (preferences.languages || 'English')
+        });
+
+        console.log('OperatorSelectionStep: Making request with params:', params.toString());
+
+        // Try to fetch from the B2B backend
+        const response = await fetch(`http://localhost:8001/api/packages/match?${params}`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('OperatorSelectionStep: Received packages:', data);
+        
+        setPackages(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Error fetching matching packages:', error);
+        setError('Unable to load operator packages. You can continue without selecting specific packages.');
+        // Set empty packages array so the user can still proceed
+        setPackages([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMatchingPackages();
   }, [preferences]);
 
-  const fetchMatchingPackages = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const queryParams = new URLSearchParams();
-      
-      if (preferences.duration) queryParams.append('duration', preferences.duration.toString());
-      if (preferences.budgetRange) queryParams.append('budget_range', preferences.budgetRange);
-      if (preferences.interests && preferences.interests.length > 0) {
-        queryParams.append('interests', preferences.interests.join(','));
-      }
-      if (preferences.groupSize) queryParams.append('group_size', preferences.groupSize.toString());
-      if (preferences.travelPace) queryParams.append('travel_pace', preferences.travelPace);
-      if (preferences.languages && preferences.languages.length > 0) {
-        queryParams.append('languages', preferences.languages.join(','));
-      }
-
-      const response = await fetch(`http://localhost:8001/api/packages/match?${queryParams.toString()}`);
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch matching packages');
-      }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        setMatchingPackages(result.data || []);
-      } else {
-        throw new Error('No matching packages found');
-      }
-    } catch (err) {
-      console.error('Error fetching matching packages:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load matching packages');
-      toast.error('Failed to load matching packages');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handlePackageToggle = (packageId: string) => {
-    const updatedSelection = selectedPackages.includes(packageId)
+    const newSelection = selectedPackages.includes(packageId)
       ? selectedPackages.filter(id => id !== packageId)
       : [...selectedPackages, packageId];
     
-    onPackageSelectionChange(updatedSelection);
+    console.log('OperatorSelectionStep: Package selection changed:', newSelection);
+    onPackageSelectionChange(newSelection);
   };
 
   const getBudgetTierColor = (tier: string) => {
@@ -111,30 +101,21 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
     }
   };
 
-  const handleContinue = () => {
-    if (selectedPackages.length === 0) {
-      toast.error('Please select at least one package or operator');
-      return;
-    }
-    onNext();
-  };
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <span className="ml-2">Finding matching packages...</span>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Button onClick={fetchMatchingPackages} variant="outline">
-          Try Again
-        </Button>
+      <div className="space-y-6">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Choose Safari Operators
+          </h2>
+          <p className="text-gray-600">
+            Finding the best safari packages for your preferences...
+          </p>
+        </div>
+        
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
       </div>
     );
   }
@@ -143,152 +124,142 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Choose Your Safari Experts
+          Choose Safari Operators
         </h2>
         <p className="text-gray-600">
-          We found {matchingPackages.length} packages that match your preferences. 
-          Select the operators you'd like to receive quotes from.
+          Select specific packages/operators you'd like to receive quotes from, or skip to connect with our recommended operators.
         </p>
       </div>
 
-      {matchingPackages.length === 0 ? (
-        <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">
-            No packages match your exact preferences, but don't worry! 
-            Our operators can create custom packages for you.
+      {error && (
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {packages.length > 0 ? (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">
+            Found {packages.length} matching package{packages.length !== 1 ? 's' : ''}. 
+            Select the ones you're interested in:
           </p>
-          <Button onClick={onNext} className="bg-orange-600 hover:bg-orange-700">
-            Continue with Custom Matching
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="grid gap-4">
-            {matchingPackages.map((match) => (
-              <Card key={match.package.id} className="relative">
-                <div className="absolute top-4 right-4">
+          
+          {packages.map((pkg) => (
+            <Card key={pkg.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardContent className="p-6">
+                <div className="flex items-start space-x-4">
                   <Checkbox
-                    checked={selectedPackages.includes(match.package.id)}
-                    onCheckedChange={() => handlePackageToggle(match.package.id)}
+                    id={pkg.id}
+                    checked={selectedPackages.includes(pkg.id)}
+                    onCheckedChange={() => handlePackageToggle(pkg.id)}
                   />
-                </div>
-                
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between pr-8">
-                    <div>
-                      <CardTitle className="text-lg">{match.package.package_name}</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">
-                        by <span className="font-medium">{match.operator.company}</span>
-                      </p>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <Star className="h-4 w-4 text-yellow-500" />
-                      <span className="text-sm font-medium">{match.match_score}</span>
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  {match.package.description && (
-                    <p className="text-gray-700 text-sm">{match.package.description}</p>
-                  )}
-                  
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {match.package.min_duration === match.package.max_duration 
-                        ? `${match.package.min_duration} days`
-                        : `${match.package.min_duration}-${match.package.max_duration} days`
-                      }
-                    </Badge>
-                    
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {match.package.min_group_size === match.package.max_group_size
-                        ? `${match.package.min_group_size} people`
-                        : `${match.package.min_group_size}-${match.package.max_group_size} people`
-                      }
-                    </Badge>
-                    
-                    <Badge className={getBudgetTierColor(match.package.budget_tier)}>
-                      {match.package.budget_tier}
-                    </Badge>
-                    
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      ${match.package.estimated_cost_per_person_per_day}/person/day
-                    </Badge>
-                  </div>
-
-                  {match.package.included_locations && match.package.included_locations.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        Destinations
-                      </p>
-                      <div className="flex flex-wrap gap-1">
-                        {match.package.included_locations.slice(0, 3).map((location, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {location}
-                          </Badge>
-                        ))}
-                        {match.package.included_locations.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{match.package.included_locations.length - 3} more
-                          </Badge>
-                        )}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-semibold text-lg">{pkg.package_name}</h3>
+                        <p className="text-gray-600 font-medium">{pkg.operator_company}</p>
                       </div>
+                      <Badge className={getBudgetTierColor(pkg.budget_tier)}>
+                        {pkg.budget_tier}
+                      </Badge>
                     </div>
-                  )}
-
-                  {match.package.included_activities && match.package.included_activities.length > 0 && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-700 mb-2">Activities</p>
+                    
+                    {pkg.description && (
+                      <p className="text-gray-700 text-sm">{pkg.description}</p>
+                    )}
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="w-4 h-4 mr-1" />
+                        {pkg.min_duration === pkg.max_duration 
+                          ? `${pkg.min_duration} days`
+                          : `${pkg.min_duration}-${pkg.max_duration} days`
+                        }
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Users className="w-4 h-4 mr-1" />
+                        {pkg.min_group_size === pkg.max_group_size
+                          ? `${pkg.min_group_size} people`
+                          : `${pkg.min_group_size}-${pkg.max_group_size} people`
+                        }
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <DollarSign className="w-4 h-4 mr-1" />
+                        ${pkg.estimated_cost_per_person_per_day}/day
+                      </div>
+                      {pkg.included_locations && pkg.included_locations.length > 0 && (
+                        <div className="flex items-center text-gray-600">
+                          <MapPin className="w-4 h-4 mr-1" />
+                          {pkg.included_locations.slice(0, 2).join(', ')}
+                          {pkg.included_locations.length > 2 && '...'}
+                        </div>
+                      )}
+                    </div>
+                    
+                    {pkg.included_activities && pkg.included_activities.length > 0 && (
                       <div className="flex flex-wrap gap-1">
-                        {match.package.included_activities.slice(0, 4).map((activity, index) => (
+                        {pkg.included_activities.slice(0, 3).map((activity, index) => (
                           <Badge key={index} variant="outline" className="text-xs">
                             {activity}
                           </Badge>
                         ))}
-                        {match.package.included_activities.length > 4 && (
+                        {pkg.included_activities.length > 3 && (
                           <Badge variant="outline" className="text-xs">
-                            +{match.package.included_activities.length - 4} more
+                            +{pkg.included_activities.length - 3} more
                           </Badge>
                         )}
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={onBack}>
-              Back
-            </Button>
-            
-            <div className="flex items-center space-x-4">
-              <p className="text-sm text-gray-600">
-                {selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''} selected
-              </p>
-              <Button 
-                onClick={handleContinue}
-                className="bg-orange-600 hover:bg-orange-700"
-                disabled={selectedPackages.length === 0}
-              >
-                Continue with Selected ({selectedPackages.length})
-              </Button>
-            </div>
-          </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
           
-          <div className="text-center pt-4">
-            <Button variant="ghost" onClick={onNext} className="text-gray-600">
-              Skip this step - Use automatic matching
-            </Button>
-          </div>
-        </>
+          {selectedPackages.length > 0 && (
+            <Alert>
+              <AlertDescription>
+                You've selected {selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''}. 
+                Your inquiry will be sent directly to these operators.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      ) : (
+        <Card>
+          <CardContent className="p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No Packages Available
+            </h3>
+            <p className="text-gray-600">
+              We couldn't load specific packages right now, but you can still continue. 
+              Our system will match you with suitable operators based on your preferences.
+            </p>
+          </CardContent>
+        </Card>
       )}
+      
+      <div className="flex justify-between pt-6">
+        <Button
+          onClick={onBack}
+          variant="outline"
+        >
+          Back
+        </Button>
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          {selectedPackages.length > 0 
+            ? `Continue with ${selectedPackages.length} Selected`
+            : 'Continue Without Selection'
+          }
+        </Button>
+      </div>
     </div>
   );
 };

@@ -3,8 +3,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
-import { WizardNavigation } from './WizardNavigation';
-import { generateItinerary } from './ItineraryGenerator';
+import ItineraryDisplay from './ItineraryDisplay';
 
 interface PreferenceWizardProps {
   onComplete: (data: {
@@ -43,66 +42,85 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     specialRequirements: ''
   });
   const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
-  const [showItineraryGenerator, setShowItineraryGenerator] = useState(false);
+  const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
 
-  // Update total steps to include operator selection
   const totalSteps = 10;
+
+  console.log('PreferenceWizard: Current step:', currentStep, 'Selected packages:', selectedPackages);
 
   const handlePreferenceChange = (key: string, value: any) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
   };
 
   const handleNext = () => {
-    if (currentStep === 9) {
-      // After dietary step, show itinerary generator
-      setShowItineraryGenerator(true);
-    } else if (currentStep < totalSteps) {
+    console.log('PreferenceWizard: Moving from step', currentStep);
+    
+    if (currentStep < totalSteps) {
       setCurrentStep(prev => prev + 1);
-    } else {
-      // Complete the wizard
-      onComplete({
-        preferences,
-        schedule,
-        travel,
-        dietary,
-        selectedPackages
-      });
+    } else if (currentStep === totalSteps) {
+      // After operator selection (step 10), show itinerary display with lead capture
+      console.log('PreferenceWizard: Moving to itinerary display with packages:', selectedPackages);
+      setShowItineraryDisplay(true);
     }
   };
 
   const handleBack = () => {
-    if (showItineraryGenerator) {
-      setShowItineraryGenerator(false);
+    if (showItineraryDisplay) {
+      setShowItineraryDisplay(false);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
   };
 
-  const handleItineraryComplete = () => {
-    setShowItineraryGenerator(false);
-    setCurrentStep(10); // Go to operator selection step
+  const handleItineraryComplete = (result: any) => {
+    console.log('PreferenceWizard: Itinerary completed with result:', result);
+    onComplete({
+      preferences,
+      schedule,
+      travel,
+      dietary,
+      selectedPackages
+    });
   };
 
-  if (showItineraryGenerator) {
-    // Show a simple loading state for itinerary generation
+  const handleItineraryBack = () => {
+    setShowItineraryDisplay(false);
+  };
+
+  if (showItineraryDisplay) {
+    // Create a mock itinerary for display
+    const mockItinerary = {
+      title: `${preferences.duration}-Day Safari Adventure`,
+      overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
+      duration: preferences.duration,
+      estimatedCost: {
+        amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
+        currency: 'USD'
+      },
+      itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
+        day: i + 1,
+        location: i === 0 ? 'Arrival' : 'Safari Location',
+        activities: [{
+          name: i === 0 ? 'Airport Transfer' : 'Game Drive',
+          duration: '3-4 hours',
+          description: i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
+        }],
+        accommodation: `Safari Lodge ${i + 1}`,
+        meals: ['Breakfast', 'Lunch', 'Dinner']
+      }))
+    };
+
     return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card className="mt-8">
-          <CardContent className="p-8 text-center">
-            <div className="space-y-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <h3 className="text-lg font-semibold">Generating Your Safari Itinerary</h3>
-              <p className="text-gray-600">Please wait while we create your personalized safari experience...</p>
-              <button
-                onClick={handleItineraryComplete}
-                className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
-              >
-                Continue to Operator Selection
-              </button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <ItineraryDisplay
+        itinerary={mockItinerary}
+        preferences={preferences}
+        schedule={schedule}
+        travel={travel}
+        dietary={dietary}
+        selectedPackages={selectedPackages}
+        onBack={handleItineraryBack}
+        onComplete={handleItineraryComplete}
+      />
     );
   }
 
