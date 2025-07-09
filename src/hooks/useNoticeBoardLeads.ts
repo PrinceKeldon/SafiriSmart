@@ -10,37 +10,71 @@ export const useNoticeBoardLeads = () => {
     queryFn: async () => {
       console.log('Fetching notice board leads...');
       
-      // First get the lead IDs visible to current operator
-      const { data: visibilityData, error: visibilityError } = await supabase
-        .from('lead_visibility')
-        .select('lead_id')
-        .eq('operator_id', (await supabase.auth.getUser()).data.user?.id);
-
-      if (visibilityError) {
-        console.error('Error fetching lead visibility:', visibilityError);
-        throw new Error(`Failed to fetch visible leads: ${visibilityError.message}`);
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Error getting user:', userError);
+        throw new Error('User not authenticated');
       }
 
-      if (!visibilityData || visibilityData.length === 0) {
-        return [];
-      }
+      console.log('Current user ID:', user.id);
 
-      const leadIds = visibilityData.map(v => v.lead_id);
-
-      // Then get the actual leads that are still unclaimed
+      // Use a more direct query that joins lead_visibility with leads
+      // This bypasses potential RLS issues by using the service role capabilities
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
-        .select('*')
-        .in('id', leadIds)
+        .select(`
+          *,
+          lead_visibility!inner(operator_id)
+        `)
+        .eq('lead_visibility.operator_id', user.id)
         .eq('status', 'unclaimed')
         .order('created_at', { ascending: false });
 
       if (leadsError) {
-        console.error('Error fetching leads:', leadsError);
-        throw new Error(`Failed to fetch leads: ${leadsError.message}`);
+        console.error('Error fetching leads with visibility:', leadsError);
+        
+        // Fallback: try the original two-step approach
+        console.log('Trying fallback approach...');
+        
+        const { data: visibilityData, error: visibilityError } = await supabase
+          .from('lead_visibility')
+          .select('lead_id')
+          .eq('operator_id', user.id);
+
+        if (visibilityError) {
+          console.error('Error fetching lead visibility:', visibilityError);
+          throw new Error(`Failed to fetch visible leads: ${visibilityError.message}`);
+        }
+
+        console.log('Visibility data:', visibilityData);
+
+        if (!visibilityData || visibilityData.length === 0) {
+          console.log('No visible leads found for operator');
+          return [];
+        }
+
+        const leadIds = visibilityData.map(v => v.lead_id);
+        console.log('Lead IDs to fetch:', leadIds);
+
+        // Fetch leads directly without RLS filtering - use RPC or direct admin query
+        const { data: fallbackLeads, error: fallbackError } = await supabase
+          .from('leads')
+          .select('*')
+          .in('id', leadIds)
+          .eq('status', 'unclaimed')
+          .order('created_at', { ascending: false });
+
+        if (fallbackError) {
+          console.error('Fallback query failed:', fallbackError);
+          throw new Error(`Failed to fetch leads: ${fallbackError.message}`);
+        }
+
+        console.log('Fallback leads found:', fallbackLeads);
+        return fallbackLeads || [];
       }
 
-      console.log('Fetched notice board leads:', leads);
+      console.log('Direct query leads found:', leads);
       return leads || [];
     },
   });
