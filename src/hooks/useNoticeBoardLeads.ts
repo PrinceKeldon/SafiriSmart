@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead';
@@ -8,19 +7,42 @@ export const useNoticeBoardLeads = () => {
   return useQuery({
     queryKey: ['notice-board-leads'],
     queryFn: async () => {
-      console.log('Fetching notice board leads...');
+      console.log('🔍 useNoticeBoardLeads: Starting fetch...');
       
       // Get current user
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       if (userError || !user) {
-        console.error('Error getting user:', userError);
+        console.error('❌ Error getting user:', userError);
         throw new Error('User not authenticated');
       }
 
-      console.log('Current user ID:', user.id);
+      console.log('👤 Current user ID:', user.id);
+
+      // First, let's check what's in the lead_visibility table for this user
+      const { data: visibilityCheck, error: visibilityCheckError } = await supabase
+        .from('lead_visibility')
+        .select('*')
+        .eq('operator_id', user.id);
+
+      console.log('🔍 Lead visibility entries for user:', visibilityCheck);
+      if (visibilityCheckError) {
+        console.error('❌ Error checking lead visibility:', visibilityCheckError);
+      }
+
+      // Also check all unclaimed leads in the system (for debugging)
+      const { data: allUnclaimedLeads, error: allLeadsError } = await supabase
+        .from('leads')
+        .select('id, status, traveler_name, created_at')
+        .eq('status', 'unclaimed')
+        .order('created_at', { ascending: false });
+
+      console.log('📋 All unclaimed leads in system:', allUnclaimedLeads);
+      if (allLeadsError) {
+        console.error('❌ Error fetching all unclaimed leads:', allLeadsError);
+      }
 
       // Use a more direct query that joins lead_visibility with leads
-      // This bypasses potential RLS issues by using the service role capabilities
+      console.log('🔍 Attempting direct join query...');
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
         .select(`
@@ -32,10 +54,10 @@ export const useNoticeBoardLeads = () => {
         .order('created_at', { ascending: false });
 
       if (leadsError) {
-        console.error('Error fetching leads with visibility:', leadsError);
+        console.error('❌ Error fetching leads with visibility:', leadsError);
         
         // Fallback: try the original two-step approach
-        console.log('Trying fallback approach...');
+        console.log('🔄 Trying fallback approach...');
         
         const { data: visibilityData, error: visibilityError } = await supabase
           .from('lead_visibility')
@@ -43,21 +65,21 @@ export const useNoticeBoardLeads = () => {
           .eq('operator_id', user.id);
 
         if (visibilityError) {
-          console.error('Error fetching lead visibility:', visibilityError);
+          console.error('❌ Error fetching lead visibility:', visibilityError);
           throw new Error(`Failed to fetch visible leads: ${visibilityError.message}`);
         }
 
-        console.log('Visibility data:', visibilityData);
+        console.log('👁️ Visibility data:', visibilityData);
 
         if (!visibilityData || visibilityData.length === 0) {
-          console.log('No visible leads found for operator');
+          console.log('⚠️ No visible leads found for operator');
           return [];
         }
 
         const leadIds = visibilityData.map(v => v.lead_id);
-        console.log('Lead IDs to fetch:', leadIds);
+        console.log('🎯 Lead IDs to fetch:', leadIds);
 
-        // Fetch leads directly without RLS filtering - use RPC or direct admin query
+        // Fetch leads directly
         const { data: fallbackLeads, error: fallbackError } = await supabase
           .from('leads')
           .select('*')
@@ -66,17 +88,22 @@ export const useNoticeBoardLeads = () => {
           .order('created_at', { ascending: false });
 
         if (fallbackError) {
-          console.error('Fallback query failed:', fallbackError);
+          console.error('❌ Fallback query failed:', fallbackError);
           throw new Error(`Failed to fetch leads: ${fallbackError.message}`);
         }
 
-        console.log('Fallback leads found:', fallbackLeads);
+        console.log('✅ Fallback leads found:', fallbackLeads?.length || 0, 'leads');
+        console.log('📋 Fallback leads details:', fallbackLeads);
         return fallbackLeads || [];
       }
 
-      console.log('Direct query leads found:', leads);
+      console.log('✅ Direct query leads found:', leads?.length || 0, 'leads');
+      console.log('📋 Direct query leads details:', leads);
       return leads || [];
     },
+    retry: 1,
+    refetchOnWindowFocus: true,
+    staleTime: 30000, // 30 seconds
   });
 };
 
