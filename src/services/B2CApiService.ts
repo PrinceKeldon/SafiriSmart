@@ -1,37 +1,8 @@
 
+import { supabase } from '@/integrations/supabase/client';
+
 class B2CApiService {
-  private b2bBackendUrl: string;
-  private aiCoreUrl: string;
-
-  constructor() {
-    // Use environment variables or fallback to localhost for development
-    this.b2bBackendUrl = import.meta.env.VITE_B2B_BACKEND_URL || 'http://localhost:8001';
-    this.aiCoreUrl = import.meta.env.VITE_AI_CORE_SERVICE_URL || 'http://localhost:8000';
-  }
-
-  private async makeRequest<T>(
-    url: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
-  // AI Core Service - Generate Itinerary
+  // AI Core Service - Generate Itinerary (if needed in future)
   async generateItinerary(preferences: {
     duration: number;
     budgetRange: string;
@@ -39,13 +10,11 @@ class B2CApiService {
     groupSize: number;
     travelPace: string;
   }): Promise<any> {
-    return this.makeRequest(`${this.aiCoreUrl}/generate_itinerary`, {
-      method: 'POST',
-      body: JSON.stringify(preferences),
-    });
+    // This would call AI service in the future
+    throw new Error('AI Core Service not implemented yet');
   }
 
-  // Create Lead with Simplified Routing (All Operators)
+  // Create Lead via Supabase Edge Function
   async createLead(leadData: {
     traveler: {
       name: string;
@@ -80,34 +49,36 @@ class B2CApiService {
     };
     itinerary?: any;
   }): Promise<any> {
-    console.log('B2CApiService: Creating lead for all operators:', {
+    console.log('B2CApiService: Creating lead via Supabase Edge Function:', {
       travelerInfo: leadData.traveler,
       hasItinerary: !!leadData.itinerary
     });
 
-    return this.makeRequest(`${this.b2bBackendUrl}/api/leads`, {
-      method: 'POST',
-      body: JSON.stringify(leadData),
-    });
-  }
-
-  // Health check endpoints
-  async checkB2BBackendHealth(): Promise<any> {
     try {
-      return await this.makeRequest(`${this.b2bBackendUrl}/health`);
+      const { data, error } = await supabase.functions.invoke('create-lead', {
+        body: leadData
+      });
+
+      if (error) {
+        console.error('B2CApiService: Edge function error:', error);
+        throw new Error(error.message || 'Failed to create lead');
+      }
+
+      console.log('B2CApiService: Lead created successfully:', data);
+      return data;
     } catch (error) {
-      console.error('B2B Backend health check failed:', error);
+      console.error('B2CApiService: Error calling edge function:', error);
       throw error;
     }
+  }
+
+  // Health check endpoints (for future use)
+  async checkB2BBackendHealth(): Promise<any> {
+    throw new Error('B2B Backend health check not implemented');
   }
 
   async checkAICoreHealth(): Promise<any> {
-    try {
-      return await this.makeRequest(`${this.aiCoreUrl}/health`);
-    } catch (error) {
-      console.error('AI Core Service health check failed:', error);
-      throw error;
-    }
+    throw new Error('AI Core Service health check not implemented');
   }
 }
 
