@@ -10,7 +10,6 @@ import { TravelScheduleStep } from './steps/TravelScheduleStep';
 import { TravelLogisticsStep } from './steps/TravelLogisticsStep';
 import { DietaryStep } from './steps/DietaryStep';
 import { UserDetailsStep } from './steps/UserDetailsStep';
-import { FinalOperatorSelectionStep } from './steps/FinalOperatorSelectionStep';
 import { UserDetails } from './WizardTypes';
 
 export interface WizardStepsProps {
@@ -122,26 +121,13 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
             onBack={onBack}
           />
         );
-      case 11:
-        return (
-          <FinalOperatorSelectionStep
-            preferences={preferences}
-            schedule={schedule}
-            travel={travel}
-            dietary={dietary}
-            userDetails={userDetails}
-            itinerary={itinerary}
-            onComplete={onComplete!}
-            onBack={onBack}
-          />
-        );
       default:
         return null;
     }
   };
 
-  // Don't render navigation buttons for steps 10 and 11 as they handle their own
-  if (currentStep === 10 || currentStep === 11) {
+  // Don't render navigation buttons for step 10 as it handles its own
+  if (currentStep === 10) {
     return <div>{renderStep()}</div>;
   }
 
