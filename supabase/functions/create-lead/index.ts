@@ -136,7 +136,7 @@ serve(async (req) => {
 
     console.log('Inserting lead into database...');
 
-    // Insert the lead into Supabase
+    // Insert the lead into Supabase - FIXED: Use 'system_matched' instead of 'all_operators'
     const { data: leadData, error } = await supabaseClient
       .from('leads')
       .insert({
@@ -148,7 +148,7 @@ serve(async (req) => {
         itinerary: mockItinerary,
         status: 'unclaimed',
         assigned_operator_id: null,
-        selection_type: 'all_operators',
+        selection_type: 'system_matched', // FIXED: Use valid constraint value
         todo_checklist: []
       })
       .select()
@@ -204,7 +204,7 @@ serve(async (req) => {
         data: {
           lead_id: leadData.id,
           status: leadData.status,
-          selection_type: 'all_operators',
+          selection_type: 'system_matched', // Updated to reflect the fix
           operators_notified: operators ? operators.length : 0,
           traveler_info: {
             name: traveler.name,
