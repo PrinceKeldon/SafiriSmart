@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead';
@@ -18,87 +19,63 @@ export const useNoticeBoardLeads = () => {
 
       console.log('👤 Current user ID:', user.id);
 
-      // First, let's check what's in the lead_visibility table for this user
-      const { data: visibilityCheck, error: visibilityCheckError } = await supabase
+      // First, get lead visibility entries for this user
+      const { data: visibilityData, error: visibilityError } = await supabase
         .from('lead_visibility')
-        .select('*')
+        .select('lead_id')
         .eq('operator_id', user.id);
 
-      console.log('🔍 Lead visibility entries for user:', visibilityCheck);
-      if (visibilityCheckError) {
-        console.error('❌ Error checking lead visibility:', visibilityCheckError);
+      console.log('👁️ Raw visibility data:', visibilityData);
+      console.log('❌ Visibility error:', visibilityError);
+
+      if (visibilityError) {
+        console.error('❌ Error fetching lead visibility:', visibilityError);
+        throw new Error(`Failed to fetch visible leads: ${visibilityError.message}`);
       }
 
-      // Also check all unclaimed leads in the system (for debugging)
-      const { data: allUnclaimedLeads, error: allLeadsError } = await supabase
-        .from('leads')
-        .select('id, status, traveler_name, created_at')
-        .eq('status', 'unclaimed')
-        .order('created_at', { ascending: false });
-
-      console.log('📋 All unclaimed leads in system:', allUnclaimedLeads);
-      if (allLeadsError) {
-        console.error('❌ Error fetching all unclaimed leads:', allLeadsError);
+      if (!visibilityData || visibilityData.length === 0) {
+        console.log('⚠️ No visible leads found for operator');
+        return [];
       }
 
-      // Use a more direct query that joins lead_visibility with leads
-      console.log('🔍 Attempting direct join query...');
+      const leadIds = visibilityData.map(v => v.lead_id);
+      console.log('🎯 Lead IDs to fetch:', leadIds);
+
+      // Now fetch leads with these IDs that are unclaimed
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
-        .select(`
-          *,
-          lead_visibility!inner(operator_id)
-        `)
-        .eq('lead_visibility.operator_id', user.id)
+        .select('*')
+        .in('id', leadIds)
         .eq('status', 'unclaimed')
         .order('created_at', { ascending: false });
 
+      console.log('📊 Direct leads query result:', leads);
+      console.log('❌ Direct leads error:', leadsError);
+
       if (leadsError) {
-        console.error('❌ Error fetching leads with visibility:', leadsError);
-        
-        // Fallback: try the original two-step approach
-        console.log('🔄 Trying fallback approach...');
-        
-        const { data: visibilityData, error: visibilityError } = await supabase
-          .from('lead_visibility')
-          .select('lead_id')
-          .eq('operator_id', user.id);
-
-        if (visibilityError) {
-          console.error('❌ Error fetching lead visibility:', visibilityError);
-          throw new Error(`Failed to fetch visible leads: ${visibilityError.message}`);
-        }
-
-        console.log('👁️ Visibility data:', visibilityData);
-
-        if (!visibilityData || visibilityData.length === 0) {
-          console.log('⚠️ No visible leads found for operator');
-          return [];
-        }
-
-        const leadIds = visibilityData.map(v => v.lead_id);
-        console.log('🎯 Lead IDs to fetch:', leadIds);
-
-        // Fetch leads directly
-        const { data: fallbackLeads, error: fallbackError } = await supabase
-          .from('leads')
-          .select('*')
-          .in('id', leadIds)
-          .eq('status', 'unclaimed')
-          .order('created_at', { ascending: false });
-
-        if (fallbackError) {
-          console.error('❌ Fallback query failed:', fallbackError);
-          throw new Error(`Failed to fetch leads: ${fallbackError.message}`);
-        }
-
-        console.log('✅ Fallback leads found:', fallbackLeads?.length || 0, 'leads');
-        console.log('📋 Fallback leads details:', fallbackLeads);
-        return fallbackLeads || [];
+        console.error('❌ Error fetching leads:', leadsError);
+        throw new Error(`Failed to fetch leads: ${leadsError.message}`);
       }
 
-      console.log('✅ Direct query leads found:', leads?.length || 0, 'leads');
-      console.log('📋 Direct query leads details:', leads);
+      // Additional debugging: check what leads exist with any status
+      const { data: allStatusLeads, error: allStatusError } = await supabase
+        .from('leads')
+        .select('id, status, traveler_name, created_at')
+        .in('id', leadIds)
+        .order('created_at', { ascending: false });
+
+      console.log('🔍 All leads with any status for this operator:', allStatusLeads);
+      if (allStatusError) {
+        console.error('❌ Error fetching all status leads:', allStatusError);
+      }
+
+      // Log the specific filtering results
+      const unclaimedCount = allStatusLeads?.filter(l => l.status === 'unclaimed').length || 0;
+      const claimedCount = allStatusLeads?.filter(l => l.status === 'claimed').length || 0;
+      const otherStatusCount = allStatusLeads?.filter(l => l.status !== 'unclaimed' && l.status !== 'claimed').length || 0;
+
+      console.log(`📈 Lead status breakdown: ${unclaimedCount} unclaimed, ${claimedCount} claimed, ${otherStatusCount} other`);
+
       return leads || [];
     },
     retry: 1,
