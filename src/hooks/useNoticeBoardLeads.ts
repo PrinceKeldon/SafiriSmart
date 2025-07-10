@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead';
@@ -41,12 +40,13 @@ export const useNoticeBoardLeads = () => {
       const leadIds = visibilityData.map(v => v.lead_id);
       console.log('🎯 Lead IDs to fetch:', leadIds);
 
-      // Now fetch leads with these IDs that are unclaimed
+      // Now fetch leads with these IDs that are new or unassigned
+      // Updated to include 'new' status instead of just 'unclaimed'
       const { data: leads, error: leadsError } = await supabase
         .from('leads')
         .select('*')
         .in('id', leadIds)
-        .eq('status', 'unclaimed')
+        .in('status', ['new', 'unclaimed']) // Include both new and unclaimed
         .order('created_at', { ascending: false });
 
       console.log('📊 Direct leads query result:', leads);
@@ -70,11 +70,12 @@ export const useNoticeBoardLeads = () => {
       }
 
       // Log the specific filtering results
+      const newCount = allStatusLeads?.filter(l => l.status === 'new').length || 0;
       const unclaimedCount = allStatusLeads?.filter(l => l.status === 'unclaimed').length || 0;
       const claimedCount = allStatusLeads?.filter(l => l.status === 'claimed').length || 0;
-      const otherStatusCount = allStatusLeads?.filter(l => l.status !== 'unclaimed' && l.status !== 'claimed').length || 0;
+      const otherStatusCount = allStatusLeads?.filter(l => !['new', 'unclaimed', 'claimed'].includes(l.status)).length || 0;
 
-      console.log(`📈 Lead status breakdown: ${unclaimedCount} unclaimed, ${claimedCount} claimed, ${otherStatusCount} other`);
+      console.log(`📈 Lead status breakdown: ${newCount} new, ${unclaimedCount} unclaimed, ${claimedCount} claimed, ${otherStatusCount} other`);
 
       return leads || [];
     },
@@ -140,7 +141,7 @@ export const useClaimLead = () => {
           updated_at: new Date().toISOString()
         })
         .eq('id', leadId)
-        .eq('status', 'unclaimed') // Ensure it's still unclaimed
+        .in('status', ['new', 'unclaimed']) // Allow claiming from both new and unclaimed status
         .select()
         .single();
 

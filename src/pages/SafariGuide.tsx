@@ -1,10 +1,14 @@
 
 import PreferenceWizard from '@/components/preferences/PreferenceWizard';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Compass } from 'lucide-react';
+import { ArrowLeft, Compass, Bug } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { OperatorSelectionDebugger } from '@/components/preferences/OperatorSelectionDebugger';
+import { useState } from 'react';
 
 const SafariGuide = () => {
+  const [showDebugger, setShowDebugger] = useState(false);
+
   const handleWizardComplete = (data: any) => {
     console.log('Wizard completed with data:', data);
     // Handle completion logic here
@@ -27,28 +31,55 @@ const SafariGuide = () => {
               <p className="text-xs text-gray-600">by SafiriSmart</p>
             </div>
           </div>
-          <Link to="/">
-            <Button variant="outline" size="sm" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="flex items-center gap-2"
+              onClick={() => setShowDebugger(!showDebugger)}
+            >
+              <Bug className="h-4 w-4" />
+              {showDebugger ? 'Hide' : 'Show'} Debugger
             </Button>
-          </Link>
+            <Link to="/">
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                Back to Home
+              </Button>
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
-            Plan Your Perfect Safari Adventure
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Answer a few questions and let our AI create a personalized safari itinerary just for you.
-          </p>
-        </div>
+        {showDebugger ? (
+          <div className="space-y-8">
+            <div className="text-center">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Debug Operator Selection Flow
+              </h2>
+              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                Use the tools below to test each step of the operator selection process.
+              </p>
+            </div>
+            <OperatorSelectionDebugger />
+          </div>
+        ) : (
+          <>
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">
+                Plan Your Perfect Safari Adventure
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Answer a few questions and let our AI create a personalized safari itinerary just for you.
+              </p>
+            </div>
 
-        {/* Preference Wizard */}
-        <PreferenceWizard onComplete={handleWizardComplete} />
+            {/* Preference Wizard */}
+            <PreferenceWizard onComplete={handleWizardComplete} />
+          </>
+        )}
       </div>
     </div>
   );

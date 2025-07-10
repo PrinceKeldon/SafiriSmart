@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Create lead with selected operators function called');
+    console.log('🚀 Create lead with selected operators function called');
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -22,30 +22,39 @@ serve(async (req) => {
     );
 
     const requestBody = await req.json();
-    console.log('Request body received:', JSON.stringify(requestBody, null, 2));
+    console.log('📥 Request body received:', JSON.stringify(requestBody, null, 2));
 
-    const { traveler, preferences, schedule, travel, dietary, itinerary, selected_operator_ids } = requestBody;
+    const { traveler, preferences, schedule, travel, dietary, itinerary, selectedOperatorIds } = requestBody;
 
-    // Validation
+    // Enhanced validation with detailed logging
     if (!traveler?.name || !traveler?.email || !traveler?.country) {
-      throw new Error('Traveler name, email, and country are required');
+      const error = 'Traveler name, email, and country are required';
+      console.error('❌ Validation error:', error);
+      console.log('🔍 Received traveler data:', traveler);
+      throw new Error(error);
     }
 
     if (!preferences) {
-      throw new Error('Preferences are required');
+      const error = 'Preferences are required';
+      console.error('❌ Validation error:', error);
+      throw new Error(error);
     }
 
-    if (!selected_operator_ids || !Array.isArray(selected_operator_ids) || selected_operator_ids.length === 0) {
-      throw new Error('At least one operator must be selected');
+    if (!selectedOperatorIds || !Array.isArray(selectedOperatorIds) || selectedOperatorIds.length === 0) {
+      const error = 'At least one operator must be selected';
+      console.error('❌ Validation error:', error);
+      console.log('🔍 Received selectedOperatorIds:', selectedOperatorIds);
+      throw new Error(error);
     }
 
-    console.log('Creating lead for selected operators:', {
+    console.log('✅ Validation passed - Creating lead for selected operators:', {
       travelerInfo: {
         name: traveler.name,
         email: traveler.email,
         country: traveler.country
       },
-      selectedOperatorIds: selected_operator_ids
+      selectedOperatorIds: selectedOperatorIds,
+      selectedOperatorCount: selectedOperatorIds.length
     });
 
     // Process dates properly
@@ -69,7 +78,12 @@ serve(async (req) => {
       message: traveler.message || null
     };
 
-    // Create the lead
+    console.log('📝 Creating lead with enhanced preferences:', {
+      preferencesKeys: Object.keys(enhancedPreferences),
+      hasItinerary: !!itinerary
+    });
+
+    // Create the lead with 'new' status for direct selection flow
     const { data: leadData, error: leadError } = await supabaseClient
       .from('leads')
       .insert({
@@ -79,53 +93,84 @@ serve(async (req) => {
         traveler_country: traveler.country,
         preferences: enhancedPreferences,
         itinerary: itinerary,
-        status: 'new',
-        assigned_operator_id: null
+        status: 'new', // Changed from 'unclaimed' to 'new' for direct selection
+        assigned_operator_id: null,
+        selection_type: 'user_selected' // Track that this was user-selected
       })
       .select()
       .single();
 
     if (leadError) {
-      console.error('Database insertion error:', leadError);
+      console.error('❌ Database insertion error:', leadError);
+      console.error('🔍 Error details:', JSON.stringify(leadError, null, 2));
       throw leadError;
     }
 
-    console.log('Lead created successfully:', {
+    console.log('✅ Lead created successfully:', {
       leadId: leadData.id,
-      travelerName: leadData.traveler_name
+      travelerName: leadData.traveler_name,
+      status: leadData.status,
+      selectionType: leadData.selection_type
     });
 
     // Create visibility entries for selected operators
-    const visibilityEntries = selected_operator_ids.map(operatorId => ({
+    console.log('📋 Creating lead visibility entries...');
+    const visibilityEntries = selectedOperatorIds.map(operatorId => ({
       lead_id: leadData.id,
       operator_id: operatorId
     }));
 
-    const { error: visibilityError } = await supabaseClient
+    console.log('🔍 Visibility entries to create:', visibilityEntries);
+
+    const { data: visibilityData, error: visibilityError } = await supabaseClient
       .from('lead_visibility')
-      .insert(visibilityEntries);
+      .insert(visibilityEntries)
+      .select();
 
     if (visibilityError) {
-      console.error('Error creating lead visibility entries:', visibilityError);
+      console.error('❌ Error creating lead visibility entries:', visibilityError);
+      console.error('🔍 Visibility error details:', JSON.stringify(visibilityError, null, 2));
       throw visibilityError;
     }
 
-    console.log(`Lead visibility created for ${selected_operator_ids.length} selected operators`);
+    console.log('✅ Lead visibility created successfully:', {
+      entriesCreated: visibilityData?.length || 0,
+      selectedOperators: selectedOperatorIds.length,
+      visibilityData: visibilityData
+    });
+
+    // Verify the entries were created by reading them back
+    const { data: verifyVisibility, error: verifyError } = await supabaseClient
+      .from('lead_visibility')
+      .select('*')
+      .eq('lead_id', leadData.id);
+
+    if (verifyError) {
+      console.warn('⚠️ Could not verify visibility entries:', verifyError);
+    } else {
+      console.log('🔍 Verification - Lead visibility entries in DB:', verifyVisibility);
+    }
+
+    const response = {
+      success: true,
+      data: {
+        lead_id: leadData.id,
+        status: leadData.status,
+        selection_type: leadData.selection_type,
+        operators_notified: selectedOperatorIds.length,
+        visibility_entries_created: visibilityData?.length || 0,
+        traveler_info: {
+          name: traveler.name,
+          country: traveler.country
+        }
+      },
+      message: `Lead created successfully and sent to ${selectedOperatorIds.length} selected operators`
+    };
+
+    console.log('🎉 Sending success response:', response);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          lead_id: leadData.id,
-          status: leadData.status,
-          operators_notified: selected_operator_ids.length,
-          traveler_info: {
-            name: traveler.name,
-            country: traveler.country
-          }
-        },
-        message: `Lead created successfully and sent to ${selected_operator_ids.length} selected operators`
-      }),
+      JSON.stringify(response),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -133,11 +178,14 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error creating lead with operators:', error);
+    console.error('💥 Error creating lead with operators:', error);
+    console.error('🔍 Error stack:', error.stack);
+    
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message || 'Failed to create lead'
+        error: error.message || 'Failed to create lead',
+        details: error.stack || 'No additional details'
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
