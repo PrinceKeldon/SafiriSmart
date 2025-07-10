@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, MapPin, Camera } from 'lucide-react';
@@ -7,9 +7,11 @@ import { Clock, MapPin, Camera } from 'lucide-react';
 interface TravelPaceStepProps {
   value: 'relaxed' | 'moderate' | 'active';
   onChange: (value: 'relaxed' | 'moderate' | 'active') => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange }) => {
+export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange, onNext, onBack }) => {
   const paceOptions = [
     {
       id: 'relaxed' as const,
@@ -93,6 +95,22 @@ export const TravelPaceStep: React.FC<TravelPaceStepProps> = ({ value, onChange 
             </Card>
           );
         })}
+      </div>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

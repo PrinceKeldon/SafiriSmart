@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TravelPreferences } from '../WizardTypes';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -8,11 +8,21 @@ import { Label } from '@/components/ui/label';
 import { Calendar, Clock } from 'lucide-react';
 
 interface TravelScheduleStepProps {
-  value: TravelPreferences['schedule'];
-  onChange: (schedule: TravelPreferences['schedule']) => void;
+  value: {
+    startDate?: Date;
+    endDate?: Date;
+    flexible: boolean;
+  };
+  onChange: (schedule: {
+    startDate?: Date;
+    endDate?: Date;
+    flexible: boolean;
+  }) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-export const TravelScheduleStep: React.FC<TravelScheduleStepProps> = ({ value, onChange }) => {
+export const TravelScheduleStep: React.FC<TravelScheduleStepProps> = ({ value, onChange, onNext, onBack }) => {
   const handleFlexibleChange = (checked: boolean) => {
     onChange({
       ...value,
@@ -107,6 +117,22 @@ export const TravelScheduleStep: React.FC<TravelScheduleStepProps> = ({ value, o
           )}
         </CardContent>
       </Card>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };

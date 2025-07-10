@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Card } from '@/components/ui/card';
@@ -7,9 +8,11 @@ import { Card } from '@/components/ui/card';
 interface DurationStepProps {
   value: number;
   onChange: (value: number) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-export const DurationStep: React.FC<DurationStepProps> = ({ value, onChange }) => {
+export const DurationStep: React.FC<DurationStepProps> = ({ value, onChange, onNext, onBack }) => {
   const handleSliderChange = (values: number[]) => {
     onChange(values[0]);
   };
@@ -84,6 +87,22 @@ export const DurationStep: React.FC<DurationStepProps> = ({ value, onChange }) =
           <p className="text-sm text-gray-600">11+ days</p>
           <p className="text-xs text-gray-500 mt-1">Deep exploration experience</p>
         </Card>
+      </div>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 
 interface TravelLogisticsStepProps {
   travel: {
@@ -8,12 +9,16 @@ interface TravelLogisticsStepProps {
     pickupTime?: string;
     pickupLocation?: string;
   };
-  onTravelChange: (travel: any) => void;
+  onChange: (travel: any) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
 export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({ 
   travel, 
-  onTravelChange 
+  onChange,
+  onNext,
+  onBack 
 }) => {
   return (
     <div className="space-y-6">
@@ -26,7 +31,7 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
             className="w-full px-3 py-2 border rounded-md"
             placeholder="e.g., Jomo Kenyatta International Airport (NBO)"
             value={travel.portOfEntry || ''}
-            onChange={(e) => onTravelChange({
+            onChange={(e) => onChange({
               ...travel,
               portOfEntry: e.target.value
             })}
@@ -37,7 +42,7 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
             type="checkbox"
             id="airportPickup"
             checked={travel.airportPickup}
-            onChange={(e) => onTravelChange({
+            onChange={(e) => onChange({
               ...travel,
               airportPickup: e.target.checked
             })}
@@ -54,7 +59,7 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
                 type="time"
                 className="w-full px-3 py-2 border rounded-md"
                 value={travel.pickupTime || ''}
-                onChange={(e) => onTravelChange({
+                onChange={(e) => onChange({
                   ...travel,
                   pickupTime: e.target.value
                 })}
@@ -67,7 +72,7 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
                 className="w-full px-3 py-2 border rounded-md"
                 placeholder="e.g., Terminal 1A, Gate 5"
                 value={travel.pickupLocation || ''}
-                onChange={(e) => onTravelChange({
+                onChange={(e) => onChange({
                   ...travel,
                   pickupLocation: e.target.value
                 })}
@@ -75,6 +80,22 @@ export const TravelLogisticsStep: React.FC<TravelLogisticsStepProps> = ({
             </div>
           </div>
         )}
+      </div>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

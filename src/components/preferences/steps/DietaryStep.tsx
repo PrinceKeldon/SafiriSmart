@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 
 interface DietaryStepProps {
   dietary: {
@@ -7,12 +8,16 @@ interface DietaryStepProps {
     allergies?: string;
     specialRequirements?: string;
   };
-  onDietaryChange: (dietary: any) => void;
+  onChange: (dietary: any) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
 export const DietaryStep: React.FC<DietaryStepProps> = ({ 
   dietary, 
-  onDietaryChange 
+  onChange,
+  onNext,
+  onBack 
 }) => {
   return (
     <div className="space-y-6">
@@ -25,7 +30,7 @@ export const DietaryStep: React.FC<DietaryStepProps> = ({
             rows={3}
             placeholder="e.g., Vegetarian, Halal, local cuisine preferences..."
             value={dietary.mealWishes || ''}
-            onChange={(e) => onDietaryChange({
+            onChange={(e) => onChange({
               ...dietary,
               mealWishes: e.target.value
             })}
@@ -38,7 +43,7 @@ export const DietaryStep: React.FC<DietaryStepProps> = ({
             rows={3}
             placeholder="e.g., Nut allergies, gluten intolerance, lactose intolerance..."
             value={dietary.allergies || ''}
-            onChange={(e) => onDietaryChange({
+            onChange={(e) => onChange({
               ...dietary,
               allergies: e.target.value
             })}
@@ -51,12 +56,28 @@ export const DietaryStep: React.FC<DietaryStepProps> = ({
             rows={2}
             placeholder="Any other special dietary needs or medical requirements..."
             value={dietary.specialRequirements || ''}
-            onChange={(e) => onDietaryChange({
+            onChange={(e) => onChange({
               ...dietary,
               specialRequirements: e.target.value
             })}
           />
         </div>
+      </div>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

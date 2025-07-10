@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Check, Languages } from 'lucide-react';
@@ -7,6 +8,8 @@ import { Check, Languages } from 'lucide-react';
 interface LanguagesStepProps {
   value: string[];
   onChange: (languages: string[]) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
 const commonLanguages = [
@@ -25,7 +28,7 @@ const commonLanguages = [
   'Other'
 ];
 
-export const LanguagesStep: React.FC<LanguagesStepProps> = ({ value, onChange }) => {
+export const LanguagesStep: React.FC<LanguagesStepProps> = ({ value, onChange, onNext, onBack }) => {
   const toggleLanguage = (language: string) => {
     if (value.includes(language)) {
       onChange(value.filter(lang => lang !== language));
@@ -77,6 +80,23 @@ export const LanguagesStep: React.FC<LanguagesStepProps> = ({ value, onChange })
           </div>
         </div>
       )}
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          disabled={value.length === 0}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };

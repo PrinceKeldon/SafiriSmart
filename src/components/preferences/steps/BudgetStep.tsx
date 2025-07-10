@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { DollarSign, Star, Crown } from 'lucide-react';
@@ -7,9 +7,11 @@ import { DollarSign, Star, Crown } from 'lucide-react';
 interface BudgetStepProps {
   value: 'budget' | 'mid-range' | 'luxury';
   onChange: (value: 'budget' | 'mid-range' | 'luxury') => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-export const BudgetStep: React.FC<BudgetStepProps> = ({ value, onChange }) => {
+export const BudgetStep: React.FC<BudgetStepProps> = ({ value, onChange, onNext, onBack }) => {
   const budgetOptions = [
     {
       id: 'budget' as const,
@@ -101,6 +103,22 @@ export const BudgetStep: React.FC<BudgetStepProps> = ({ value, onChange }) => {
             </Card>
           );
         })}
+      </div>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );

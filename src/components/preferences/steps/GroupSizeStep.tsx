@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,9 +8,11 @@ import { Minus, Plus, User, Users } from 'lucide-react';
 interface GroupSizeStepProps {
   value: number;
   onChange: (value: number) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-export const GroupSizeStep: React.FC<GroupSizeStepProps> = ({ value, onChange }) => {
+export const GroupSizeStep: React.FC<GroupSizeStepProps> = ({ value, onChange, onNext, onBack }) => {
   const increment = () => {
     if (value < 20) {
       onChange(value + 1);
@@ -122,6 +123,22 @@ export const GroupSizeStep: React.FC<GroupSizeStepProps> = ({ value, onChange })
           </p>
         </div>
       )}
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
+      </div>
     </div>
   );
 };

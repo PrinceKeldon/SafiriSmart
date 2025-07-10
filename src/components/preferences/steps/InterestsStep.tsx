@@ -1,14 +1,17 @@
 
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Camera, Mountain, Users, Waves, TreePine, Compass, Bird, Car } from 'lucide-react';
 
 interface InterestsStepProps {
   value: string[];
   onChange: (value: string[]) => void;
+  onNext: () => void;
+  onBack: () => void;
 }
 
-export const InterestsStep: React.FC<InterestsStepProps> = ({ value, onChange }) => {
+export const InterestsStep: React.FC<InterestsStepProps> = ({ value, onChange, onNext, onBack }) => {
   const interestOptions = [
     {
       id: 'wildlife-safari',
@@ -130,6 +133,24 @@ export const InterestsStep: React.FC<InterestsStepProps> = ({ value, onChange })
             </div>
           );
         })}
+      </div>
+
+      <div className="flex justify-between pt-6">
+        <Button
+          variant="outline"
+          onClick={onBack}
+          disabled={true}
+        >
+          Back
+        </Button>
+        
+        <Button
+          onClick={onNext}
+          disabled={value.length === 0}
+          className="bg-orange-600 hover:bg-orange-700"
+        >
+          Next
+        </Button>
       </div>
     </div>
   );
