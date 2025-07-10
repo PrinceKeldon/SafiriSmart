@@ -53,9 +53,9 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
   const [showOperatorSelection, setShowOperatorSelection] = useState(false);
 
-  const totalSteps = 10; // Updated to include user details step
+  const totalSteps = 10;
 
-  console.log('PreferenceWizard: Current step:', currentStep);
+  console.log('PreferenceWizard: Current step:', currentStep, 'showItineraryDisplay:', showItineraryDisplay, 'showOperatorSelection:', showOperatorSelection);
 
   const handlePreferenceChange = (key: string, value: any) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
@@ -74,15 +74,22 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       // After dietary step (step 9), show itinerary display
       console.log('PreferenceWizard: Moving to itinerary display');
       setShowItineraryDisplay(true);
+    } else if (currentStep === 10) {
+      // After user details step (step 10), show operator selection
+      console.log('PreferenceWizard: Moving from user details to operator selection');
+      setShowOperatorSelection(true);
     }
   };
 
   const handleBack = () => {
     if (showOperatorSelection) {
+      // From operator selection back to user details step
       setShowOperatorSelection(false);
-      setShowItineraryDisplay(true);
+      setCurrentStep(10);
     } else if (showItineraryDisplay) {
+      // From itinerary display back to step 9
       setShowItineraryDisplay(false);
+      setCurrentStep(9);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
@@ -96,11 +103,11 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
 
   const handleItineraryBack = () => {
     setShowItineraryDisplay(false);
+    setCurrentStep(9); // Go back to dietary step
   };
 
   const handleUserDetailsComplete = () => {
     console.log('PreferenceWizard: User details collected, showing operator selection');
-    setCurrentStep(1); // Reset for display purposes
     setShowOperatorSelection(true);
   };
 
@@ -120,8 +127,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     setCurrentStep(10); // Go back to user details step
   };
 
+  // Show operator selection modal
   if (showOperatorSelection) {
-    // Create the traveler data object for operator selection
     const travelerData = {
       traveler: {
         name: userDetails.name,
@@ -165,8 +172,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     );
   }
 
+  // Show itinerary display
   if (showItineraryDisplay) {
-    // Create a mock itinerary for display
     const mockItinerary = {
       title: `${preferences.duration}-Day Safari Adventure`,
       overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
@@ -201,6 +208,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     );
   }
 
+  // Show wizard steps (including step 10 - user details)
   return (
     <div className="max-w-4xl mx-auto p-6">
       <WizardProgress currentStep={currentStep} steps={steps} />
