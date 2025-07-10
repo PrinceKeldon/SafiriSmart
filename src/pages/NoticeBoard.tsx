@@ -38,6 +38,16 @@ const NoticeBoard = () => {
     refetch();
   };
 
+  const handleUpdateStatus = (leadId: string, newStatus: Lead['status']) => {
+    console.log('Updating lead status:', leadId, newStatus);
+    // TODO: Implement status update logic if needed
+  };
+
+  const handleAddNote = (leadId: string, note: string) => {
+    console.log('Adding note to lead:', leadId, note);
+    // TODO: Implement note adding logic if needed
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -157,6 +167,8 @@ const NoticeBoard = () => {
           lead={selectedLead}
           isOpen={isModalOpen}
           onClose={handleCloseModal}
+          onUpdateStatus={handleUpdateStatus}
+          onAddNote={handleAddNote}
         />
       </div>
     </DashboardLayout>

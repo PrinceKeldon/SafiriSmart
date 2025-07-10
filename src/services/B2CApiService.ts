@@ -22,6 +22,67 @@ class B2CApiService {
     }
   }
 
+  // Generate itinerary (placeholder for AI service integration)
+  async generateItinerary(preferences: {
+    duration: number;
+    budgetRange: string;
+    interests: string[];
+    groupSize: number;
+    travelPace: string;
+  }): Promise<any> {
+    console.log('B2CApiService: Generating itinerary with preferences:', preferences);
+    
+    // For now, return a mock response since we don't have AI service integrated
+    return {
+      tour_name: `${preferences.duration}-Day Kenya Safari Adventure`,
+      summary: `Experience the best of Kenya's wildlife and landscapes with this carefully crafted ${preferences.duration}-day safari.`,
+      itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
+        day_number: i + 1,
+        theme: i === 0 ? 'Arrival & Masai Mara' : `Safari Day ${i + 1}`,
+        location: i === 0 ? 'Nairobi to Masai Mara' : 'Masai Mara National Reserve',
+        activities: ['Game Drive', 'Wildlife Photography'],
+        accommodation_suggestion: 'Safari Lodge',
+        meals: ['Breakfast', 'Lunch', 'Dinner']
+      })),
+      inclusions_suggestions: [
+        'All park entrance fees',
+        'Professional safari guide',
+        'Transportation in 4WD vehicle'
+      ],
+      exclusions_suggestions: [
+        'International flights',
+        'Personal expenses',
+        'Travel insurance'
+      ],
+      important_notes: [
+        'Best time to travel is during dry seasons',
+        'Comfortable walking shoes recommended'
+      ]
+    };
+  }
+
+  // Create lead (legacy method for compatibility)
+  async createLead(leadData: {
+    traveler: {
+      name: string;
+      email: string;
+      phone?: string;
+      country: string;
+      message?: string;
+    };
+    preferences: any;
+    schedule?: any;
+    travel?: any;
+    dietary?: any;
+    itinerary?: any;
+  }): Promise<any> {
+    console.log('B2CApiService: Creating lead (legacy method):', leadData);
+    
+    // For legacy compatibility, create lead without operator selection
+    // This would typically go to all operators or a default matching system
+    throw new Error('Legacy createLead method deprecated. Use createLeadWithSelectedOperators instead.');
+  }
+
   // Create Lead with selected operators
   async createLeadWithSelectedOperators(leadData: {
     traveler: {

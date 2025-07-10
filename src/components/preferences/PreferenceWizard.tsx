@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
@@ -173,6 +172,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
         schedule={schedule}
         travel={travel}
         dietary={dietary}
+        userDetails={userDetails}
         onBack={handleItineraryBack}
         onComplete={handleItineraryComplete}
       />
