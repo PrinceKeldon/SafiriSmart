@@ -60,8 +60,8 @@ export const OperatorSelectionDebugger: React.FC = () => {
         languages: ['English']
       },
       schedule: {
-        startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000).toISOString(),
+        startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        endDate: new Date(Date.now() + 37 * 24 * 60 * 60 * 1000),
         flexible: true
       },
       travel: {
