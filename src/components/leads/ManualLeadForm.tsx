@@ -6,12 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { DurationStep } from '@/components/preferences/steps/DurationStep';
-import { BudgetStep } from '@/components/preferences/steps/BudgetStep';
-import { InterestsStep } from '@/components/preferences/steps/InterestsStep';
-import { GroupSizeStep } from '@/components/preferences/steps/GroupSizeStep';
-import { TravelPaceStep } from '@/components/preferences/steps/TravelPaceStep';
-import { LanguagesStep } from '@/components/preferences/steps/LanguagesStep';
+import { SimpleDurationStep } from '@/components/preferences/steps/SimpleDurationStep';
+import { SimpleBudgetStep } from '@/components/preferences/steps/SimpleBudgetStep';
+import { SimpleInterestsStep } from '@/components/preferences/steps/SimpleInterestsStep';
+import { SimpleGroupSizeStep } from '@/components/preferences/steps/SimpleGroupSizeStep';
+import { SimpleTravelPaceStep } from '@/components/preferences/steps/SimpleTravelPaceStep';
+import { SimpleLanguagesStep } from '@/components/preferences/steps/SimpleLanguagesStep';
 import { TravelScheduleForm } from '@/components/preferences/steps/TravelScheduleForm';
 
 interface ManualLeadFormProps {
@@ -249,7 +249,7 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <DurationStep
+                    <SimpleDurationStep
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -269,7 +269,7 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <BudgetStep
+                    <SimpleBudgetStep
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -289,7 +289,7 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <InterestsStep
+                    <SimpleInterestsStep
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -309,7 +309,7 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <GroupSizeStep
+                    <SimpleGroupSizeStep
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -329,7 +329,7 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <TravelPaceStep
+                    <SimpleTravelPaceStep
                       value={field.value}
                       onChange={field.onChange}
                     />
@@ -349,7 +349,7 @@ export const ManualLeadForm: React.FC<ManualLeadFormProps> = ({ form }) => {
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
-                    <LanguagesStep
+                    <SimpleLanguagesStep
                       value={field.value}
                       onChange={field.onChange}
                     />

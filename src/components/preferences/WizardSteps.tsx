@@ -114,7 +114,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
     case 8:
       return (
         <TravelLogisticsStep
-          value={travel}
+          travel={travel}
           onChange={onTravelChange}
           onNext={onNext}
           onBack={onBack}
@@ -123,7 +123,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
     case 9:
       return (
         <DietaryStep
-          value={dietary}
+          dietary={dietary}
           onChange={onDietaryChange}
           onNext={onNext}
           onBack={onBack}

@@ -19,6 +19,17 @@ export interface TravelPreferences {
     endDate?: Date;
     flexible: boolean;
   };
+  travel: {
+    portOfEntry?: string;
+    airportPickup: boolean;
+    pickupTime?: string;
+    pickupLocation?: string;
+  };
+  dietary: {
+    mealWishes?: string;
+    allergies?: string;
+    specialRequirements?: string;
+  };
 }
 
 export interface TourOutput {
