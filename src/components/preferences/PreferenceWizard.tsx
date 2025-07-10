@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
 import ItineraryDisplay from './ItineraryDisplay';
-import LeadCaptureForm from './LeadCaptureForm';
+import { OperatorSelectionModal } from './OperatorSelectionModal';
 import { UserDetails, steps } from './WizardTypes';
 
 interface PreferenceWizardProps {
@@ -50,9 +51,9 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     message: ''
   });
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
-  const [showLeadCaptureForm, setShowLeadCaptureForm] = useState(false);
+  const [showOperatorSelection, setShowOperatorSelection] = useState(false);
 
-  const totalSteps = 9; // Simplified to 9 steps
+  const totalSteps = 10; // Updated to include user details step
 
   console.log('PreferenceWizard: Current step:', currentStep);
 
@@ -77,8 +78,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   };
 
   const handleBack = () => {
-    if (showLeadCaptureForm) {
-      setShowLeadCaptureForm(false);
+    if (showOperatorSelection) {
+      setShowOperatorSelection(false);
       setShowItineraryDisplay(true);
     } else if (showItineraryDisplay) {
       setShowItineraryDisplay(false);
@@ -88,17 +89,23 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   };
 
   const handleItineraryComplete = () => {
-    console.log('PreferenceWizard: Moving from itinerary to lead capture form');
+    console.log('PreferenceWizard: Moving from itinerary to user details step');
     setShowItineraryDisplay(false);
-    setShowLeadCaptureForm(true);
+    setCurrentStep(10); // Move to user details step
   };
 
   const handleItineraryBack = () => {
     setShowItineraryDisplay(false);
   };
 
-  const handleFinalComplete = (result: any) => {
-    console.log('PreferenceWizard: Final completion with result:', result);
+  const handleUserDetailsComplete = () => {
+    console.log('PreferenceWizard: User details collected, showing operator selection');
+    setCurrentStep(1); // Reset for display purposes
+    setShowOperatorSelection(true);
+  };
+
+  const handleOperatorSelectionComplete = (selectedOperatorIds: string[]) => {
+    console.log('PreferenceWizard: Operator selection complete with operators:', selectedOperatorIds);
     onComplete({
       preferences,
       schedule,
@@ -108,43 +115,58 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     });
   };
 
-  if (showLeadCaptureForm) {
-    // Create a mock itinerary for the lead capture form
-    const mockItinerary = {
-      title: `${preferences.duration}-Day Safari Adventure`,
-      overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
-      duration: preferences.duration,
-      estimatedCost: {
-        amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
-        currency: 'USD'
+  const handleOperatorSelectionClose = () => {
+    setShowOperatorSelection(false);
+    setCurrentStep(10); // Go back to user details step
+  };
+
+  if (showOperatorSelection) {
+    // Create the traveler data object for operator selection
+    const travelerData = {
+      traveler: {
+        name: userDetails.name,
+        email: userDetails.email,
+        phone: userDetails.phone,
+        country: userDetails.country,
+        message: userDetails.message
       },
-      itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
-        day: i + 1,
-        location: i === 0 ? 'Arrival' : 'Safari Location',
-        activities: [
-          i === 0 ? 'Airport Transfer' : 'Game Drive',
-          i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
-        ],
-        accommodation: `Safari Lodge ${i + 1}`,
-        meals: ['Breakfast', 'Lunch', 'Dinner']
-      }))
+      preferences,
+      schedule,
+      travel,
+      dietary,
+      itinerary: {
+        title: `${preferences.duration}-Day Safari Adventure`,
+        overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
+        duration: preferences.duration,
+        estimatedCost: {
+          amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
+          currency: 'USD'
+        },
+        itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
+          day: i + 1,
+          location: i === 0 ? 'Arrival' : 'Safari Location',
+          activities: [
+            i === 0 ? 'Airport Transfer' : 'Game Drive',
+            i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
+          ],
+          accommodation: `Safari Lodge ${i + 1}`,
+          meals: ['Breakfast', 'Lunch', 'Dinner']
+        }))
+      }
     };
 
     return (
-      <LeadCaptureForm
-        preferences={preferences}
-        schedule={schedule}
-        travel={travel}
-        dietary={dietary}
-        itinerary={mockItinerary}
-        onComplete={handleFinalComplete}
-        onBack={handleBack}
+      <OperatorSelectionModal
+        isOpen={true}
+        onClose={handleOperatorSelectionClose}
+        onOperatorsSelected={handleOperatorSelectionComplete}
+        travelerData={travelerData}
       />
     );
   }
 
   if (showItineraryDisplay) {
-    // Create a mock itinerary for display - fix the activities structure
+    // Create a mock itinerary for display
     const mockItinerary = {
       title: `${preferences.duration}-Day Safari Adventure`,
       overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
@@ -199,7 +221,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
             onUserDetailsChange={handleUserDetailsChange}
             onNext={handleNext}
             onBack={handleBack}
-            onComplete={handleFinalComplete}
+            onComplete={handleUserDetailsComplete}
           />
         </CardContent>
       </Card>
