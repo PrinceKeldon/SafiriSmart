@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Lead } from '@/types/lead';
 import { useNoticeBoardLeads } from '@/hooks/useNoticeBoardLeads';
 import { NoticeBoardCard } from '@/components/leads/NoticeBoardCard';
-import { ClaimLeadModal } from '@/components/leads/ClaimLeadModal';
+import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
 import { Loader2, Bell, AlertCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -17,7 +17,7 @@ const NoticeBoard = () => {
 
   // Debug logging when component mounts
   useEffect(() => {
-    console.log('🎯 NoticeBoard component mounted');
+    console.log('🎯 New Leads page component mounted');
     console.log('📊 Current leads data:', leads);
     console.log('⏳ Is loading:', isLoading);
     console.log('❌ Error:', error);
@@ -45,7 +45,7 @@ const NoticeBoard = () => {
           <div className="flex justify-center items-center h-64">
             <div className="flex items-center gap-2">
               <Loader2 className="w-6 h-6 animate-spin" />
-              <span className="text-lg">Loading available leads...</span>
+              <span className="text-lg">Loading new leads...</span>
             </div>
           </div>
         </div>
@@ -81,8 +81,8 @@ const NoticeBoard = () => {
           <div className="flex items-center gap-3">
             <Bell className="w-8 h-8 text-blue-600" />
             <div>
-              <h1 className="text-3xl font-bold">Notice Board</h1>
-              <p className="text-gray-600">Available leads matched to your expertise</p>
+              <h1 className="text-3xl font-bold">New Leads</h1>
+              <p className="text-gray-600">Direct inquiries sent to your safari operation</p>
             </div>
           </div>
           <Button 
@@ -99,12 +99,12 @@ const NoticeBoard = () => {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Bell className="w-16 h-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Available Leads</h3>
+              <h3 className="text-xl font-semibold mb-2">No New Leads</h3>
               <p className="text-gray-500 text-center mb-4">
-                There are currently no new leads that match your services and destinations.
+                You currently have no new leads from the SafariGuide AI system.
               </p>
               <p className="text-sm text-gray-400 text-center mb-4">
-                New leads will appear here when they match your operator profile settings.
+                New leads will appear here when travelers select your operation for their safari inquiry.
               </p>
               <Button onClick={handleRefresh} variant="outline">
                 <RefreshCw className="w-4 h-4 mr-2" />
@@ -116,7 +116,7 @@ const NoticeBoard = () => {
           <>
             <div className="mb-6">
               <p className="text-sm text-gray-600">
-                Showing {leads?.length || 0} available lead{leads?.length !== 1 ? 's' : ''} matched to your expertise
+                Showing {leads?.length || 0} new lead{leads?.length !== 1 ? 's' : ''} sent directly to your operation
               </p>
             </div>
             
@@ -145,6 +145,7 @@ const NoticeBoard = () => {
                     key={lead.id}
                     lead={lead}
                     onViewDetails={handleViewDetails}
+                    showClaimButton={false}
                   />
                 );
               })}
@@ -152,7 +153,7 @@ const NoticeBoard = () => {
           </>
         )}
 
-        <ClaimLeadModal
+        <LeadDetailModal
           lead={selectedLead}
           isOpen={isModalOpen}
           onClose={handleCloseModal}

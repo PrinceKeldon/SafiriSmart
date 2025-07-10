@@ -1,42 +1,62 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import os
+from dotenv import load_dotenv
 
-# Local imports
+# Routers
+from routes.auth import router as auth_router
+from routes.leads import router as leads_router
+from routes.operators import router as operators_router
+from routes.packages import router as packages_router
+from routes.admin import router as admin_router
+from routes.health import router as health_router
+
+# Database setup
 from database import create_tables
-from routes import auth, leads, health
 
-# Configure logging
+# Load environment variables
+load_dotenv()
+
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    title="TourMaster AI - B2B Backend",
-    description="Backend API for tour operators to manage safari leads and bookings",
-    version="1.0.0"
-)
+# Initialize FastAPI app
+app = FastAPI()
 
-# CORS middleware
+# CORS configuration
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://localhost:8000",
+    os.getenv("FRONTEND_URL"),
+    os.getenv("ADMIN_URL")
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # Frontend URLs
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(auth.router)
-app.include_router(leads.router)
-app.include_router(health.router)
-
-# Create database tables on startup
+# Startup event to create database tables
 @app.on_event("startup")
 async def startup_event():
+    logger.info("Starting up and creating database tables...")
     create_tables()
-    logger.info("Database tables created successfully")
+    logger.info("Database tables created.")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+# Include all existing routers
+app.include_router(auth_router)
+app.include_router(leads_router)
+app.include_router(operators_router)
+app.include_router(packages_router)
+app.include_router(admin_router)
+app.include_router(health_router)
+
+# Add the new public operators router
+from routes.public_operators import router as public_operators_router
+app.include_router(public_operators_router)

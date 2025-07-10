@@ -1,4 +1,3 @@
-
 from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
@@ -51,6 +50,7 @@ class CreateLeadRequest(BaseModel):
     traveler: TravelerInfo
     preferences: Dict[str, Any]
     itinerary: Optional[Dict[str, Any]] = None
+    selected_operator_ids: List[uuid.UUID]  # New required field
 
 class LeadResponse(BaseModel):
     id: uuid.UUID
@@ -165,3 +165,20 @@ class OperatorPackageResponse(BaseModel):
     included_activities: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
+
+# Public Operator Schema for frontend selection
+class PublicOperatorPackage(BaseModel):
+    id: str
+    package_name: str
+    description: Optional[str] = None
+    budget_tier: str
+    min_duration: int
+    max_duration: int
+    estimated_cost_per_person_per_day: float
+
+class PublicOperatorResponse(BaseModel):
+    id: uuid.UUID
+    company_name: str
+    description: str
+    specializations: List[str]
+    top_packages: List[PublicOperatorPackage]

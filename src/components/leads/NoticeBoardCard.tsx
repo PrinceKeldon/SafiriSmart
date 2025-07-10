@@ -1,118 +1,135 @@
 
 import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Lead } from '@/types/lead';
-import { Calendar, MapPin, Users, DollarSign, Eye, Phone, Mail, Globe } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { MapPin, Calendar, Users, DollarSign, Eye, UserCheck } from 'lucide-react';
 
 interface NoticeBoardCardProps {
   lead: Lead;
   onViewDetails: (lead: Lead) => void;
+  showClaimButton?: boolean;
+  onClaim?: (leadId: string) => void;
 }
 
-export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({ lead, onViewDetails }) => {
+export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({ 
+  lead, 
+  onViewDetails, 
+  showClaimButton = true,
+  onClaim 
+}) => {
   const preferences = lead.preferences || {};
-  const duration = preferences.duration || 'N/A';
-  const destination = preferences.destination || 'Various locations';
-  const groupSize = preferences.groupSize || preferences.group_size || 'N/A';
-  const budget = preferences.budgetRange || preferences.budget || 'Not specified';
+  const itinerary = lead.itinerary || {};
+  
+  const getBudgetBadgeColor = (budget: string) => {
+    switch (budget?.toLowerCase()) {
+      case 'budget': return 'bg-green-100 text-green-800';
+      case 'mid-range': return 'bg-blue-100 text-blue-800';
+      case 'luxury': return 'bg-purple-100 text-purple-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
 
   return (
-    <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-      <CardHeader>
+    <Card className="h-full hover:shadow-lg transition-shadow">
+      <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <div className="flex-1">
-            <CardTitle className="text-lg flex items-center gap-2">
-              {lead.traveler_name}
-              {lead.traveler_country && (
-                <Badge variant="outline" className="text-xs">
-                  <Globe className="w-3 h-3 mr-1" />
-                  {lead.traveler_country}
-                </Badge>
-              )}
-            </CardTitle>
-            <CardDescription className="flex items-center gap-2">
-              <Mail className="w-4 h-4" />
-              {lead.traveler_email}
-            </CardDescription>
-            {lead.traveler_phone && (
-              <CardDescription className="flex items-center gap-2 mt-1">
-                <Phone className="w-4 h-4" />
-                {lead.traveler_phone}
-              </CardDescription>
-            )}
-          </div>
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            New Lead
+          <CardTitle className="text-lg font-semibold">
+            {lead.traveler_name}
+          </CardTitle>
+          <Badge variant="outline" className="text-xs">
+            {formatDate(lead.created_at)}
           </Badge>
         </div>
+        
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <MapPin className="w-4 h-4" />
+          <span>{lead.traveler_country}</span>
+        </div>
       </CardHeader>
-      
-      <CardContent>
-        <div className="space-y-4">
-          {/* Safari Requirements */}
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="truncate">{destination}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <span>{duration} days</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-gray-500" />
-              <span>{groupSize} travelers</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-gray-500" />
-              <span className="capitalize">{budget}</span>
+
+      <CardContent className="space-y-4">
+        {/* Trip Details */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="flex items-center gap-1">
+            <Calendar className="w-4 h-4 text-gray-500" />
+            <span>{preferences.duration || 'N/A'} days</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Users className="w-4 h-4 text-gray-500" />
+            <span>{preferences.groupSize || 'N/A'} people</span>
+          </div>
+        </div>
+
+        {/* Budget */}
+        {preferences.budgetRange && (
+          <div className="flex justify-center">
+            <Badge className={getBudgetBadgeColor(preferences.budgetRange)}>
+              {preferences.budgetRange}
+            </Badge>
+          </div>
+        )}
+
+        {/* Interests */}
+        {preferences.interests && preferences.interests.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-gray-700 mb-1">Interests:</p>
+            <div className="flex flex-wrap gap-1">
+              {preferences.interests.slice(0, 3).map((interest: string, index: number) => (
+                <Badge key={index} variant="secondary" className="text-xs">
+                  {interest}
+                </Badge>
+              ))}
+              {preferences.interests.length > 3 && (
+                <Badge variant="secondary" className="text-xs">
+                  +{preferences.interests.length - 3} more
+                </Badge>
+              )}
             </div>
           </div>
+        )}
 
-          {/* Interests/Activities */}
-          {preferences.interests && preferences.interests.length > 0 && (
-            <div className="text-sm">
-              <strong className="text-gray-700">Interests:</strong>
-              <div className="flex flex-wrap gap-1 mt-1">
-                {preferences.interests.slice(0, 3).map((interest: string, index: number) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {interest}
-                  </Badge>
-                ))}
-                {preferences.interests.length > 3 && (
-                  <Badge variant="outline" className="text-xs">
-                    +{preferences.interests.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Special Notes/Message */}
-          {preferences.message && (
-            <div className="text-sm">
-              <strong className="text-gray-700">Special Requests:</strong>
-              <p className="text-gray-600 mt-1 line-clamp-2">
-                {preferences.message}
-              </p>
-            </div>
-          )}
-          
-          <div className="text-xs text-gray-500">
-            Received {formatDistanceToNow(new Date(lead.created_at), { addSuffix: true })}
+        {/* Estimated Cost */}
+        {itinerary?.estimatedCost && (
+          <div className="flex items-center gap-1 text-sm">
+            <DollarSign className="w-4 h-4 text-gray-500" />
+            <span className="font-medium">
+              ~${itinerary.estimatedCost.amount?.toLocaleString()} {itinerary.estimatedCost.currency}
+            </span>
           </div>
-          
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-2">
           <Button 
+            variant="outline" 
+            size="sm" 
             onClick={() => onViewDetails(lead)}
-            className="w-full mt-4"
-            variant="outline"
+            className="flex-1"
           >
-            <Eye className="w-4 h-4 mr-2" />
-            View Details & Claim
+            <Eye className="w-4 h-4 mr-1" />
+            View Details
           </Button>
+          
+          {showClaimButton && onClaim && (
+            <Button 
+              size="sm" 
+              onClick={() => onClaim(lead.id)}
+              className="flex-1"
+            >
+              <UserCheck className="w-4 h-4 mr-1" />
+              Claim Lead
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

@@ -89,3 +89,15 @@ class OperatorPackage(Base):
     
     # Relationships
     operator = relationship("Operator", back_populates="packages")
+
+class LeadVisibility(Base):
+    __tablename__ = "lead_visibility"
+    
+    id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    lead_id = Column(PG_UUID(as_uuid=True), ForeignKey('leads.id', ondelete='CASCADE'), nullable=False)
+    operator_id = Column(PG_UUID(as_uuid=True), ForeignKey('operators.id', ondelete='CASCADE'), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    lead = relationship("Lead", backref="visibility_entries")
+    operator = relationship("Operator", backref="visible_leads")

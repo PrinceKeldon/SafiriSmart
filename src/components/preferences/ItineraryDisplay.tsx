@@ -8,7 +8,9 @@ import { DayItineraryCard } from './itinerary/DayItineraryCard';
 import { ItineraryHeader } from './itinerary/ItineraryHeader';
 import { InclusionsExclusions } from './itinerary/InclusionsExclusions';
 import { ImportantNotes } from './itinerary/ImportantNotes';
-import LeadCaptureForm from './LeadCaptureForm';
+import { CallToAction } from './itinerary/CallToAction';
+import { OperatorSelectionModal } from './OperatorSelectionModal';
+import { useToast } from '@/hooks/use-toast';
 
 interface ItineraryDisplayProps {
   itinerary: any;
@@ -16,6 +18,7 @@ interface ItineraryDisplayProps {
   schedule: any;
   travel: any;
   dietary: any;
+  userDetails: any;
   onBack: () => void;
   onComplete: (result: any) => void;
 }
@@ -26,40 +29,35 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   schedule,
   travel,
   dietary,
+  userDetails,
   onBack,
   onComplete
 }) => {
-  const [showLeadCapture, setShowLeadCapture] = useState(false);
+  const [showOperatorSelection, setShowOperatorSelection] = useState(false);
+  const { toast } = useToast();
 
   console.log('ItineraryDisplay: Rendering itinerary display');
 
-  const handleProceedToBooking = () => {
-    console.log('ItineraryDisplay: Proceeding to lead capture');
-    setShowLeadCapture(true);
+  const handleSelectOperators = () => {
+    console.log('ItineraryDisplay: Opening operator selection modal');
+    setShowOperatorSelection(true);
   };
 
-  const handleLeadCaptureBack = () => {
-    setShowLeadCapture(false);
+  const handleOperatorsSelected = (selectedOperatorIds: string[]) => {
+    console.log('ItineraryDisplay: Operators selected:', selectedOperatorIds);
+    setShowOperatorSelection(false);
+    
+    // Complete the wizard flow
+    onComplete({
+      success: true,
+      message: `Inquiry sent to ${selectedOperatorIds.length} operator${selectedOperatorIds.length > 1 ? 's' : ''}`,
+      selectedOperators: selectedOperatorIds.length
+    });
   };
 
-  const handleLeadCaptureComplete = (result: any) => {
-    console.log('ItineraryDisplay: Lead capture completed:', result);
-    onComplete(result);
+  const handleCloseModal = () => {
+    setShowOperatorSelection(false);
   };
-
-  if (showLeadCapture) {
-    return (
-      <LeadCaptureForm
-        preferences={preferences}
-        schedule={schedule}
-        travel={travel}
-        dietary={dietary}
-        itinerary={itinerary}
-        onComplete={handleLeadCaptureComplete}
-        onBack={handleLeadCaptureBack}
-      />
-    );
-  }
 
   if (!itinerary) {
     return (
@@ -95,29 +93,23 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
         notes={itinerary.important_notes || []}
       />
       
-      {/* Call to Action for Lead Capture */}
-      <Card className="bg-gradient-to-r from-green-50 to-blue-50">
-        <CardContent className="pt-6">
-          <div className="text-center">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">
-              Ready to Make This Safari a Reality?
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Connect with our local experts to customize your itinerary and get personalized quotes from safari operators.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="flex items-center" onClick={handleProceedToBooking}>
-                <Users className="w-5 h-5 mr-2" />
-                Get Personalized Quotes
-              </Button>
-              <Button size="lg" variant="outline" className="flex items-center" onClick={onBack}>
-                <Calendar className="w-5 h-5 mr-2" />
-                Back to Preferences
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Updated Call to Action */}
+      <CallToAction onSelectOperators={handleSelectOperators} />
+
+      {/* Operator Selection Modal */}
+      <OperatorSelectionModal
+        isOpen={showOperatorSelection}
+        onClose={handleCloseModal}
+        onOperatorsSelected={handleOperatorsSelected}
+        travelerData={{
+          traveler: userDetails,
+          preferences,
+          schedule,
+          travel,
+          dietary,
+          itinerary
+        }}
+      />
     </div>
   );
 };

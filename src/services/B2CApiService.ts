@@ -2,20 +2,28 @@
 import { supabase } from '@/integrations/supabase/client';
 
 class B2CApiService {
-  // AI Core Service - Generate Itinerary (if needed in future)
-  async generateItinerary(preferences: {
-    duration: number;
-    budgetRange: string;
-    interests: string[];
-    groupSize: number;
-    travelPace: string;
-  }): Promise<any> {
-    // This would call AI service in the future
-    throw new Error('AI Core Service not implemented yet');
+  // Get all active operators for selection
+  async getPublicOperators(): Promise<any[]> {
+    console.log('B2CApiService: Fetching public operators...');
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('get-public-operators');
+      
+      if (error) {
+        console.error('B2CApiService: Error fetching operators:', error);
+        throw new Error(error.message || 'Failed to fetch operators');
+      }
+      
+      console.log('B2CApiService: Operators fetched successfully:', data?.length || 0);
+      return data || [];
+    } catch (error) {
+      console.error('B2CApiService: Error calling get-public-operators function:', error);
+      throw error;
+    }
   }
 
-  // Create Lead via Supabase Edge Function
-  async createLead(leadData: {
+  // Create Lead with selected operators
+  async createLeadWithSelectedOperators(leadData: {
     traveler: {
       name: string;
       email: string;
@@ -48,15 +56,20 @@ class B2CApiService {
       specialRequirements?: string;
     };
     itinerary?: any;
+    selectedOperatorIds: string[];
   }): Promise<any> {
-    console.log('B2CApiService: Creating lead via Supabase Edge Function:', {
+    console.log('B2CApiService: Creating lead with selected operators:', {
       travelerInfo: leadData.traveler,
+      selectedOperators: leadData.selectedOperatorIds.length,
       hasItinerary: !!leadData.itinerary
     });
 
     try {
-      const { data, error } = await supabase.functions.invoke('create-lead', {
-        body: leadData
+      const { data, error } = await supabase.functions.invoke('create-lead-with-operators', {
+        body: {
+          ...leadData,
+          selected_operator_ids: leadData.selectedOperatorIds
+        }
       });
 
       if (error) {
@@ -67,7 +80,7 @@ class B2CApiService {
       console.log('B2CApiService: Lead created successfully:', data);
       return data;
     } catch (error) {
-      console.error('B2CApiService: Error calling edge function:', error);
+      console.error('B2CApiService: Error calling create-lead-with-operators function:', error);
       throw error;
     }
   }

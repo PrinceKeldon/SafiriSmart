@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from models import Operator, Lead, LeadNote, OperatorPackage
@@ -15,8 +14,7 @@ def get_operator_by_id(db: Session, operator_id: uuid.UUID) -> Optional[Operator
 
 # Lead CRUD
 def create_lead(db: Session, lead_data: CreateLeadRequest, itinerary: Optional[Dict[str, Any]] = None) -> Lead:
-    # Intelligent assignment based on preferences
-    assigned_operator = get_next_operator_for_assignment(db, lead_data.preferences)
+    """Create lead and assign to selected operators directly"""
     
     lead = Lead(
         traveler_name=lead_data.traveler.name,
@@ -25,13 +23,24 @@ def create_lead(db: Session, lead_data: CreateLeadRequest, itinerary: Optional[D
         traveler_country=lead_data.traveler.country,
         preferences=lead_data.preferences,
         itinerary=itinerary or lead_data.itinerary,
-        assigned_operator_id=assigned_operator.id if assigned_operator else None,
+        assigned_operator_id=None,  # No single assignment anymore
         status=LeadStatus.NEW
     )
     
     db.add(lead)
     db.commit()
     db.refresh(lead)
+    
+    # Create lead_visibility entries for selected operators
+    from models import LeadVisibility
+    for operator_id in lead_data.selected_operator_ids:
+        visibility_entry = LeadVisibility(
+            lead_id=lead.id,
+            operator_id=operator_id
+        )
+        db.add(visibility_entry)
+    
+    db.commit()
     return lead
 
 def get_leads_for_operator(
