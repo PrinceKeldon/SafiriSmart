@@ -206,71 +206,38 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
     
     try {
-      // First, try to sign in with Supabase Auth directly
-      console.log('🔐 LOGIN: Attempting Supabase Auth signInWithPassword for:', email);
+      // Use the auth-login edge function instead of direct Supabase auth
+      console.log('🔐 LOGIN: Calling auth-login edge function for:', email);
       
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { data, error } = await supabase.functions.invoke('auth-login', {
+        body: {
+          email,
+          password
+        }
       });
 
-      console.log('📋 LOGIN: Supabase Auth response:', { 
+      console.log('📋 LOGIN: Auth-login edge function response:', { 
         hasData: !!data, 
-        hasUser: !!data?.user, 
-        hasSession: !!data?.session,
-        userEmail: data?.user?.email,
-        error: error?.message,
-        errorCode: error?.code,
-        fullError: error
+        success: data?.success,
+        error: error?.message || data?.message,
+        hasOperatorData: !!data?.data?.operator
       });
 
       if (error) {
-        console.error('❌ LOGIN: Supabase Auth login error:', error);
-        return { success: false, error: `Auth Error: ${error.message} (Code: ${error.code || 'unknown'})` };
+        console.error('❌ LOGIN: Edge function error:', error);
+        return { success: false, error: `Login Error: ${error.message}` };
       }
 
-      if (!data.user || !data.session) {
-        console.error('❌ LOGIN: No user or session returned from Supabase Auth');
-        return { success: false, error: 'Authentication failed - no user or session returned' };
+      if (!data?.success) {
+        console.error('❌ LOGIN: Login failed:', data?.message);
+        return { success: false, error: data?.message || 'Login failed' };
       }
 
-      console.log('✅ LOGIN: Supabase Auth login successful, checking operator record...');
+      const { access_token, operator } = data.data;
 
-      // After successful auth, check if operator exists and is active
-      console.log('🔍 LOGIN: Querying operators table for email:', email);
-      
-      const { data: operator, error: operatorError } = await supabase
-        .from('operators')
-        .select('*')
-        .eq('email', email)
-        .eq('is_active', true)
-        .single();
-
-      console.log('📊 LOGIN: Operators table query result:', {
-        email,
-        hasOperator: !!operator,
-        error: operatorError?.message,
-        errorCode: operatorError?.code,
-        operatorData: operator ? {
-          id: operator.id,
-          email: operator.email,
-          role: operator.role,
-          is_active: operator.is_active,
-          name: operator.name
-        } : null
-      });
-
-      if (operatorError || !operator) {
-        console.error('❌ LOGIN: Operator check failed:', {
-          email,
-          error: operatorError?.message,
-          errorCode: operatorError?.code,
-          hasOperator: !!operator
-        });
-        
-        console.log('🚪 LOGIN: Signing out user due to missing operator record');
-        await supabase.auth.signOut();
-        return { success: false, error: 'No active operator account found for this email' };
+      if (!access_token || !operator) {
+        console.error('❌ LOGIN: Missing access token or operator data');
+        return { success: false, error: 'Authentication failed - missing data' };
       }
 
       // Check if the operator's role matches the expected role for this login portal
@@ -288,9 +255,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           portalType: expectedRole === 'admin' ? 'Admin Portal' : 'Operator Portal'
         });
         
-        console.log('🚪 LOGIN: Signing out user due to role mismatch');
-        await supabase.auth.signOut();
-        return { success: false, error: `Access denied. This portal is for ${expectedRole}s.` };
+        return { success: false, error: `Access denied. This portal is for ${expectedRole}s only.` };
+      }
+
+      // Set the session using the access token from the edge function
+      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+        access_token,
+        refresh_token: access_token // Using access_token as refresh_token for now
+      });
+
+      if (sessionError) {
+        console.error('❌ LOGIN: Session setting error:', sessionError);
+        return { success: false, error: 'Failed to establish session' };
       }
 
       console.log('🎉 LOGIN: Login successful for operator:', {
