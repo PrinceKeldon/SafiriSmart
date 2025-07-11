@@ -11,7 +11,7 @@ import SafariGuide from '@/pages/SafariGuide';
 import Login from '@/pages/Login';
 import AdminLogin from '@/pages/AdminLogin';
 import Dashboard from '@/pages/Dashboard';
-import NoticeBoard from '@/pages/NoticeBoard';
+import LeadInbox from '@/pages/LeadInbox';
 import Packages from '@/pages/Packages';
 import Profile from '@/pages/Profile';
 import AdminDashboard from '@/pages/AdminDashboard';
@@ -54,7 +54,7 @@ function App() {
                 path="/dashboard/notice-board"
                 element={
                   <PrivateRoute>
-                    <NoticeBoard />
+                    <LeadInbox />
                   </PrivateRoute>
                 }
               />

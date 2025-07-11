@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -7,7 +6,7 @@ import {
   Users, 
   Package, 
   User, 
-  Bell,
+  Inbox,
   LogOut,
   Settings
 } from 'lucide-react';
@@ -25,9 +24,9 @@ const Navigation = () => {
       icon: LayoutDashboard,
     },
     {
-      name: 'Notice Board',
+      name: 'Lead Inbox',
       href: '/dashboard/notice-board',
-      icon: Bell,
+      icon: Inbox,
     },
     {
       name: 'Packages',

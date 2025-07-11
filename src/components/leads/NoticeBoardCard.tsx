@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Lead } from '@/types/lead';
-import { MapPin, Calendar, Users, DollarSign, Eye, UserCheck } from 'lucide-react';
+import { MapPin, Calendar, Users, DollarSign, Eye, Clock } from 'lucide-react';
 
 interface NoticeBoardCardProps {
   lead: Lead;
@@ -16,7 +16,7 @@ interface NoticeBoardCardProps {
 export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({ 
   lead, 
   onViewDetails, 
-  showClaimButton = true,
+  showClaimButton = false,
   onClaim 
 }) => {
   const preferences = lead.preferences || {};
@@ -31,12 +31,36 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
     }
   };
 
+  const getStatusBadgeColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'contacted': return 'bg-yellow-100 text-yellow-800';
+      case 'quoted': return 'bg-purple-100 text-purple-800';
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 7) return `${diffInDays}d ago`;
+    return formatDate(dateString);
   };
 
   return (
@@ -46,9 +70,15 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
           <CardTitle className="text-lg font-semibold">
             {lead.traveler_name}
           </CardTitle>
-          <Badge variant="outline" className="text-xs">
-            {formatDate(lead.created_at)}
-          </Badge>
+          <div className="flex flex-col items-end gap-1">
+            <Badge className={getStatusBadgeColor(lead.status)}>
+              {lead.status}
+            </Badge>
+            <div className="flex items-center text-xs text-gray-500">
+              <Clock className="w-3 h-3 mr-1" />
+              {getTimeAgo(lead.created_at)}
+            </div>
+          </div>
         </div>
         
         <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -108,6 +138,11 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
           </div>
         )}
 
+        {/* Lead Source Indicator */}
+        <div className="bg-blue-50 px-2 py-1 rounded text-xs text-blue-700">
+          📧 Direct inquiry via SafariGuide AI
+        </div>
+
         {/* Action Buttons */}
         <div className="flex gap-2 pt-2">
           <Button 
@@ -126,7 +161,6 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
               onClick={() => onClaim(lead.id)}
               className="flex-1"
             >
-              <UserCheck className="w-4 h-4 mr-1" />
               Claim Lead
             </Button>
           )}
