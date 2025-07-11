@@ -33,6 +33,14 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   if (!lead) return null;
 
+  console.log('🎯 LeadDetailModal: Lead data received:', {
+    leadId: lead.id,
+    hasItinerary: !!lead.itinerary,
+    itineraryType: typeof lead.itinerary,
+    itineraryKeys: lead.itinerary ? Object.keys(lead.itinerary) : [],
+    itinerary: lead.itinerary
+  });
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
@@ -69,13 +77,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
             </TabsContent>
 
             <TabsContent value="itinerary" className="mt-6">
-              {lead.itinerary ? (
-                <ItineraryView itinerary={lead.itinerary} />
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  No itinerary available for this lead
-                </div>
-              )}
+              <ItineraryView itinerary={lead.itinerary} />
             </TabsContent>
 
             <TabsContent value="notes" className="mt-6">
