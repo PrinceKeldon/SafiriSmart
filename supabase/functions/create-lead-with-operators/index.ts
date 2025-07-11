@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -7,6 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Default checklist items for new leads
+const DEFAULT_CHECKLIST = [
+  { "id": "task-1", "task": "Review Lead & Itinerary", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-2", "task": "Send Initial Contact Email", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-3", "task": "Prepare Detailed Quote", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-4", "task": "Send Quote to Traveler", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-5", "task": "Follow Up with Traveler", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-6", "task": "Confirm Booking & Payment", "completed": false, "created_at": new Date().toISOString() }
+];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -78,9 +87,10 @@ serve(async (req) => {
       message: traveler.message || null
     };
 
-    console.log('📝 Creating leads with enhanced preferences:', {
+    console.log('📝 Creating leads with enhanced preferences and default checklist:', {
       preferencesKeys: Object.keys(enhancedPreferences),
-      hasItinerary: !!itinerary
+      hasItinerary: !!itinerary,
+      checklistItems: DEFAULT_CHECKLIST.length
     });
 
     // Create separate leads for each selected operator
@@ -90,7 +100,7 @@ serve(async (req) => {
     for (const operatorId of selectedOperatorIds) {
       console.log(`📋 Creating lead for operator: ${operatorId}`);
       
-      // Create individual lead assigned directly to this operator
+      // Create individual lead assigned directly to this operator with default checklist
       const { data: leadData, error: leadError } = await supabaseClient
         .from('leads')
         .insert({
@@ -100,9 +110,10 @@ serve(async (req) => {
           traveler_country: traveler.country,
           preferences: enhancedPreferences,
           itinerary: itinerary,
-          status: 'new', // New status for direct assignment
-          assigned_operator_id: operatorId, // CRITICAL: Directly assign to operator
-          selection_type: 'user_selected' // Track that this was user-selected
+          status: 'new',
+          assigned_operator_id: operatorId,
+          selection_type: 'user_selected',
+          todo_checklist: DEFAULT_CHECKLIST // Add default checklist
         })
         .select()
         .single();
@@ -118,7 +129,8 @@ serve(async (req) => {
         travelerName: leadData.traveler_name,
         status: leadData.status,
         assignedOperatorId: leadData.assigned_operator_id,
-        selectionType: leadData.selection_type
+        selectionType: leadData.selection_type,
+        checklistItems: leadData.todo_checklist?.length || 0
       });
 
       createdLeads.push(leadData);
@@ -154,12 +166,13 @@ serve(async (req) => {
         leads_created: createdLeads.length,
         lead_ids: createdLeads.map(lead => lead.id),
         operators_assigned: selectedOperatorIds.length,
+        checklist_items_per_lead: DEFAULT_CHECKLIST.length,
         traveler_info: {
           name: traveler.name,
           country: traveler.country
         }
       },
-      message: `Successfully created ${createdLeads.length} lead${createdLeads.length > 1 ? 's' : ''} and assigned to ${selectedOperatorIds.length} operator${selectedOperatorIds.length > 1 ? 's' : ''}`
+      message: `Successfully created ${createdLeads.length} lead${createdLeads.length > 1 ? 's' : ''} with default checklist and assigned to ${selectedOperatorIds.length} operator${selectedOperatorIds.length > 1 ? 's' : ''}`
     };
 
     console.log('🎉 Sending success response:', response);
@@ -184,7 +197,6 @@ serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
       }
     );
   }

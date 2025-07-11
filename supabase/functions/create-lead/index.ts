@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -7,6 +6,16 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Default checklist items for new leads
+const DEFAULT_CHECKLIST = [
+  { "id": "task-1", "task": "Review Lead & Itinerary", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-2", "task": "Send Initial Contact Email", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-3", "task": "Prepare Detailed Quote", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-4", "task": "Send Quote to Traveler", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-5", "task": "Follow Up with Traveler", "completed": false, "created_at": new Date().toISOString() },
+  { "id": "task-6", "task": "Confirm Booking & Payment", "completed": false, "created_at": new Date().toISOString() }
+];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -134,9 +143,9 @@ serve(async (req) => {
       message: traveler.message || null
     };
 
-    console.log('Inserting lead into database...');
+    console.log('Inserting lead into database with default checklist...');
 
-    // Insert the lead into Supabase - FIXED: Use 'system_matched' instead of 'all_operators'
+    // Insert the lead into Supabase with default checklist
     const { data: leadData, error } = await supabaseClient
       .from('leads')
       .insert({
@@ -148,8 +157,8 @@ serve(async (req) => {
         itinerary: mockItinerary,
         status: 'unclaimed',
         assigned_operator_id: null,
-        selection_type: 'system_matched', // FIXED: Use valid constraint value
-        todo_checklist: []
+        selection_type: 'system_matched',
+        todo_checklist: DEFAULT_CHECKLIST // Add default checklist
       })
       .select()
       .single();
@@ -159,10 +168,11 @@ serve(async (req) => {
       throw error;
     }
 
-    console.log('Lead created successfully:', {
+    console.log('Lead created successfully with default checklist:', {
       leadId: leadData.id,
       travelerName: leadData.traveler_name,
-      travelerCountry: leadData.traveler_country
+      travelerCountry: leadData.traveler_country,
+      checklistItems: leadData.todo_checklist?.length || 0
     });
 
     // Get all active operators
@@ -204,8 +214,9 @@ serve(async (req) => {
         data: {
           lead_id: leadData.id,
           status: leadData.status,
-          selection_type: 'system_matched', // Updated to reflect the fix
+          selection_type: 'system_matched',
           operators_notified: operators ? operators.length : 0,
+          checklist_items: leadData.todo_checklist?.length || 0,
           traveler_info: {
             name: traveler.name,
             country: traveler.country,
@@ -214,7 +225,7 @@ serve(async (req) => {
           },
           assigned_operator: null
         },
-        message: `Lead created successfully for ${traveler.name} from ${traveler.country} and posted to all active operators`
+        message: `Lead created successfully for ${traveler.name} from ${traveler.country} and posted to all active operators with default checklist`
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

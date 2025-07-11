@@ -1,8 +1,8 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LeadTodoItem } from '@/types/lead';
+import { LeadTodoItem, Lead } from '@/types/lead';
 import { useUpdateLeadTodoList } from '@/hooks/useUpdateLeadTodoList';
 import { CheckCircle2, Circle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -10,11 +10,24 @@ import { Badge } from '@/components/ui/badge';
 interface LeadChecklistProps {
   leadId: string;
   todoChecklist: LeadTodoItem[];
+  leadStatus: Lead['status']; // Add lead status prop
 }
 
-export const LeadChecklist: React.FC<LeadChecklistProps> = ({ leadId, todoChecklist }) => {
+export const LeadChecklist: React.FC<LeadChecklistProps> = ({ 
+  leadId, 
+  todoChecklist, 
+  leadStatus 
+}) => {
   const [localChecklist, setLocalChecklist] = useState<LeadTodoItem[]>(todoChecklist);
   const updateTodoList = useUpdateLeadTodoList();
+
+  // Status to task mapping for automatic completion
+  const statusTaskMapping = {
+    'contacted': 'task-2', // Send Initial Contact Email
+    'quoted': 'task-4',    // Send Quote to Traveler
+    'confirmed': 'task-6', // Confirm Booking & Payment
+    'completed': 'task-6'  // Also mark booking confirmed when completed
+  };
 
   // Debounced update function
   const debouncedUpdate = useCallback(
@@ -24,7 +37,47 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({ leadId, todoCheckl
     [leadId, updateTodoList]
   );
 
+  // Effect to automatically check items based on lead status
+  useEffect(() => {
+    console.log('🔄 Lead status changed:', leadStatus);
+    
+    const taskToComplete = statusTaskMapping[leadStatus as keyof typeof statusTaskMapping];
+    
+    if (taskToComplete) {
+      console.log('🎯 Auto-completing task based on status:', { status: leadStatus, taskId: taskToComplete });
+      
+      setLocalChecklist(prevChecklist => {
+        const updatedChecklist = prevChecklist.map(item => {
+          if (item.id === taskToComplete && !item.completed) {
+            console.log('✅ Auto-checking task:', item.task);
+            return { ...item, completed: true };
+          }
+          return item;
+        });
+        
+        // Only update if there was actually a change
+        const hasChanges = updatedChecklist.some((item, index) => 
+          item.completed !== prevChecklist[index].completed
+        );
+        
+        if (hasChanges) {
+          console.log('💾 Persisting auto-completed task to backend');
+          debouncedUpdate(updatedChecklist);
+        }
+        
+        return updatedChecklist;
+      });
+    }
+  }, [leadStatus, debouncedUpdate]);
+
+  // Update local checklist when prop changes
+  useEffect(() => {
+    setLocalChecklist(todoChecklist);
+  }, [todoChecklist]);
+
   const handleToggleTask = (taskId: string) => {
+    console.log('🖱️ Manual task toggle:', taskId);
+    
     const updatedChecklist = localChecklist.map(item =>
       item.id === taskId
         ? { ...item, completed: !item.completed }
@@ -49,7 +102,7 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({ leadId, todoCheckl
               Lead Management Checklist
             </CardTitle>
             <CardDescription>
-              Track your progress with this lead
+              Track your progress with this lead • Status: <Badge variant="outline" className="ml-1">{leadStatus}</Badge>
             </CardDescription>
           </div>
           <Badge variant={progressPercentage === 100 ? "default" : "secondary"}>

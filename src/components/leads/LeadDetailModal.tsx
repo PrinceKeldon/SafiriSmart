@@ -35,7 +35,9 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
 
   console.log('🎯 LeadDetailModal: Lead data received:', {
     leadId: lead.id,
+    status: lead.status,
     hasItinerary: !!lead.itinerary,
+    checklistItems: lead.todo_checklist?.length || 0,
     itineraryType: typeof lead.itinerary,
     itineraryKeys: lead.itinerary ? Object.keys(lead.itinerary) : [],
     itinerary: lead.itinerary
@@ -72,6 +74,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                 <LeadChecklist 
                   leadId={lead.id}
                   todoChecklist={lead.todo_checklist}
+                  leadStatus={lead.status}
                 />
               )}
             </TabsContent>
