@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
@@ -98,7 +97,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   const handleItineraryComplete = () => {
     console.log('PreferenceWizard: Moving from itinerary to user details step');
     setShowItineraryDisplay(false);
-    setCurrentStep(10); // Move to user details step
+    setCurrentStep(10); // Move to user details step (Step 10)
   };
 
   const handleItineraryBack = () => {

@@ -20,7 +20,7 @@ interface ItineraryDisplayProps {
   dietary: any;
   userDetails: any;
   onBack: () => void;
-  onComplete: (result: any) => void;
+  onComplete: () => void;
 }
 
 const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
@@ -33,30 +33,13 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
   onBack,
   onComplete
 }) => {
-  const [showOperatorSelection, setShowOperatorSelection] = useState(false);
   const { toast } = useToast();
 
   console.log('ItineraryDisplay: Rendering itinerary display');
 
-  const handleSelectOperators = () => {
-    console.log('ItineraryDisplay: Opening operator selection modal');
-    setShowOperatorSelection(true);
-  };
-
-  const handleOperatorsSelected = (selectedOperatorIds: string[]) => {
-    console.log('ItineraryDisplay: Operators selected:', selectedOperatorIds);
-    setShowOperatorSelection(false);
-    
-    // Complete the wizard flow
-    onComplete({
-      success: true,
-      message: `Inquiry sent to ${selectedOperatorIds.length} operator${selectedOperatorIds.length > 1 ? 's' : ''}`,
-      selectedOperators: selectedOperatorIds.length
-    });
-  };
-
-  const handleCloseModal = () => {
-    setShowOperatorSelection(false);
+  const handleContinueToUserDetails = () => {
+    console.log('ItineraryDisplay: Moving to user details step');
+    onComplete(); // This should trigger the transition to step 10 (User Details)
   };
 
   if (!itinerary) {
@@ -94,22 +77,30 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
       />
       
       {/* Updated Call to Action */}
-      <CallToAction onSelectOperators={handleSelectOperators} />
-
-      {/* Operator Selection Modal */}
-      <OperatorSelectionModal
-        isOpen={showOperatorSelection}
-        onClose={handleCloseModal}
-        onOperatorsSelected={handleOperatorsSelected}
-        travelerData={{
-          traveler: userDetails,
-          preferences,
-          schedule,
-          travel,
-          dietary,
-          itinerary
-        }}
-      />
+      <Card className="mt-8">
+        <CardContent className="p-6 text-center">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">
+            Ready to Book Your Safari Adventure?
+          </h3>
+          <p className="text-gray-600 mb-6">
+            Continue to provide your contact details and we'll connect you with the best safari operators for your trip.
+          </p>
+          <div className="flex justify-between">
+            <Button
+              variant="outline"
+              onClick={onBack}
+            >
+              Back to Preferences
+            </Button>
+            <Button
+              onClick={handleContinueToUserDetails}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              Continue to Contact Details
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
