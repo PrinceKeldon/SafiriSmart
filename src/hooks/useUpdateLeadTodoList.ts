@@ -66,7 +66,7 @@ export const useUpdateLeadTodoList = () => {
         itinerary: data.itinerary as any,
         quoted_price: data.quoted_price,
         quoted_currency: data.quoted_currency,
-        todo_checklist: data.todo_checklist as LeadTodoItem[],
+        todo_checklist: data.todo_checklist as unknown as LeadTodoItem[],
         created_at: data.created_at,
         updated_at: data.updated_at,
       };
