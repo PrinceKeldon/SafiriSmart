@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 interface LeadChecklistProps {
   leadId: string;
   todoChecklist: LeadTodoItem[];
-  leadStatus: Lead['status']; // Add lead status prop
+  leadStatus: Lead['status'];
 }
 
 export const LeadChecklist: React.FC<LeadChecklistProps> = ({ 
@@ -21,71 +21,45 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
   const [localChecklist, setLocalChecklist] = useState<LeadTodoItem[]>(todoChecklist);
   const updateTodoList = useUpdateLeadTodoList();
 
-  // Status to task mapping for automatic completion
-  const statusTaskMapping = {
-    'contacted': 'task-2', // Send Initial Contact Email
-    'quoted': 'task-4',    // Send Quote to Traveler
-    'confirmed': 'task-6', // Confirm Booking & Payment
-    'completed': 'task-6'  // Also mark booking confirmed when completed
-  };
+  console.log('📋 LeadChecklist rendered with:', {
+    leadId,
+    checklistItems: todoChecklist.length,
+    leadStatus,
+    localChecklistItems: localChecklist.length
+  });
 
   // Debounced update function
   const debouncedUpdate = useCallback(
     debounce((updatedChecklist: LeadTodoItem[]) => {
+      console.log('💾 Debounced update triggered:', updatedChecklist);
       updateTodoList.mutate({ leadId, todoChecklist: updatedChecklist });
     }, 1000),
     [leadId, updateTodoList]
   );
 
-  // Effect to automatically check items based on lead status
+  // Update local checklist when prop changes (from external updates)
   useEffect(() => {
-    console.log('🔄 Lead status changed:', leadStatus);
-    
-    const taskToComplete = statusTaskMapping[leadStatus as keyof typeof statusTaskMapping];
-    
-    if (taskToComplete) {
-      console.log('🎯 Auto-completing task based on status:', { status: leadStatus, taskId: taskToComplete });
-      
-      setLocalChecklist(prevChecklist => {
-        const updatedChecklist = prevChecklist.map(item => {
-          if (item.id === taskToComplete && !item.completed) {
-            console.log('✅ Auto-checking task:', item.task);
-            return { ...item, completed: true };
-          }
-          return item;
-        });
-        
-        // Only update if there was actually a change
-        const hasChanges = updatedChecklist.some((item, index) => 
-          item.completed !== prevChecklist[index].completed
-        );
-        
-        if (hasChanges) {
-          console.log('💾 Persisting auto-completed task to backend');
-          debouncedUpdate(updatedChecklist);
-        }
-        
-        return updatedChecklist;
-      });
-    }
-  }, [leadStatus, debouncedUpdate]);
-
-  // Update local checklist when prop changes
-  useEffect(() => {
+    console.log('🔄 Updating local checklist from props:', todoChecklist);
     setLocalChecklist(todoChecklist);
   }, [todoChecklist]);
 
   const handleToggleTask = (taskId: string) => {
-    console.log('🖱️ Manual task toggle:', taskId);
+    console.log('🖱️ Manual task toggle triggered:', taskId);
     
-    const updatedChecklist = localChecklist.map(item =>
-      item.id === taskId
-        ? { ...item, completed: !item.completed }
-        : item
-    );
-    
-    setLocalChecklist(updatedChecklist);
-    debouncedUpdate(updatedChecklist);
+    setLocalChecklist(prevChecklist => {
+      const updatedChecklist = prevChecklist.map(item =>
+        item.id === taskId
+          ? { ...item, completed: !item.completed }
+          : item
+      );
+      
+      console.log('📝 Local checklist updated:', updatedChecklist);
+      
+      // Trigger debounced backend update
+      debouncedUpdate(updatedChecklist);
+      
+      return updatedChecklist;
+    });
   };
 
   const completedCount = localChecklist.filter(item => item.completed).length;
@@ -167,6 +141,14 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
           <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
             <p className="text-green-800 text-sm font-medium">
               🎉 Congratulations! You've completed all tasks for this lead.
+            </p>
+          </div>
+        )}
+        
+        {updateTodoList.isPending && (
+          <div className="mt-4 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm font-medium">
+              💾 Saving checklist...
             </p>
           </div>
         )}

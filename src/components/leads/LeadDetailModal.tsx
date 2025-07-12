@@ -18,7 +18,7 @@ interface LeadDetailModalProps {
   lead: Lead | null;
   isOpen: boolean;
   onClose: () => void;
-  onUpdateStatus: (leadId: string, newStatus: Lead['status']) => void;
+  onUpdateStatus?: (leadId: string, newStatus: Lead['status']) => void; // Made optional
   onAddNote: (leadId: string, note: string) => void;
 }
 
@@ -26,7 +26,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   lead,
   isOpen,
   onClose,
-  onUpdateStatus,
+  onUpdateStatus, // Not used anymore since status is auto-managed
   onAddNote,
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -49,7 +49,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
         <DialogHeader>
           <DialogTitle className="text-xl">{lead.traveler_name}</DialogTitle>
           <DialogDescription>
-            Lead Details and Management
+            Lead Details and Management - Status updates automatically based on checklist progress
           </DialogDescription>
         </DialogHeader>
 
@@ -64,8 +64,8 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
           <div className="overflow-y-auto max-h-[calc(90vh-200px)]">
             <TabsContent value="overview" className="mt-6">
               <LeadOverview 
-                lead={lead} 
-                onUpdateStatus={onUpdateStatus}
+                lead={lead}
+                // Removed onUpdateStatus since status is now auto-managed
               />
             </TabsContent>
 

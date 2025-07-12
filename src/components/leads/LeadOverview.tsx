@@ -2,8 +2,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Lead } from '@/types/lead';
 import { 
   User, Mail, Phone, Globe, Calendar, MapPin, Users, 
@@ -12,25 +10,22 @@ import {
 
 interface LeadOverviewProps {
   lead: Lead;
-  onUpdateStatus: (leadId: string, newStatus: Lead['status']) => void;
+  onUpdateStatus?: (leadId: string, newStatus: Lead['status']) => void; // Made optional since we're not using it
 }
 
-const STATUS_OPTIONS = [
-  { value: 'claimed', label: 'Claimed', color: 'bg-blue-100 text-blue-800' },
-  { value: 'contacted', label: 'Contacted', color: 'bg-yellow-100 text-yellow-800' },
-  { value: 'quoted', label: 'Quoted', color: 'bg-purple-100 text-purple-800' },
-  { value: 'confirmed', label: 'Confirmed', color: 'bg-green-100 text-green-800' },
-  { value: 'completed', label: 'Completed', color: 'bg-green-100 text-green-800' },
-  { value: 'cancelled', label: 'Cancelled', color: 'bg-red-100 text-red-800' },
-] as const;
+const STATUS_DISPLAY = {
+  'unclaimed': { label: 'Unclaimed', color: 'bg-gray-100 text-gray-800' },
+  'claimed': { label: 'Claimed', color: 'bg-blue-100 text-blue-800' },
+  'contacted': { label: 'Contacted', color: 'bg-yellow-100 text-yellow-800' },
+  'quoted': { label: 'Quoted', color: 'bg-purple-100 text-purple-800' },
+  'confirmed': { label: 'Confirmed', color: 'bg-green-100 text-green-800' },
+  'completed': { label: 'Completed', color: 'bg-green-100 text-green-800' },
+  'cancelled': { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
+} as const;
 
-export const LeadOverview: React.FC<LeadOverviewProps> = ({ lead, onUpdateStatus }) => {
+export const LeadOverview: React.FC<LeadOverviewProps> = ({ lead }) => {
   const preferences = lead.preferences || {};
-  const currentStatus = STATUS_OPTIONS.find(status => status.value === lead.status);
-
-  const handleStatusChange = (newStatus: string) => {
-    onUpdateStatus(lead.id, newStatus as Lead['status']);
-  };
+  const currentStatus = STATUS_DISPLAY[lead.status as keyof typeof STATUS_DISPLAY] || STATUS_DISPLAY['claimed'];
 
   return (
     <div className="space-y-6">
@@ -83,28 +78,19 @@ export const LeadOverview: React.FC<LeadOverviewProps> = ({ lead, onUpdateStatus
         </CardContent>
       </Card>
 
-      {/* Lead Status */}
+      {/* Lead Status - Now Display Only */}
       <Card>
         <CardHeader>
           <CardTitle>Lead Status</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4">
-            <Badge className={currentStatus?.color}>
-              {currentStatus?.label || lead.status}
+            <Badge className={currentStatus.color}>
+              {currentStatus.label}
             </Badge>
-            <Select value={lead.status} onValueChange={handleStatusChange}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((status) => (
-                  <SelectItem key={status.value} value={status.value}>
-                    {status.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <p className="text-sm text-gray-500">
+              Status updates automatically based on checklist progress
+            </p>
           </div>
         </CardContent>
       </Card>
