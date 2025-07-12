@@ -1,7 +1,7 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { LeadTodoItem } from '@/types/lead';
+import { LeadTodoItem, Lead } from '@/types/lead';
 import { toast } from 'sonner';
 
 export const useUpdateLeadTodoList = () => {
@@ -52,7 +52,26 @@ export const useUpdateLeadTodoList = () => {
       }
 
       console.log('✅ Successfully updated checklist and status:', data);
-      return data;
+      
+      // Convert the Supabase response to our Lead type
+      const updatedLead: Lead = {
+        id: data.id,
+        status: data.status as Lead['status'],
+        assigned_operator_id: data.assigned_operator_id,
+        traveler_name: data.traveler_name,
+        traveler_email: data.traveler_email,
+        traveler_phone: data.traveler_phone,
+        traveler_country: data.traveler_country,
+        preferences: data.preferences as any,
+        itinerary: data.itinerary as any,
+        quoted_price: data.quoted_price,
+        quoted_currency: data.quoted_currency,
+        todo_checklist: data.todo_checklist as LeadTodoItem[],
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      };
+      
+      return updatedLead;
     },
     onSuccess: (data, { leadId }) => {
       console.log('🔄 Invalidating queries after successful update');
