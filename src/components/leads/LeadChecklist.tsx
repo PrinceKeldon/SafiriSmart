@@ -11,12 +11,14 @@ interface LeadChecklistProps {
   leadId: string;
   todoChecklist: LeadTodoItem[];
   leadStatus: Lead['status'];
+  onLeadUpdate?: (updatedLead: Lead) => void; // New prop for parent update
 }
 
 export const LeadChecklist: React.FC<LeadChecklistProps> = ({ 
   leadId, 
   todoChecklist, 
-  leadStatus 
+  leadStatus,
+  onLeadUpdate 
 }) => {
   const [localChecklist, setLocalChecklist] = useState<LeadTodoItem[]>(todoChecklist);
   const updateTodoList = useUpdateLeadTodoList();
@@ -32,9 +34,20 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
   const debouncedUpdate = useCallback(
     debounce((updatedChecklist: LeadTodoItem[]) => {
       console.log('💾 Debounced update triggered:', updatedChecklist);
-      updateTodoList.mutate({ leadId, todoChecklist: updatedChecklist });
+      updateTodoList.mutate(
+        { leadId, todoChecklist: updatedChecklist },
+        {
+          onSuccess: (updatedLead) => {
+            console.log('✅ Checklist update successful, calling onLeadUpdate:', updatedLead);
+            // Call the parent update function to refresh the entire lead list
+            if (onLeadUpdate) {
+              onLeadUpdate(updatedLead);
+            }
+          }
+        }
+      );
     }, 1000),
-    [leadId, updateTodoList]
+    [leadId, updateTodoList, onLeadUpdate]
   );
 
   // Update local checklist when prop changes (from external updates)

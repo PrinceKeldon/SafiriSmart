@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Lead } from '@/types/lead';
 import { useLeads } from '@/hooks/useLeads';
 import { NoticeBoardCard } from '@/components/leads/NoticeBoardCard';
@@ -37,6 +37,19 @@ const LeadInbox = () => {
 
   const handleRefresh = () => {
     console.log('🔄 Manual refresh triggered');
+    refetch();
+  };
+
+  // New function to handle lead updates
+  const handleLeadUpdate = (updatedLead: Lead) => {
+    console.log('🔄 Handling lead update in LeadInbox:', updatedLead);
+    
+    // Update the selected lead if it's the one being updated
+    if (selectedLead?.id === updatedLead.id) {
+      setSelectedLead(updatedLead);
+    }
+    
+    // Trigger a refetch to ensure the list is updated
     refetch();
   };
 
@@ -234,6 +247,7 @@ const LeadInbox = () => {
           onClose={handleCloseModal}
           onUpdateStatus={handleUpdateStatus}
           onAddNote={handleAddNote}
+          onLeadUpdate={handleLeadUpdate}
         />
       </div>
     </DashboardLayout>

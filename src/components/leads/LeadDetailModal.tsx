@@ -20,6 +20,7 @@ interface LeadDetailModalProps {
   onClose: () => void;
   onUpdateStatus?: (leadId: string, newStatus: Lead['status']) => void; // Made optional
   onAddNote: (leadId: string, note: string) => void;
+  onLeadUpdate?: (updatedLead: Lead) => void; // New prop for handling lead updates
 }
 
 export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
@@ -28,6 +29,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
   onClose,
   onUpdateStatus, // Not used anymore since status is auto-managed
   onAddNote,
+  onLeadUpdate, // New prop
 }) => {
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -75,6 +77,7 @@ export const LeadDetailModal: React.FC<LeadDetailModalProps> = ({
                   leadId={lead.id}
                   todoChecklist={lead.todo_checklist}
                   leadStatus={lead.status}
+                  onLeadUpdate={onLeadUpdate}
                 />
               )}
             </TabsContent>
