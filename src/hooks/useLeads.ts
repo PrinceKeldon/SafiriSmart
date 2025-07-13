@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead';
@@ -96,37 +97,6 @@ export const useUpdateLeadStatus = () => {
   });
 };
 
-export const useAddLeadNote = () => {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ leadId, note }: { leadId: string; note: string }) => {
-      console.log('Adding lead note:', { leadId, note });
-      
-      const { data, error } = await supabase
-        .from('lead_notes')
-        .insert({
-          lead_id: leadId,
-          note: note,
-          created_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error adding lead note:', error);
-        throw new Error(`Failed to add note: ${error.message}`);
-      }
-
-      return data;
-    },
-    onSuccess: (_, { leadId }) => {
-      queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
-      queryClient.invalidateQueries({ queryKey: ['lead-notes', leadId] });
-    },
-  });
-};
-
 export const useUpdateLeadQuote = () => {
   const queryClient = useQueryClient();
   
@@ -160,28 +130,5 @@ export const useUpdateLeadQuote = () => {
       queryClient.invalidateQueries({ queryKey: ['lead', leadId] });
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
-  });
-};
-
-export const useLeadNotes = (leadId: string) => {
-  return useQuery({
-    queryKey: ['lead-notes', leadId],
-    queryFn: async () => {
-      console.log('Fetching lead notes for:', leadId);
-      
-      const { data, error } = await supabase
-        .from('lead_notes')
-        .select('*')
-        .eq('lead_id', leadId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching lead notes:', error);
-        throw new Error(`Failed to fetch lead notes: ${error.message}`);
-      }
-
-      return data || [];
-    },
-    enabled: !!leadId,
   });
 };

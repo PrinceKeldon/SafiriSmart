@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
@@ -11,6 +12,7 @@ from routes.operators import router as operators_router
 from routes.packages import router as packages_router
 from routes.admin import router as admin_router
 from routes.health import router as health_router
+from routes.notes import router as notes_router
 
 # Database setup
 from database import create_tables
@@ -56,6 +58,7 @@ app.include_router(operators_router)
 app.include_router(packages_router)
 app.include_router(admin_router)
 app.include_router(health_router)
+app.include_router(notes_router)
 
 # Add the new public operators router
 from routes.public_operators import router as public_operators_router
