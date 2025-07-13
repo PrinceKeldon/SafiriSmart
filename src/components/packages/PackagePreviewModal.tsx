@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { X, MapPin, Users, Clock, DollarSign, Download, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { OperatorPackage } from '@/types/operator';
+import { useOperatorProfile } from '@/hooks/useOperatorProfile';
 import { toast } from 'sonner';
 
 interface PackagePreviewModalProps {
@@ -23,6 +23,8 @@ export const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { data: operatorProfile } = useOperatorProfile();
+
   const getBudgetTierColor = (tier: string) => {
     switch (tier) {
       case 'budget':
@@ -56,10 +58,20 @@ export const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({
     ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
+    // Company name (if available)
+    let y = 40;
+    if (operatorProfile?.company_name || operatorProfile?.company) {
+      ctx.fillStyle = '#6b7280';
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(operatorProfile.company_name || operatorProfile.company, 30, y);
+      y += 40;
+    }
+
     // Header
     ctx.fillStyle = '#1f2937';
     ctx.font = 'bold 32px Arial';
-    ctx.fillText(pkg.package_name, 30, 60);
+    ctx.fillText(pkg.package_name, 30, y);
+    y += 40;
 
     // Budget tier badge
     const budgetColors = {
@@ -68,10 +80,11 @@ export const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({
       luxury: '#7c3aed'
     };
     ctx.fillStyle = budgetColors[pkg.budget_tier as keyof typeof budgetColors] || '#6b7280';
-    ctx.fillRect(30, 80, 120, 30);
+    ctx.fillRect(30, y, 120, 30);
     ctx.fillStyle = '#ffffff';
     ctx.font = '16px Arial';
-    ctx.fillText(pkg.budget_tier || 'budget', 40, 100);
+    ctx.fillText(pkg.budget_tier || 'budget', 40, y + 20);
+    y += 50;
 
     // Description
     ctx.fillStyle = '#374151';
@@ -79,7 +92,6 @@ export const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({
     const description = pkg.description || '';
     const words = description.split(' ');
     let line = '';
-    let y = 150;
     
     for (let n = 0; n < words.length; n++) {
       const testLine = line + words[n] + ' ';
@@ -182,7 +194,8 @@ export const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({
   const handleShare = async () => {
     if (!pkg) return;
     
-    const shareText = `${pkg.package_name}\n\n${pkg.description}\n\nDuration: ${pkg.min_duration}-${pkg.max_duration} days\nGroup Size: ${pkg.min_group_size}-${pkg.max_group_size} people\nBudget: ${pkg.budget_tier}\nCost: $${pkg.estimated_cost_per_person_per_day}/person/day`;
+    const companyName = operatorProfile?.company_name || operatorProfile?.company || '';
+    const shareText = `${companyName ? `${companyName}\n` : ''}${pkg.package_name}\n\n${pkg.description}\n\nDuration: ${pkg.min_duration}-${pkg.max_duration} days\nGroup Size: ${pkg.min_group_size}-${pkg.max_group_size} people\nBudget: ${pkg.budget_tier}\nCost: $${pkg.estimated_cost_per_person_per_day}/person/day`;
     
     if (navigator.share) {
       try {
@@ -212,7 +225,14 @@ export const PackagePreviewModal: React.FC<PackagePreviewModalProps> = ({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
-            <span>{pkg.package_name}</span>
+            <div>
+              {(operatorProfile?.company_name || operatorProfile?.company) && (
+                <p className="text-sm text-gray-600 font-normal mb-1">
+                  {operatorProfile.company_name || operatorProfile.company}
+                </p>
+              )}
+              <span>{pkg.package_name}</span>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"

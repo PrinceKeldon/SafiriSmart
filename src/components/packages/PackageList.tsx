@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Edit, Trash2, MapPin, Users, Clock, DollarSign, Download, Share2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { OperatorPackage } from '@/types/operator';
 import { useDeleteOperatorPackage } from '@/hooks/useOperatorPackages';
+import { useOperatorProfile } from '@/hooks/useOperatorProfile';
 import { PackagePreviewModal } from './PackagePreviewModal';
 import { toast } from 'sonner';
 
@@ -27,6 +27,7 @@ interface PackageListProps {
 
 export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) => {
   const deletePackage = useDeleteOperatorPackage();
+  const { data: operatorProfile } = useOperatorProfile();
   const [previewPackage, setPreviewPackage] = useState<OperatorPackage | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -62,10 +63,20 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
     ctx.lineWidth = 2;
     ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
 
+    // Company name (if available)
+    let y = 40;
+    if (operatorProfile?.company_name || operatorProfile?.company) {
+      ctx.fillStyle = '#6b7280';
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(operatorProfile.company_name || operatorProfile.company, 30, y);
+      y += 40;
+    }
+
     // Header
     ctx.fillStyle = '#1f2937';
     ctx.font = 'bold 32px Arial';
-    ctx.fillText(pkg.package_name, 30, 60);
+    ctx.fillText(pkg.package_name, 30, y);
+    y += 40;
 
     // Budget tier badge
     const budgetColors = {
@@ -74,10 +85,11 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
       luxury: '#7c3aed'
     };
     ctx.fillStyle = budgetColors[pkg.budget_tier as keyof typeof budgetColors] || '#6b7280';
-    ctx.fillRect(30, 80, 120, 30);
+    ctx.fillRect(30, y, 120, 30);
     ctx.fillStyle = '#ffffff';
     ctx.font = '16px Arial';
-    ctx.fillText(pkg.budget_tier || 'budget', 40, 100);
+    ctx.fillText(pkg.budget_tier || 'budget', 40, y + 20);
+    y += 50;
 
     // Description
     ctx.fillStyle = '#374151';
@@ -85,7 +97,6 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
     const description = pkg.description || '';
     const words = description.split(' ');
     let line = '';
-    let y = 150;
     
     for (let n = 0; n < words.length; n++) {
       const testLine = line + words[n] + ' ';
@@ -184,7 +195,8 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
   };
 
   const handleShare = async (pkg: OperatorPackage) => {
-    const shareText = `${pkg.package_name}\n\n${pkg.description}\n\nDuration: ${pkg.min_duration}-${pkg.max_duration} days\nGroup Size: ${pkg.min_group_size}-${pkg.max_group_size} people\nBudget: ${pkg.budget_tier}\nCost: $${pkg.estimated_cost_per_person_per_day}/person/day`;
+    const companyName = operatorProfile?.company_name || operatorProfile?.company || '';
+    const shareText = `${companyName ? `${companyName}\n` : ''}${pkg.package_name}\n\n${pkg.description}\n\nDuration: ${pkg.min_duration}-${pkg.max_duration} days\nGroup Size: ${pkg.min_group_size}-${pkg.max_group_size} people\nBudget: ${pkg.budget_tier}\nCost: $${pkg.estimated_cost_per_person_per_day}/person/day`;
     
     if (navigator.share) {
       try {
@@ -240,7 +252,14 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
           <Card key={pkg.id} className="relative hover:shadow-md transition-shadow">
             <CardHeader>
               <div className="flex justify-between items-start">
-                <CardTitle className="text-lg">{pkg.package_name || 'Untitled Package'}</CardTitle>
+                <div>
+                  {(operatorProfile?.company_name || operatorProfile?.company) && (
+                    <p className="text-xs text-gray-500 mb-1">
+                      {operatorProfile.company_name || operatorProfile.company}
+                    </p>
+                  )}
+                  <CardTitle className="text-lg">{pkg.package_name || 'Untitled Package'}</CardTitle>
+                </div>
                 <Badge className={getBudgetTierColor(pkg.budget_tier || 'budget')}>
                   {pkg.budget_tier || 'budget'}
                 </Badge>
