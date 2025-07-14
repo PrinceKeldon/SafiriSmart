@@ -1,12 +1,12 @@
 
 import React from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { OperatorProfileForm } from '@/components/profile/OperatorProfileForm';
+import { ProfileDashboard } from '@/components/profile/ProfileDashboard';
 
 const Profile = () => {
   return (
     <DashboardLayout>
-      <OperatorProfileForm />
+      <ProfileDashboard />
     </DashboardLayout>
   );
 };
