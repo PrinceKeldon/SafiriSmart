@@ -38,11 +38,6 @@ const Navigation = () => {
       href: '/dashboard/profile',
       icon: User,
     },
-    {
-      name: 'Config',
-      href: '/config',
-      icon: Settings,
-    },
   ];
 
   const handleLogout = () => {
