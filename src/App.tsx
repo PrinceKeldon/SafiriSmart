@@ -15,6 +15,8 @@ import LeadInbox from '@/pages/LeadInbox';
 import Packages from '@/pages/Packages';
 import Profile from '@/pages/Profile';
 import AdminDashboard from '@/pages/AdminDashboard';
+import SystemConfig from '@/pages/SystemConfig';
+import EnvConfig from '@/pages/EnvConfig';
 import NewLead from '@/pages/NewLead';
 
 import './App.css';
@@ -89,6 +91,22 @@ function App() {
                 element={
                   <PrivateRoute requireAdmin={true}>
                     <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/admin/system-config"
+                element={
+                  <PrivateRoute requireAdmin={true}>
+                    <SystemConfig />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/admin/env-config"
+                element={
+                  <PrivateRoute requireAdmin={true}>
+                    <EnvConfig />
                   </PrivateRoute>
                 }
               />

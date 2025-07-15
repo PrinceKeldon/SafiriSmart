@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Eye, Trash2 } from 'lucide-react';
 import { OperatorDetailView } from './OperatorDetailView';
+import { OperatorProfileProgress } from './OperatorProfileProgress';
 import { adminService } from '@/services/AdminService';
 import { toast } from 'sonner';
 import { Tables } from '@/integrations/supabase/types';
@@ -92,6 +93,11 @@ export const OperatorsList: React.FC<OperatorsListProps> = ({
                   {spec}
                 </Badge>
               ))}
+            </div>
+            
+            {/* Profile Progress */}
+            <div className="mt-3 p-2 bg-gray-50 rounded-md">
+              <OperatorProfileProgress operator={operator} compact />
             </div>
           </div>
           <div className="text-right">
