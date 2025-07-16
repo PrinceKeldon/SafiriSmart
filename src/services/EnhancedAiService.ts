@@ -339,14 +339,33 @@ class EnhancedAiService {
       try {
         const enhancedPrompt = this.generateCreativePrompt(preferences);
         
+        // Create a safe object to spread by ensuring preferences is always an object
+        const requestBody = {
+          duration: preferences.duration,
+          budgetRange: preferences.budgetRange,
+          interests: preferences.interests,
+          groupSize: preferences.groupSize,
+          travelPace: preferences.travelPace,
+          languages: preferences.languages,
+          enhanced_prompt: enhancedPrompt,
+          creativity_seed: Math.random(),
+          iteration_number: i + 1
+        };
+        
+        // Add optional properties if they exist
+        if (preferences.schedule) {
+          requestBody.schedule = preferences.schedule;
+        }
+        if (preferences.travel) {
+          requestBody.travel = preferences.travel;
+        }
+        if (preferences.dietary) {
+          requestBody.dietary = preferences.dietary;
+        }
+        
         const iteration = await this.makeRequest('/generate_itinerary', {
           method: 'POST',
-          body: JSON.stringify({
-            ...(preferences || {}),
-            enhanced_prompt: enhancedPrompt,
-            creativity_seed: Math.random(),
-            iteration_number: i + 1
-          }),
+          body: JSON.stringify(requestBody),
         });
         
         if (iteration) {
