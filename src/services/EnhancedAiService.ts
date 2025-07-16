@@ -349,7 +349,7 @@ class EnhancedAiService {
         const iteration = await this.makeRequest('/generate_itinerary', {
           method: 'POST',
           body: JSON.stringify({
-            ...preferences,
+            ...(preferences as Record<string, any>),
             enhanced_prompt: enhancedPrompt,
             creativity_seed: Math.random(), // Add randomness seed
             iteration_number: i + 1
