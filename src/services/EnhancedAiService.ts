@@ -307,7 +307,7 @@ class EnhancedAiService {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(options.headers as Record<string, string> || {}),
+        ...(options.headers && typeof options.headers === 'object' ? options.headers : {}),
       },
     };
 
