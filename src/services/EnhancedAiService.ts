@@ -1,4 +1,3 @@
-
 import { TravelPreferences } from '@/components/preferences/WizardTypes';
 
 interface ItineraryOptions {
@@ -305,10 +304,13 @@ class EnhancedAiService {
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+      },
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...options.headers,
+        ...(options.headers || {}),
       },
     };
 
