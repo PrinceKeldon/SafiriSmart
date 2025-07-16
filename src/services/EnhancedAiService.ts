@@ -1,5 +1,3 @@
-
-
 import { TravelPreferences } from '@/components/preferences/WizardTypes';
 
 interface ItineraryOptions {
@@ -17,7 +15,6 @@ class EnhancedAiService {
   constructor() {
     this.baseUrl = import.meta.env.VITE_AI_CORE_SERVICE_URL || 'http://localhost:8000';
     
-    // Enhanced knowledge base for weighted selection
     this.kenyanExperiences = {
       activities: [
         'Traditional game drives',
@@ -156,7 +153,6 @@ class EnhancedAiService {
   }
 
   private selectDiverseElements(preferences: TravelPreferences) {
-    // Weighted selection for diversity
     const selectedActivities = this.weightedSelection(this.kenyanExperiences.activities, 5, preferences);
     const selectedCultural = this.weightedSelection(this.kenyanExperiences.culturalExperiences, 3, preferences);
     const selectedUnique = this.weightedSelection(this.kenyanExperiences.uniqueExperiences, 3, preferences);
@@ -171,13 +167,11 @@ class EnhancedAiService {
   }
 
   private weightedSelection(options: string[], count: number, preferences: TravelPreferences): string[] {
-    // Create weights based on user preferences
     const weightedOptions = options.map(option => ({
       option,
       weight: this.calculateWeight(option, preferences)
     }));
 
-    // Sort by weight and add randomization
     weightedOptions.sort(() => Math.random() - 0.5);
     
     const selected: string[] = [];
@@ -198,14 +192,12 @@ class EnhancedAiService {
   private calculateWeight(option: string, preferences: TravelPreferences): number {
     let weight = 1;
 
-    // Boost weight based on user interests
     preferences.interests.forEach(interest => {
       if (option.toLowerCase().includes(interest.toLowerCase().replace('-', ' '))) {
         weight += 2;
       }
     });
 
-    // Budget considerations
     if (preferences.budgetRange === 'luxury' && 
         (option.includes('luxury') || option.includes('exclusive') || option.includes('private'))) {
       weight += 1.5;
@@ -216,7 +208,6 @@ class EnhancedAiService {
       weight += 1.5;
     }
 
-    // Group size considerations
     if (preferences.groupSize <= 2 && option.includes('intimate')) {
       weight += 1;
     }
@@ -225,7 +216,6 @@ class EnhancedAiService {
       weight += 1;
     }
 
-    // Travel pace considerations
     if (preferences.travelPace === 'relaxed' && 
         (option.includes('relaxation') || option.includes('sundowner') || option.includes('spa'))) {
       weight += 1;
@@ -242,7 +232,6 @@ class EnhancedAiService {
   private generatePersonalizationPrompts(preferences: TravelPreferences): string {
     let prompts = '';
 
-    // Interest-specific prompts
     if (preferences.interests.includes('wildlife-safari')) {
       prompts += `
       - Focus on rare and endangered species encounters
@@ -271,7 +260,6 @@ class EnhancedAiService {
       - Suggest early morning birding opportunities`;
     }
 
-    // Budget-specific enhancements
     if (preferences.budgetRange === 'luxury') {
       prompts += `
       - Include exclusive experiences not available to general public
@@ -286,7 +274,6 @@ class EnhancedAiService {
       - Suggest cost-effective alternatives that don't compromise experience quality`;
     }
 
-    // Pace-specific adaptations
     if (preferences.travelPace === 'relaxed') {
       prompts += `
       - Allow ample time at each location
@@ -309,7 +296,6 @@ class EnhancedAiService {
       'Content-Type': 'application/json',
     };
 
-    // Safely merge headers if they exist and are an object
     if (options.headers && typeof options.headers === 'object' && options.headers !== null) {
       const incomingHeaders = options.headers as Record<string, string>;
       Object.assign(headers, incomingHeaders);
@@ -338,10 +324,8 @@ class EnhancedAiService {
       pace: preferences.travelPace
     });
 
-    // Generate multiple iterations for diversity
     const iterations = await this.generateMultipleIterations(preferences, 3);
     
-    // Select the most diverse iteration
     const selectedItinerary = this.selectMostDiverse(iterations);
     
     console.log('✨ Enhanced itinerary generated with creative elements');
@@ -358,9 +342,9 @@ class EnhancedAiService {
         const iteration = await this.makeRequest('/generate_itinerary', {
           method: 'POST',
           body: JSON.stringify({
-            ...(preferences as Record<string, any>),
+            ...(preferences || {}),
             enhanced_prompt: enhancedPrompt,
-            creativity_seed: Math.random(), // Add randomness seed
+            creativity_seed: Math.random(),
             iteration_number: i + 1
           }),
         });
@@ -385,7 +369,6 @@ class EnhancedAiService {
       throw new Error('No valid iterations generated');
     }
     
-    // Sort by diversity score and select the highest
     iterations.sort((a, b) => (b.diversity_score || 0) - (a.diversity_score || 0));
     
     console.log('🎯 Selected most diverse iteration with score:', iterations[0].diversity_score);
@@ -402,28 +385,23 @@ class EnhancedAiService {
     const accommodationTypes = new Set<string>();
     
     itinerary.itinerary_details.forEach((day: any) => {
-      // Count unique activities
       if (day.activities) {
         day.activities.forEach((activity: string) => activities.add(activity.toLowerCase()));
       }
       
-      // Count unique locations
       if (day.location) {
         locations.add(day.location.toLowerCase());
       }
       
-      // Count unique accommodation types
       if (day.accommodation_suggestion) {
         accommodationTypes.add(day.accommodation_suggestion.toLowerCase());
       }
     });
     
-    // Calculate diversity score
-    score += activities.size * 2; // Activities weighted higher
+    score += activities.size * 2;
     score += locations.size * 1.5;
     score += accommodationTypes.size;
     
-    // Bonus for creative elements
     if (itinerary.tour_name && !itinerary.tour_name.includes('Safari Adventure')) {
       score += 5;
     }
@@ -452,7 +430,6 @@ class EnhancedAiService {
   private async generateFallbackItinerary(preferences: TravelPreferences): Promise<any> {
     console.log('🔄 Generating fallback itinerary with basic creativity enhancements');
     
-    // Enhanced fallback with creative elements
     return {
       tour_name: `${preferences.duration}-Day Hidden Gems of Kenya Safari`,
       summary: `Discover Kenya's best-kept secrets on this carefully crafted ${preferences.duration}-day adventure, designed for ${preferences.groupSize} travelers seeking authentic experiences beyond the ordinary tourist trail.`,
@@ -533,4 +510,3 @@ class EnhancedAiService {
 }
 
 export const enhancedAiService = new EnhancedAiService();
-
