@@ -1,3 +1,4 @@
+
 import { TravelPreferences } from '@/components/preferences/WizardTypes';
 
 interface ItineraryOptions {
@@ -307,7 +308,7 @@ class EnhancedAiService {
       ...options,
       headers: {
         'Content-Type': 'application/json',
-        ...(options.headers && typeof options.headers === 'object' ? options.headers : {}),
+        ...(typeof options.headers === 'object' && options.headers !== null ? options.headers as Record<string, string> : {}),
       },
     };
 
