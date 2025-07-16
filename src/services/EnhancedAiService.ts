@@ -1,4 +1,5 @@
 
+
 import { TravelPreferences } from '@/components/preferences/WizardTypes';
 
 interface ItineraryOptions {
@@ -304,12 +305,19 @@ class EnhancedAiService {
   }
 
   private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    // Safely merge headers if they exist and are an object
+    if (options.headers && typeof options.headers === 'object' && options.headers !== null) {
+      const incomingHeaders = options.headers as Record<string, string>;
+      Object.assign(headers, incomingHeaders);
+    }
+
     const config: RequestInit = {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(typeof options.headers === 'object' && options.headers !== null ? options.headers as Record<string, string> : {}),
-      },
+      headers,
     };
 
     const response = await fetch(`${this.baseUrl}${endpoint}`, config);
@@ -525,3 +533,4 @@ class EnhancedAiService {
 }
 
 export const enhancedAiService = new EnhancedAiService();
+
