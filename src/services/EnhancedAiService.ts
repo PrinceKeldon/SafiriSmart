@@ -339,8 +339,8 @@ class EnhancedAiService {
       try {
         const enhancedPrompt = this.generateCreativePrompt(preferences);
         
-        // Create a safe object to spread by ensuring preferences is always an object
-        const requestBody = {
+        // Create a properly typed request body object
+        const requestBody: Record<string, any> = {
           duration: preferences.duration,
           budgetRange: preferences.budgetRange,
           interests: preferences.interests,
