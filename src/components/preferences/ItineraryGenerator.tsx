@@ -1,56 +1,25 @@
 import { TravelPreferences, TourOutput } from './WizardTypes';
-import { b2cApiService } from '@/services/B2CApiService';
+import { generateEnhancedItinerary, generateCreativeMockItinerary } from './EnhancedItineraryGenerator';
 
 export const generateItinerary = async (preferences: TravelPreferences): Promise<TourOutput> => {
+  console.log('🎯 Starting enhanced itinerary generation process...');
+  
   try {
-    console.log('Calling AI Core Service with preferences:', preferences);
-    
-    // Transform preferences to match AI Core Service format
-    const aiPreferences = {
-      duration: preferences.duration,
-      budgetRange: preferences.budgetRange,
-      interests: preferences.interests,
-      groupSize: preferences.groupSize,
-      travelPace: preferences.travelPace
-    };
-
-    const response = await b2cApiService.generateItinerary(aiPreferences);
-    
-    // Transform AI response to TourOutput format
-    const itinerary: TourOutput = {
-      tour_name: response.tour_name || `${preferences.duration}-Day Kenya Safari Adventure`,
-      summary: response.summary || `Experience the best of Kenya's wildlife and landscapes with this carefully crafted ${preferences.duration}-day safari.`,
-      itinerary_details: response.itinerary_details || generateDefaultItinerary(preferences),
-      inclusions_suggestions: response.inclusions_suggestions || getDefaultInclusions(preferences),
-      exclusions_suggestions: response.exclusions_suggestions || getDefaultExclusions(),
-      important_notes: response.important_notes || getDefaultNotes(preferences)
-    };
-
-    return itinerary;
+    // Use the enhanced AI service for creative and diverse itineraries
+    return await generateEnhancedItinerary(preferences);
   } catch (error) {
-    console.error('Error calling AI Core Service:', error);
+    console.error('❌ Enhanced itinerary generation failed completely:', error);
     
-    // Fallback to mock data if API call fails
-    console.log('Falling back to mock itinerary generation');
-    return generateMockItinerary(preferences);
+    // Final fallback to creative mock generation
+    console.log('🎨 Using creative mock generation as final fallback');
+    return generateCreativeMockItinerary(preferences);
   }
 };
 
-// Keep the existing mock generation as fallback
+// Keep the existing mock generation as legacy fallback
 export const generateMockItinerary = (preferences: TravelPreferences): Promise<TourOutput> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const mockItinerary: TourOutput = {
-        tour_name: `${preferences.duration}-Day Ultimate Kenya Safari Adventure`,
-        summary: `Experience the best of Kenya's wildlife and landscapes with this carefully crafted ${preferences.duration}-day safari. Perfect for ${preferences.groupSize} travelers seeking a ${preferences.travelPace} pace adventure with ${preferences.budgetRange} accommodations. Guide speaks ${preferences.languages.join(', ')}.`,
-        itinerary_details: generateDefaultItinerary(preferences),
-        inclusions_suggestions: getDefaultInclusions(preferences),
-        exclusions_suggestions: getDefaultExclusions(),
-        important_notes: getDefaultNotes(preferences)
-      };
-      resolve(mockItinerary);
-    }, 2000);
-  });
+  console.log('⚠️ Using legacy mock itinerary generation');
+  return generateCreativeMockItinerary(preferences);
 };
 
 const generateDefaultItinerary = (preferences: TravelPreferences) => {
@@ -74,11 +43,11 @@ const generateDefaultItinerary = (preferences: TravelPreferences) => {
       preferences.budgetRange === 'mid-range' ?
       'Comfortable Safari Camp with Ensuite Facilities' :
       'Budget-Friendly Safari Lodge',
-    meals: preferences.dietary.mealWishes ? 
+    meals: preferences.dietary?.mealWishes ? 
       ['Breakfast (Dietary accommodated)', 'Lunch (Dietary accommodated)', 'Dinner (Dietary accommodated)'] :
       ['Breakfast', 'Lunch', 'Dinner'],
-    travel_notes: index === 0 ? `Entry point: ${preferences.travel.portOfEntry || 'TBD'}` : undefined,
-    pickup_details: index === 0 && preferences.travel.airportPickup ? {
+    travel_notes: index === 0 ? `Entry point: ${preferences.travel?.portOfEntry || 'TBD'}` : undefined,
+    pickup_details: index === 0 && preferences.travel?.airportPickup ? {
       time: preferences.travel.pickupTime || 'TBD',
       location: preferences.travel.pickupLocation || 'TBD'
     } : undefined
@@ -109,5 +78,5 @@ const getDefaultNotes = (preferences: TravelPreferences) => [
   'Comfortable walking shoes and neutral-colored clothing recommended',
   'Binoculars and camera equipment advised for wildlife viewing',
   'Yellow fever vaccination may be required depending on your country of origin',
-  preferences.dietary.allergies ? `Please inform guide of allergies: ${preferences.dietary.allergies}` : ''
+  preferences.dietary?.allergies ? `Please inform guide of allergies: ${preferences.dietary.allergies}` : ''
 ].filter(Boolean);

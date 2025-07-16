@@ -1,4 +1,3 @@
-
 export interface UserDetails {
   name: string;
   email: string;
@@ -8,24 +7,24 @@ export interface UserDetails {
 }
 
 export interface TravelPreferences {
-  interests: string[];
   duration: number;
+  budgetRange: string;
+  interests: string[];
   groupSize: number;
-  budgetRange: 'budget' | 'mid-range' | 'luxury';
-  travelPace: 'relaxed' | 'moderate' | 'active';
+  travelPace: string;
   languages: string[];
-  schedule: {
+  schedule?: {
     startDate?: Date;
     endDate?: Date;
     flexible: boolean;
   };
-  travel: {
+  travel?: {
     portOfEntry?: string;
     airportPickup: boolean;
     pickupTime?: string;
     pickupLocation?: string;
   };
-  dietary: {
+  dietary?: {
     mealWishes?: string;
     allergies?: string;
     specialRequirements?: string;
@@ -35,22 +34,33 @@ export interface TravelPreferences {
 export interface TourOutput {
   tour_name: string;
   summary: string;
-  itinerary_details: Array<{
-    day_number: number;
-    theme: string;
-    location: string;
-    activities: string[];
-    accommodation_suggestion: string;
-    meals: string[];
-    travel_notes?: string;
-    pickup_details?: {
-      time: string;
-      location: string;
-    };
-  }>;
+  itinerary_details: ItineraryDay[];
   inclusions_suggestions: string[];
   exclusions_suggestions: string[];
   important_notes: string[];
+  creativity_metadata?: {
+    diversity_score: number;
+    creativity_elements: string[];
+    generation_method: string;
+  };
+}
+
+export interface ItineraryDay {
+  day_number: number;
+  theme: string;
+  location: string;
+  activities: string[];
+  accommodation_suggestion: string;
+  meals: string[];
+  travel_notes?: string;
+  pickup_details?: {
+    time?: string;
+    location?: string;
+  };
+  unique_experiences?: string[];
+  flexibility_options?: string[];
+  cultural_highlight?: string;
+  conservation_story?: string;
 }
 
 export const steps = [
