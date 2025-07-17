@@ -207,38 +207,47 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     });
     
     try {
-      // Use the auth-login edge function instead of direct Supabase auth
-      console.log('🔐 LOGIN: Calling auth-login edge function for:', email);
+      // Use Supabase's built-in signInWithPassword instead of edge function
+      console.log('🔐 LOGIN: Attempting authentication with Supabase Auth for:', email);
       
-      const { data, error } = await supabase.functions.invoke('auth-login', {
-        body: {
-          email,
-          password
-        }
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
-      console.log('📋 LOGIN: Auth-login edge function response:', { 
-        hasData: !!data, 
-        success: data?.success,
-        error: error?.message || data?.message,
-        hasOperatorData: !!data?.data?.operator
+      console.log('📋 LOGIN: Supabase Auth response:', { 
+        hasData: !!authData, 
+        hasUser: !!authData.user,
+        hasSession: !!authData.session,
+        error: authError?.message,
+        userEmail: authData.user?.email
       });
 
-      if (error) {
-        console.error('❌ LOGIN: Edge function error:', error);
-        return { success: false, error: `Login Error: ${error.message}` };
+      if (authError) {
+        console.error('❌ LOGIN: Authentication error:', authError);
+        return { success: false, error: authError.message };
       }
 
-      if (!data?.success) {
-        console.error('❌ LOGIN: Login failed:', data?.message);
-        return { success: false, error: data?.message || 'Login failed' };
+      if (!authData.user || !authData.session) {
+        console.error('❌ LOGIN: No user or session returned from auth');
+        return { success: false, error: 'Authentication failed' };
       }
 
-      const { access_token, operator } = data.data;
+      // Check if operator exists and has correct role
+      console.log('🔍 LOGIN: Checking operator profile for:', authData.user.email);
+      
+      const { data: operator, error: operatorError } = await supabase
+        .from('operators')
+        .select('*')
+        .eq('email', authData.user.email)
+        .eq('is_active', true)
+        .single();
 
-      if (!access_token || !operator) {
-        console.error('❌ LOGIN: Missing access token or operator data');
-        return { success: false, error: 'Authentication failed - missing data' };
+      if (operatorError || !operator) {
+        console.error('❌ LOGIN: Operator lookup error:', operatorError);
+        // Sign out the user since they don't have a valid operator profile
+        await supabase.auth.signOut();
+        return { success: false, error: 'No active operator profile found for this email' };
       }
 
       // Check if the operator's role matches the expected role for this login portal
@@ -250,24 +259,15 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
       if (operator.role !== expectedRole) {
         console.error('❌ LOGIN: Role mismatch detected:', {
-          email,
+          email: authData.user.email,
           operatorRole: operator.role,
           expectedRole,
           portalType: expectedRole === 'admin' ? 'Admin Portal' : 'Operator Portal'
         });
         
+        // Sign out the user since they're trying to access wrong portal
+        await supabase.auth.signOut();
         return { success: false, error: `Access denied. This portal is for ${expectedRole}s only.` };
-      }
-
-      // Set the session using the access token from the edge function
-      const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
-        access_token,
-        refresh_token: access_token // Using access_token as refresh_token for now
-      });
-
-      if (sessionError) {
-        console.error('❌ LOGIN: Session setting error:', sessionError);
-        return { success: false, error: 'Failed to establish session' };
       }
 
       console.log('🎉 LOGIN: Login successful for operator:', {
