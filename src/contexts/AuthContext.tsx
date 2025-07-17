@@ -16,6 +16,7 @@ interface AuthContextType {
   user: AuthUser | null;
   session: Session | null;
   login: (email: string, password: string, expectedRole?: 'operator' | 'admin') => Promise<{ success: boolean; error?: string }>;
+  loginWithGoogle: (expectedRole?: 'operator' | 'admin') => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string, name: string, company: string, specializations?: string[]) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
@@ -294,6 +295,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const loginWithGoogle = async (expectedRole: 'operator' | 'admin' = 'operator') => {
+    console.log('🚀 GOOGLE LOGIN: Starting Google login process', {
+      expectedRole,
+      timestamp: new Date().toISOString()
+    });
+    
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}${expectedRole === 'admin' ? '/admin/dashboard' : '/dashboard'}`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        }
+      });
+
+      if (error) {
+        console.error('❌ GOOGLE LOGIN: OAuth error:', error);
+        return { success: false, error: error.message };
+      }
+
+      console.log('🎉 GOOGLE LOGIN: OAuth redirect initiated');
+      return { success: true };
+    } catch (error) {
+      console.error('💥 GOOGLE LOGIN: Unexpected error:', {
+        expectedRole,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        errorType: error instanceof Error ? error.constructor.name : typeof error
+      });
+      
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Google login failed. Please try again.' 
+      };
+    }
+  };
+
   const logout = async () => {
     console.log('🚪 LOGOUT: Starting logout process');
     
@@ -320,6 +360,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     user,
     session,
     login,
+    loginWithGoogle,
     signup,
     logout,
     isLoading,
