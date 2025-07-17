@@ -370,7 +370,7 @@ class EnhancedAiService {
         
         if (iteration) {
           iterations.push({
-            ...iteration,
+            ...Object.assign({}, iteration),
             diversity_score: this.calculateDiversityScore(iteration),
             creativity_elements: this.extractCreativityElements(iteration)
           });
