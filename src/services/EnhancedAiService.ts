@@ -463,7 +463,7 @@ class EnhancedAiService {
     // Merge with provided preferences, ensuring we have a valid TravelPreferences object
     const safePreferences: TravelPreferences = {
       ...defaultPreferences,
-      ...(preferences || {})
+      ...(preferences && typeof preferences === 'object' && !Array.isArray(preferences) ? preferences : {})
     };
     
     return {
