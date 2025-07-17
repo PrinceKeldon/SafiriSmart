@@ -459,16 +459,8 @@ class EnhancedAiService {
       languages: ['English']
     };
     
-    // Ensure preferences is valid before merging
-    let safePreferences: TravelPreferences;
-    if (preferences && typeof preferences === 'object' && !Array.isArray(preferences)) {
-      safePreferences = {
-        ...defaultPreferences,
-        ...preferences
-      };
-    } else {
-      safePreferences = defaultPreferences;
-    }
+    // Safely merge preferences with default values
+    const safePreferences: TravelPreferences = Object.assign({}, defaultPreferences, preferences || {});
     
     return {
       tour_name: `${safePreferences.duration}-Day Hidden Gems of Kenya Safari`,
