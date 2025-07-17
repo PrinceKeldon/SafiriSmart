@@ -14,8 +14,8 @@ export const usePerformanceMonitor = (pageName: string) => {
       const paint = performance.getEntriesByType('paint');
       
       const metrics: Partial<PerformanceMetrics> = {
-        pageLoadTime: navigation?.loadEventEnd - navigation?.navigationStart,
-        timeToInteractive: navigation?.domInteractive - navigation?.navigationStart,
+        pageLoadTime: navigation?.loadEventEnd - navigation?.loadEventStart,
+        timeToInteractive: navigation?.domInteractive - navigation?.loadEventStart,
       };
 
       const fcp = paint.find(entry => entry.name === 'first-contentful-paint');

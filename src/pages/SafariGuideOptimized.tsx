@@ -9,7 +9,11 @@ import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
 
 // Lazy load components for better performance
 const PreferenceWizard = React.lazy(() => import('@/components/preferences/PreferenceWizard'));
-const OperatorSelectionDebugger = React.lazy(() => import('@/components/preferences/OperatorSelectionDebugger'));
+const OperatorSelectionDebugger = React.lazy(() => 
+  import('@/components/preferences/OperatorSelectionDebugger').then(module => ({
+    default: module.OperatorSelectionDebugger
+  }))
+);
 
 const SafariGuideOptimized = () => {
   usePerformanceMonitor('SafariGuide_Landing');

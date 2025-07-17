@@ -38,7 +38,7 @@ export function useOptimizedQuery<T>({
     retry: enableRetries ? 3 : false,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     staleTime: background ? 5 * 60 * 1000 : 30 * 1000, // 5 min for background, 30s for foreground
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes (renamed from cacheTime)
     refetchOnWindowFocus: !background,
     refetchOnReconnect: true,
     ...options,
