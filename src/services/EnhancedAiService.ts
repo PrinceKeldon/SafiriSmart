@@ -1,4 +1,3 @@
-
 import { TravelPreferences } from '@/components/preferences/WizardTypes';
 
 interface ItineraryOptions {
@@ -460,11 +459,16 @@ class EnhancedAiService {
       languages: ['English']
     };
     
-    // Merge with provided preferences, ensuring we have a valid TravelPreferences object
-    const safePreferences: TravelPreferences = {
-      ...defaultPreferences,
-      ...(preferences && typeof preferences === 'object' && !Array.isArray(preferences) ? preferences : {})
-    };
+    // Ensure preferences is valid before merging
+    let safePreferences: TravelPreferences;
+    if (preferences && typeof preferences === 'object' && !Array.isArray(preferences)) {
+      safePreferences = {
+        ...defaultPreferences,
+        ...preferences
+      };
+    } else {
+      safePreferences = defaultPreferences;
+    }
     
     return {
       tour_name: `${safePreferences.duration}-Day Hidden Gems of Kenya Safari`,
