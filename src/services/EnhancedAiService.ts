@@ -1,3 +1,4 @@
+
 import { TravelPreferences } from '@/components/preferences/WizardTypes';
 
 interface ItineraryOptions {
@@ -449,16 +450,29 @@ class EnhancedAiService {
   private async generateFallbackItinerary(preferences: TravelPreferences): Promise<any> {
     console.log('🔄 Generating fallback itinerary with basic creativity enhancements');
     
-    // Ensure preferences is a valid object before spreading
-    const safePreferences = preferences && typeof preferences === 'object' ? preferences : {};
+    // Create a proper default TravelPreferences object
+    const defaultPreferences: TravelPreferences = {
+      duration: 7,
+      budgetRange: 'mid-range',
+      interests: ['wildlife-safari'],
+      groupSize: 2,
+      travelPace: 'relaxed',
+      languages: ['English']
+    };
+    
+    // Merge with provided preferences, ensuring we have a valid TravelPreferences object
+    const safePreferences: TravelPreferences = {
+      ...defaultPreferences,
+      ...(preferences || {})
+    };
     
     return {
-      tour_name: `${safePreferences.duration || 7}-Day Hidden Gems of Kenya Safari`,
-      summary: `Discover Kenya's best-kept secrets on this carefully crafted ${safePreferences.duration || 7}-day adventure, designed for ${safePreferences.groupSize || 2} travelers seeking authentic experiences beyond the ordinary tourist trail.`,
-      itinerary_details: this.generateCreativeFallbackDays(safePreferences as TravelPreferences),
-      inclusions_suggestions: this.getEnhancedInclusions(safePreferences as TravelPreferences),
+      tour_name: `${safePreferences.duration}-Day Hidden Gems of Kenya Safari`,
+      summary: `Discover Kenya's best-kept secrets on this carefully crafted ${safePreferences.duration}-day adventure, designed for ${safePreferences.groupSize} travelers seeking authentic experiences beyond the ordinary tourist trail.`,
+      itinerary_details: this.generateCreativeFallbackDays(safePreferences),
+      inclusions_suggestions: this.getEnhancedInclusions(safePreferences),
       exclusions_suggestions: this.getStandardExclusions(),
-      important_notes: this.getCreativeNotes(safePreferences as TravelPreferences),
+      important_notes: this.getCreativeNotes(safePreferences),
       diversity_score: 15,
       creativity_elements: ['Unique experience focus', 'Local community integration']
     };
