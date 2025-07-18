@@ -65,11 +65,12 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
   const hasDocument = profile?.certificate_of_incorporation_url && profile.certificate_of_incorporation_url.length > 0;
   
   // Enhanced status logic for better UX
-  const getVerificationStatus = () => {
+  const getVerificationStatus = (): 'none' | 'pending' | 'approved' | 'rejected' => {
     if (!hasDocument) return 'none';
     
     // In a real implementation, this would check against a verification_status table
     // For now, we'll show pending for all uploaded documents
+    // This should be extended to check actual verification status from database
     return 'pending';
   };
 
