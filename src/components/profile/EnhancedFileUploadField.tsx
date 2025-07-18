@@ -31,6 +31,8 @@ export const EnhancedFileUploadField: React.FC<EnhancedFileUploadFieldProps> = (
     const file = event.target.files?.[0];
     if (!file) return;
 
+    console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
+
     // Validate file type
     const allowedTypes = [
       'application/pdf',
@@ -54,37 +56,53 @@ export const EnhancedFileUploadField: React.FC<EnhancedFileUploadFieldProps> = (
 
     setUploading(true);
     try {
+      // Create unique file path
       const fileExt = file.name.split('.').pop();
       const timestamp = Date.now();
       const randomId = Math.random().toString(36).substring(2);
-      const filePath = `verification-docs/${timestamp}-${randomId}.${fileExt}`;
+      const fileName = `${timestamp}-${randomId}.${fileExt}`;
+      const filePath = `verification-docs/${fileName}`;
 
-      console.log('Uploading file to path:', filePath);
+      console.log('Uploading to path:', filePath);
 
-      const { data, error } = await supabase.storage
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Upload file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('operator-documents')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
         });
 
-      if (error) {
-        console.error('Upload error:', error);
-        throw error;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        if (uploadError.message.includes('already exists')) {
+          throw new Error('A file with this name already exists. Please try again.');
+        }
+        throw uploadError;
       }
 
+      console.log('Upload successful:', uploadData);
+
+      // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from('operator-documents')
-        .getPublicUrl(data.path);
+        .getPublicUrl(uploadData.path);
 
-      console.log('File uploaded successfully. Public URL:', publicUrl);
+      console.log('Generated public URL:', publicUrl);
 
       setFileName(file.name);
       onUrlChange(publicUrl);
       toast.success('File uploaded successfully');
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Failed to upload file. Please try again.');
+      console.error('Upload failed:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to upload file';
+      toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
     }
@@ -183,7 +201,10 @@ export const EnhancedFileUploadField: React.FC<EnhancedFileUploadFieldProps> = (
           </TabsList>
           
           <TabsContent value="upload" className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+            <div 
+              className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400 transition-colors"
+              onClick={() => fileInputRef.current?.click()}
+            >
               <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-600 mb-2">
                 Click to upload your verification document

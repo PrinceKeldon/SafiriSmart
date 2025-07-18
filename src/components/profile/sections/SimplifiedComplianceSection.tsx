@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
-import { Edit, Save, X, Shield, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { Edit, Save, X, Shield, CheckCircle, Clock, XCircle, AlertTriangle } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { useUpdateOperatorProfile } from '@/hooks/useOperatorProfile';
 import { EnhancedFileUploadField } from '../EnhancedFileUploadField';
@@ -64,34 +64,50 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
 
   const hasDocument = profile?.certificate_of_incorporation_url && profile.certificate_of_incorporation_url.length > 0;
   
-  // Simple status logic - in a real system this would be managed by admin review
+  // Enhanced status logic for better UX
   const getVerificationStatus = () => {
     if (!hasDocument) return 'none';
-    return 'pending'; // In production, this would be determined by admin review
+    
+    // In a real implementation, this would check against a verification_status table
+    // For now, we'll show pending for all uploaded documents
+    return 'pending';
   };
 
   const status = getVerificationStatus();
 
-  const StatusIcon = {
-    none: XCircle,
-    pending: Clock,
-    approved: CheckCircle,
-    rejected: XCircle
-  }[status];
+  const statusConfig = {
+    none: {
+      icon: XCircle,
+      color: 'text-gray-400',
+      text: 'No document uploaded',
+      bgColor: 'bg-gray-50',
+      borderColor: 'border-gray-200'
+    },
+    pending: {
+      icon: Clock,
+      color: 'text-yellow-600',
+      text: 'Under Review',
+      bgColor: 'bg-yellow-50',
+      borderColor: 'border-yellow-200'
+    },
+    approved: {
+      icon: CheckCircle,
+      color: 'text-green-600',
+      text: 'Verified',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200'
+    },
+    rejected: {
+      icon: XCircle,
+      color: 'text-red-600',
+      text: 'Rejected',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200'
+    }
+  };
 
-  const statusColor = {
-    none: 'text-gray-400',
-    pending: 'text-yellow-500',
-    approved: 'text-green-500',
-    rejected: 'text-red-500'
-  }[status];
-
-  const statusText = {
-    none: 'No document uploaded',
-    pending: 'Pending Review',
-    approved: 'Approved',
-    rejected: 'Rejected'
-  }[status];
+  const config = statusConfig[status];
+  const StatusIcon = config.icon;
 
   if (isEditing) {
     return (
@@ -171,15 +187,20 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
       <CardContent>
         {hasDocument ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border rounded-lg">
+            <div className={`flex items-center justify-between p-4 border rounded-lg ${config.bgColor} ${config.borderColor}`}>
               <div className="flex items-center gap-3">
                 <Shield className="w-5 h-5 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium">Business Verification Document</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <StatusIcon className={`w-4 h-4 ${statusColor}`} />
-                    <span className={`text-sm ${statusColor}`}>{statusText}</span>
+                    <StatusIcon className={`w-4 h-4 ${config.color}`} />
+                    <span className={`text-sm font-medium ${config.color}`}>{config.text}</span>
                   </div>
+                  {status === 'pending' && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Your document is being reviewed by our admin team
+                    </p>
+                  )}
                 </div>
               </div>
               <Button
@@ -190,6 +211,28 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
                 View Document
               </Button>
             </div>
+
+            {status === 'rejected' && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-900">Document Rejected</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      Your verification document was rejected. Please upload a new document addressing the feedback provided.
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={onEdit}
+                      className="mt-2"
+                    >
+                      Upload New Document
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-8">
@@ -206,4 +249,4 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
       </CardContent>
     </Card>
   );
-}; 
+};
