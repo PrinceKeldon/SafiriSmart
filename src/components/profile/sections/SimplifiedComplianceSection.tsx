@@ -113,11 +113,13 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
                   <FormItem>
                     <FileUploadField
                       label="Business Verification Document"
-                      description="Upload your business registration certificate, tourism board license, or other official documentation that proves your business legitimacy."
                       currentUrl={field.value}
                       onUrlChange={(url) => field.onChange(url || '')}
                       disabled={updateProfile.isPending}
                     />
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Upload your business registration certificate, tourism board license, or other official documentation that proves your business legitimacy.
+                    </p>
                     <FormMessage />
                   </FormItem>
                 )}

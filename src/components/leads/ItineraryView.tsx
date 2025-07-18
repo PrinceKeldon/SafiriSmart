@@ -3,6 +3,7 @@ import { Clock, DollarSign, Bed, Car, Edit, Send } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Lead } from '@/types/lead';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,10 +17,13 @@ import {
 } from '@/components/ui/alert-dialog';
 
 interface ItineraryViewProps {
-  itinerary: any; // Accept any structure from the database
+  lead: Lead;
+  onLeadUpdate?: (updatedLead: Lead) => void;
+  readOnly?: boolean;
 }
 
-export const ItineraryView = ({ itinerary }: ItineraryViewProps) => {
+export const ItineraryView = ({ lead, readOnly = false }: ItineraryViewProps) => {
+  const itinerary = lead.itinerary;
   console.log('🎯 ItineraryView: Received itinerary data:', itinerary);
 
   const formatCurrency = (amount: number, currency: string = 'USD') => {

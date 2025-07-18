@@ -8,25 +8,21 @@ import { CheckCircle2, Circle, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface LeadChecklistProps {
-  leadId: string;
-  todoChecklist: LeadTodoItem[];
-  leadStatus: Lead['status'];
-  onLeadUpdate?: (updatedLead: Lead) => void; // New prop for parent update
+  lead: Lead;
+  onLeadUpdate?: (updatedLead: Lead) => void;
 }
 
 export const LeadChecklist: React.FC<LeadChecklistProps> = ({ 
-  leadId, 
-  todoChecklist, 
-  leadStatus,
+  lead,
   onLeadUpdate 
 }) => {
-  const [localChecklist, setLocalChecklist] = useState<LeadTodoItem[]>(todoChecklist);
+  const [localChecklist, setLocalChecklist] = useState<LeadTodoItem[]>(lead.todo_checklist || []);
   const updateTodoList = useUpdateLeadTodoList();
 
   console.log('📋 LeadChecklist rendered with:', {
-    leadId,
-    checklistItems: todoChecklist.length,
-    leadStatus,
+    leadId: lead.id,
+    checklistItems: (lead.todo_checklist || []).length,
+    leadStatus: lead.status,
     localChecklistItems: localChecklist.length
   });
 
@@ -35,7 +31,7 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
     debounce((updatedChecklist: LeadTodoItem[]) => {
       console.log('💾 Debounced update triggered:', updatedChecklist);
       updateTodoList.mutate(
-        { leadId, todoChecklist: updatedChecklist },
+        { leadId: lead.id, todoChecklist: updatedChecklist },
         {
           onSuccess: (updatedLead) => {
             console.log('✅ Checklist update successful, calling onLeadUpdate:', updatedLead);
@@ -47,14 +43,14 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
         }
       );
     }, 1000),
-    [leadId, updateTodoList, onLeadUpdate]
+    [lead.id, updateTodoList, onLeadUpdate]
   );
 
   // Update local checklist when prop changes (from external updates)
   useEffect(() => {
-    console.log('🔄 Updating local checklist from props:', todoChecklist);
-    setLocalChecklist(todoChecklist);
-  }, [todoChecklist]);
+    console.log('🔄 Updating local checklist from props:', lead.todo_checklist);
+    setLocalChecklist(lead.todo_checklist || []);
+  }, [lead.todo_checklist]);
 
   const handleToggleTask = (taskId: string) => {
     console.log('🖱️ Manual task toggle triggered:', taskId);
@@ -89,7 +85,7 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
               Lead Management Checklist
             </CardTitle>
             <CardDescription>
-              Track your progress with this lead • Status: <Badge variant="outline" className="ml-1">{leadStatus}</Badge>
+              Track your progress with this lead • Status: <Badge variant="outline" className="ml-1">{lead.status}</Badge>
             </CardDescription>
           </div>
           <Badge variant={progressPercentage === 100 ? "default" : "secondary"}>

@@ -10,7 +10,9 @@ import {
 
 interface LeadOverviewProps {
   lead: Lead;
-  onUpdateStatus?: (leadId: string, newStatus: Lead['status']) => void; // Made optional since we're not using it
+  onUpdateStatus?: (leadId: string, newStatus: Lead['status']) => void;
+  onLeadUpdate?: (updatedLead: Lead) => void;
+  readOnly?: boolean;
 }
 
 const STATUS_DISPLAY = {
@@ -23,7 +25,7 @@ const STATUS_DISPLAY = {
   'cancelled': { label: 'Cancelled', color: 'bg-red-100 text-red-800' },
 } as const;
 
-export const LeadOverview: React.FC<LeadOverviewProps> = ({ lead }) => {
+export const LeadOverview: React.FC<LeadOverviewProps> = ({ lead, readOnly = false }) => {
   const preferences = lead.preferences || {};
   const currentStatus = STATUS_DISPLAY[lead.status as keyof typeof STATUS_DISPLAY] || STATUS_DISPLAY['claimed'];
 
