@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Lead } from '@/types/lead';
@@ -8,6 +7,7 @@ export const useLeads = (params: {
   limit?: number;
   status?: string;
   search?: string;
+  includeArchived?: boolean;
 } = {}) => {
   return useQuery({
     queryKey: ['leads', params],
@@ -19,6 +19,11 @@ export const useLeads = (params: {
         .select('*')
         .not('assigned_operator_id', 'is', null) // Only show assigned/claimed leads
         .order('created_at', { ascending: false });
+
+      // Filter out archived leads by default
+      if (!params.includeArchived) {
+        query = query.eq('archived', false);
+      }
 
       if (params.status) {
         query = query.eq('status', params.status);
@@ -93,6 +98,7 @@ export const useUpdateLeadStatus = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      queryClient.invalidateQueries({ queryKey: ['archived-leads'] });
     },
   });
 };

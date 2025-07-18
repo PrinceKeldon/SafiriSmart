@@ -127,6 +127,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          archived: boolean
           assigned_operator_id: string | null
           created_at: string | null
           id: string
@@ -144,6 +145,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          archived?: boolean
           assigned_operator_id?: string | null
           created_at?: string | null
           id?: string
@@ -161,6 +163,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          archived?: boolean
           assigned_operator_id?: string | null
           created_at?: string | null
           id?: string
