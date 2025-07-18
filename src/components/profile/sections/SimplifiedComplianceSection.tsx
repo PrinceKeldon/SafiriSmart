@@ -7,7 +7,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Edit, Save, X, Shield, CheckCircle, Clock, XCircle } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { useUpdateOperatorProfile } from '@/hooks/useOperatorProfile';
-import { FileUploadField } from '../FileUploadField';
+import { EnhancedFileUploadField } from '../EnhancedFileUploadField';
 import { toast } from 'sonner';
 
 type OperatorRow = Tables<'operators'>;
@@ -47,13 +47,17 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
 
   const onSubmit = async (data: ComplianceFormData) => {
     try {
+      console.log('Submitting compliance data:', data);
+      
       const updateData = Object.fromEntries(
         Object.entries(data).filter(([_, value]) => value !== '')
       );
+      
       await updateProfile.mutateAsync(updateData);
       toast.success('Verification document updated successfully');
       onCancel();
     } catch (error) {
+      console.error('Failed to update verification document:', error);
       toast.error('Failed to update verification document');
     }
   };
@@ -111,14 +115,17 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
                 name="certificate_of_incorporation_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FileUploadField
+                    <EnhancedFileUploadField
                       label="Business Verification Document"
                       currentUrl={field.value}
-                      onUrlChange={(url) => field.onChange(url || '')}
+                      onUrlChange={(url) => {
+                        console.log('URL changed:', url);
+                        field.onChange(url || '');
+                      }}
                       disabled={updateProfile.isPending}
                     />
                     <p className="text-sm text-muted-foreground mt-2">
-                      Upload your business registration certificate, tourism board license, or other official documentation that proves your business legitimacy.
+                      Upload your business registration certificate, tourism board license, or other official documentation that proves your business legitimacy. You can upload a file or provide a URL link.
                     </p>
                     <FormMessage />
                   </FormItem>
@@ -128,7 +135,7 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
               <div className="flex gap-2">
                 <Button type="submit" disabled={updateProfile.isPending}>
                   <Save className="w-4 h-4 mr-2" />
-                  Save Changes
+                  {updateProfile.isPending ? 'Saving...' : 'Save Changes'}
                 </Button>
                 <Button type="button" variant="outline" onClick={onCancel}>
                   <X className="w-4 h-4 mr-2" />
