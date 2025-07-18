@@ -67,11 +67,11 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
     <Card className="h-full hover:shadow-lg transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className="text-base sm:text-lg font-semibold truncate flex-1 min-w-0">
             {lead.traveler_name}
           </CardTitle>
-          <div className="flex flex-col items-end gap-1">
-            <Badge className={getStatusBadgeColor(lead.status)}>
+          <div className="flex flex-col items-end gap-1 ml-2">
+            <Badge className={`${getStatusBadgeColor(lead.status)} text-xs whitespace-nowrap`}>
               {lead.status}
             </Badge>
             <div className="flex items-center text-xs text-gray-500">
@@ -81,22 +81,22 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
           </div>
         </div>
         
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <MapPin className="w-4 h-4" />
-          <span>{lead.traveler_country}</span>
+        <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600">
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          <span className="truncate">{lead.traveler_country}</span>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
         {/* Trip Details */}
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        <div className="grid grid-cols-2 gap-3 text-xs sm:text-sm">
           <div className="flex items-center gap-1">
-            <Calendar className="w-4 h-4 text-gray-500" />
-            <span>{preferences.duration || 'N/A'} days</span>
+            <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+            <span className="truncate">{preferences.duration || 'N/A'} days</span>
           </div>
           <div className="flex items-center gap-1">
-            <Users className="w-4 h-4 text-gray-500" />
-            <span>{preferences.groupSize || 'N/A'} people</span>
+            <Users className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+            <span className="truncate">{preferences.groupSize || 'N/A'} people</span>
           </div>
         </div>
 
@@ -130,9 +130,9 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
 
         {/* Estimated Cost */}
         {itinerary?.estimatedCost && (
-          <div className="flex items-center gap-1 text-sm">
-            <DollarSign className="w-4 h-4 text-gray-500" />
-            <span className="font-medium">
+          <div className="flex items-center gap-1 text-xs sm:text-sm">
+            <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+            <span className="font-medium truncate">
               ~${itinerary.estimatedCost.amount?.toLocaleString()} {itinerary.estimatedCost.currency}
             </span>
           </div>
@@ -144,14 +144,14 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-2">
+        <div className="flex flex-col sm:flex-row gap-2 pt-2">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={() => onViewDetails(lead)}
-            className="flex-1"
+            className="flex-1 text-xs sm:text-sm"
           >
-            <Eye className="w-4 h-4 mr-1" />
+            <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
             View Details
           </Button>
           
@@ -159,7 +159,7 @@ export const NoticeBoardCard: React.FC<NoticeBoardCardProps> = ({
             <Button 
               size="sm" 
               onClick={() => onClaim(lead.id)}
-              className="flex-1"
+              className="flex-1 text-xs sm:text-sm"
             >
               Claim Lead
             </Button>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -45,14 +46,14 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-64 z-10">
+    <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-48 sm:w-64 z-10 overflow-y-auto">
       <div className="flex flex-col h-full">
-        <div className="p-6">
-          <h2 className="text-xl font-bold text-gray-900">TourMaster AI</h2>
-          <p className="text-sm text-gray-600">B2B Dashboard</p>
+        <div className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">TourMaster AI</h2>
+          <p className="text-xs sm:text-sm text-gray-600">B2B Dashboard</p>
         </div>
         
-        <div className="flex-1 px-4">
+        <div className="flex-1 px-2 sm:px-4">
           <ul className="space-y-2">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
@@ -61,14 +62,14 @@ const Navigation = () => {
                   <Link
                     to={item.href}
                     className={cn(
-                      'flex items-center px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                      'flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors',
                       isActive
                         ? 'bg-blue-100 text-blue-700'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     )}
                   >
-                    <item.icon className="mr-3 h-5 w-5" />
-                    {item.name}
+                    <item.icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="truncate">{item.name}</span>
                   </Link>
                 </li>
               );
@@ -76,14 +77,14 @@ const Navigation = () => {
           </ul>
         </div>
         
-        <div className="p-4 border-t">
+        <div className="p-2 sm:p-4 border-t">
           <Button
             variant="ghost"
             onClick={handleLogout}
-            className="w-full justify-start text-gray-600 hover:text-gray-900"
+            className="w-full justify-start text-gray-600 hover:text-gray-900 text-sm"
           >
-            <LogOut className="mr-3 h-5 w-5" />
-            Logout
+            <LogOut className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            <span className="truncate">Logout</span>
           </Button>
         </div>
       </div>

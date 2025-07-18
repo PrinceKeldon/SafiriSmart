@@ -23,7 +23,7 @@ export const DashboardFilters = ({
   onStatusFilterChange
 }: DashboardFiltersProps) => {
   return (
-    <div className="flex flex-col sm:flex-row gap-4 bg-white p-4 rounded-lg shadow-sm border">
+    <div className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border">
       <div className="flex-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -37,7 +37,7 @@ export const DashboardFilters = ({
       </div>
       
       <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-        <SelectTrigger className="w-full sm:w-48">
+        <SelectTrigger className="w-full">
           <Filter className="h-4 w-4 mr-2" />
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>

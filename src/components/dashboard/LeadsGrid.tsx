@@ -11,14 +11,14 @@ interface LeadsGridProps {
 export const LeadsGrid = ({ leads, onViewDetails, onUpdateStatus }: LeadsGridProps) => {
   if (leads.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-8 sm:py-12">
         <p className="text-gray-500">No leads found matching your criteria.</p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
       {leads.map((lead) => (
         <LeadCard
           key={lead.id}
