@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { CheckCircle, AlertCircle, Clock, FileText, Building2 } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, Shield, Building2 } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 
 type OperatorRow = Tables<'operators'>;
@@ -67,21 +68,6 @@ export const OperatorProfileProgress: React.FC<OperatorProfileProgressProps> = (
       priority: 'medium'
     });
 
-    // Documents
-    const documents = [
-      operator.certificate_of_incorporation_url,
-      operator.business_permit_url,
-      operator.kato_membership_url
-    ];
-    const documentsComplete = documents.filter(doc => doc && doc.length > 0).length;
-    
-    tasks.push({
-      id: 'documents',
-      title: 'Compliance Documents',
-      completed: documentsComplete >= 2, // At least 2 out of 3 documents
-      priority: 'medium'
-    });
-
     return tasks;
   };
 
@@ -98,19 +84,19 @@ export const OperatorProfileProgress: React.FC<OperatorProfileProgressProps> = (
   const status = getProgressStatus();
   const StatusIcon = status.icon;
 
-  const getDocumentStatus = () => {
-    const documents = [
-      { name: 'Certificate of Incorporation', url: operator.certificate_of_incorporation_url },
-      { name: 'Business Permit', url: operator.business_permit_url },
-      { name: 'KATO Membership', url: operator.kato_membership_url }
-    ];
-    return documents;
+  const getProofOfTrustStatus = () => {
+    const hasAnyProof = [
+      operator.certificate_of_incorporation_url,
+      operator.business_permit_url,
+      operator.kato_membership_url
+    ].some(url => url && url.length > 0);
+    
+    return hasAnyProof;
   };
 
+  const hasProofOfTrust = getProofOfTrustStatus();
+
   if (compact) {
-    const documents = getDocumentStatus();
-    const uploadedDocs = documents.filter(doc => doc.url && doc.url.length > 0);
-    
     return (
       <div className="space-y-2">
         {/* Progress Bar */}
@@ -138,33 +124,19 @@ export const OperatorProfileProgress: React.FC<OperatorProfileProgressProps> = (
           </span>
         </div>
         
-        {/* Document Status */}
+        {/* Proof of Trust Status */}
         <div className="flex items-center gap-2">
-          <FileText className="w-3 h-3 text-muted-foreground" />
+          <Shield className="w-3 h-3 text-muted-foreground" />
           <span className="text-xs">
-            <span className="font-medium">Documents:</span> 
-            <span className={uploadedDocs.length >= 2 ? 'text-green-600' : 'text-red-600'}>
-              {uploadedDocs.length}/3 uploaded
+            <span className="font-medium">Proof of Trust:</span> 
+            <span className={hasProofOfTrust ? 'text-green-600' : 'text-gray-500'}>
+              {hasProofOfTrust ? 'Submitted' : 'Not submitted'}
             </span>
           </span>
         </div>
-        
-        {/* Missing Documents Alert */}
-        {uploadedDocs.length < 3 && (
-          <div className="flex flex-wrap gap-1">
-            {documents.filter(doc => !doc.url || doc.url.length === 0).map((doc, index) => (
-              <Badge key={index} variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
-                {doc.name} missing
-              </Badge>
-            ))}
-          </div>
-        )}
       </div>
     );
   }
-
-  const documents = getDocumentStatus();
-  const uploadedDocs = documents.filter(doc => doc.url && doc.url.length > 0);
 
   return (
     <div className="space-y-4">
@@ -200,33 +172,28 @@ export const OperatorProfileProgress: React.FC<OperatorProfileProgressProps> = (
         </div>
       </div>
 
-      {/* Document Status Details */}
+      {/* Proof of Trust Status */}
       <div className="bg-muted/50 p-3 rounded-lg">
-        <div className="flex items-center gap-2 mb-3">
-          <FileText className="w-4 h-4 text-muted-foreground" />
-          <span className="text-sm font-medium">Compliance Documents ({uploadedDocs.length}/3)</span>
+        <div className="flex items-center gap-2 mb-2">
+          <Shield className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-medium">Proof of Trust</span>
         </div>
-        <div className="space-y-2">
-          {documents.map((doc, index) => (
-            <div key={index} className="flex items-center justify-between text-xs">
-              <span className="font-medium">{doc.name}</span>
-              {doc.url && doc.url.length > 0 ? (
-                <div className="flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3 text-green-500" />
-                  <span className="text-green-600">Uploaded</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <AlertCircle className="w-3 h-3 text-red-500" />
-                  <span className="text-red-600">Missing</span>
-                </div>
-              )}
+        <div className="text-sm">
+          {hasProofOfTrust ? (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-3 h-3 text-green-500" />
+              <span className="text-green-600">Materials submitted for review</span>
             </div>
-          ))}
+          ) : (
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-3 h-3 text-gray-400" />
+              <span className="text-gray-600">No materials submitted</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 text-xs">
+      <div className="grid grid-cols-1 gap-2 text-xs">
         {tasks.map((task) => (
           <div key={task.id} className="flex items-center gap-1">
             {task.completed ? (

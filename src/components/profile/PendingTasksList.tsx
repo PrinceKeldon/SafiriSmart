@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { CheckCircle, Clock } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 
 type OperatorRow = Tables<'operators'>;
@@ -14,7 +15,7 @@ interface Task {
   id: string;
   title: string;
   description: string;
-  status: 'pending' | 'completed' | 'incomplete';
+  status: 'pending' | 'completed';
   priority: 'high' | 'medium' | 'low';
 }
 
@@ -35,7 +36,7 @@ export const PendingTasksList: React.FC<PendingTasksListProps> = ({ profile }) =
     tasks.push({
       id: 'company-info',
       title: 'Company Information',
-      description: 'Fill in basic company details',
+      description: 'Complete your company profile with basic details',
       status: companyComplete ? 'completed' : 'pending',
       priority: 'high'
     });
@@ -52,7 +53,7 @@ export const PendingTasksList: React.FC<PendingTasksListProps> = ({ profile }) =
     tasks.push({
       id: 'contact-info',
       title: 'Contact Information',
-      description: 'Complete address and contact details',
+      description: 'Add your address and contact details',
       status: contactComplete ? 'completed' : 'pending',
       priority: 'high'
     });
@@ -64,26 +65,9 @@ export const PendingTasksList: React.FC<PendingTasksListProps> = ({ profile }) =
     tasks.push({
       id: 'services-destinations',
       title: 'Services & Destinations',
-      description: 'Define your services and destinations',
+      description: 'Define the services you offer and destinations you cover',
       status: servicesComplete ? 'completed' : 'pending',
       priority: 'medium'
-    });
-
-    // Document Upload Tasks
-    const documents = [
-      { field: profile.certificate_of_incorporation_url, name: 'Certificate of Incorporation' },
-      { field: profile.business_permit_url, name: 'Business Permit' },
-      { field: profile.kato_membership_url, name: 'KATO Membership' }
-    ];
-
-    documents.forEach((doc, index) => {
-      tasks.push({
-        id: `document-${index}`,
-        title: doc.name,
-        description: `Upload ${doc.name.toLowerCase()}`,
-        status: doc.field && doc.field.length > 0 ? 'completed' : 'pending',
-        priority: 'medium'
-      });
     });
 
     return tasks;
@@ -100,7 +84,7 @@ export const PendingTasksList: React.FC<PendingTasksListProps> = ({ profile }) =
       case 'pending':
         return <Clock className="w-4 h-4 text-yellow-500" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <Clock className="w-4 h-4 text-yellow-500" />;
     }
   };
 
@@ -123,7 +107,7 @@ export const PendingTasksList: React.FC<PendingTasksListProps> = ({ profile }) =
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Clock className="w-5 h-5" />
-          Profile Tasks
+          Profile Setup
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -178,6 +162,16 @@ export const PendingTasksList: React.FC<PendingTasksListProps> = ({ profile }) =
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {tasks.length > 0 && completedTasks.length === tasks.length && (
+          <div className="text-center py-4">
+            <CheckCircle className="w-8 h-8 mx-auto text-green-500 mb-2" />
+            <p className="text-sm text-green-600 font-medium">Profile setup complete!</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Consider adding Proof of Trust materials to build credibility
+            </p>
           </div>
         )}
       </CardContent>
