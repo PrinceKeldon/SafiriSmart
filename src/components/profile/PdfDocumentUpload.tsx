@@ -26,21 +26,41 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
   const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isValidPdfUrl = (url: string) => {
+    // Check if it's a valid PDF URL (either contains .pdf or is from our storage with PDF path)
+    return url.includes('.pdf') || (url.includes('supabase') && url.includes('proof-of-trust/pdfs'));
+  };
+
   const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('Selected PDF file:', file.name, 'Type:', file.type, 'Size:', file.size);
+    console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
 
-    // Validate file type - Only PDFs
-    if (file.type !== 'application/pdf') {
-      toast.error('Only PDF files are allowed');
+    // Strict PDF validation - check both MIME type and file extension
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      toast.error('Only PDF files are allowed in this section');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Additional MIME type validation
+    if (file.type && file.type !== 'application/pdf') {
+      toast.error('Invalid file type. Only PDF documents are accepted');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File size must be less than 5MB');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -93,6 +113,9 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
       toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -116,11 +139,14 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
 
   const displayFileName = fileName || (currentUrl ? getFileNameFromUrl(currentUrl) : '');
 
+  // Check if current URL is actually a valid PDF
+  const isCurrentUrlValid = currentUrl && isValidPdfUrl(currentUrl);
+
   return (
     <div className="space-y-4">
       <Label className="text-base font-medium">{label}</Label>
       
-      {currentUrl || fileName ? (
+      {isCurrentUrlValid ? (
         <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
@@ -145,7 +171,7 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
               className="text-blue-600 hover:text-blue-800"
             >
               <ExternalLink className="w-4 h-4 mr-1" />
-              View
+              View PDF
             </Button>
             <Button
               type="button"
@@ -158,6 +184,31 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
               <X className="w-4 h-4" />
             </Button>
           </div>
+        </div>
+      ) : currentUrl ? (
+        <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <X className="w-5 h-5 text-red-600" />
+            <div>
+              <span className="text-sm font-medium text-red-700">
+                Invalid PDF Entry
+              </span>
+              <p className="text-xs text-red-600">
+                This entry is not a valid PDF file
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleRemoveDocument}
+            disabled={disabled}
+            className="text-red-600 hover:text-red-800"
+          >
+            <X className="w-4 h-4" />
+            Remove
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -180,7 +231,7 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
           <Input
             ref={fileInputRef}
             type="file"
-            accept=".pdf"
+            accept=".pdf,application/pdf"
             onChange={handlePdfUpload}
             disabled={disabled || uploading}
             className="hidden"

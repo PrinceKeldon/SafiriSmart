@@ -21,20 +21,43 @@ export const ExternalUrlField: React.FC<ExternalUrlFieldProps> = ({
 }) => {
   const [urlInput, setUrlInput] = useState<string>(currentUrl || '');
 
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   const handleUrlSubmit = () => {
-    if (!urlInput.trim()) {
+    const trimmedUrl = urlInput.trim();
+    
+    if (!trimmedUrl) {
       toast.error('Please enter a valid URL');
       return;
     }
 
-    // Basic URL validation
-    try {
-      new URL(urlInput);
-      onUrlChange(urlInput.trim());
-      toast.success('External URL saved successfully');
-    } catch {
-      toast.error('Please enter a valid URL');
+    // Strict URL validation - must start with http:// or https://
+    if (!trimmedUrl.startsWith('http://') && !trimmedUrl.startsWith('https://')) {
+      toast.error('URL must start with http:// or https://');
+      return;
     }
+
+    // Additional URL validation
+    if (!isValidUrl(trimmedUrl)) {
+      toast.error('Please enter a valid URL format');
+      return;
+    }
+
+    // Prevent file uploads or non-URL content
+    if (trimmedUrl.includes('file://') || trimmedUrl.includes('data:') || trimmedUrl.includes('blob:')) {
+      toast.error('Please enter a valid web URL only');
+      return;
+    }
+
+    onUrlChange(trimmedUrl);
+    toast.success('External URL saved successfully');
   };
 
   const handleRemoveUrl = () => {
@@ -43,19 +66,21 @@ export const ExternalUrlField: React.FC<ExternalUrlFieldProps> = ({
     toast.success('External URL removed');
   };
 
+  const isCurrentUrlValid = currentUrl && isValidUrl(currentUrl);
+
   return (
     <div className="space-y-4">
       <Label className="text-base font-medium">{label}</Label>
       
-      {currentUrl ? (
+      {isCurrentUrlValid ? (
         <div className="flex items-center justify-between p-4 bg-purple-50 border border-purple-200 rounded-lg">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-purple-600" />
               <Link className="w-5 h-5 text-purple-600" />
             </div>
-            <div>
-              <span className="text-sm font-medium text-purple-700 truncate max-w-xs">
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-medium text-purple-700 truncate block">
                 {currentUrl}
               </span>
               <p className="text-xs text-purple-600 font-medium">
@@ -63,12 +88,12 @@ export const ExternalUrlField: React.FC<ExternalUrlFieldProps> = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 flex-shrink-0">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => window.open(currentUrl, '_blank')}
+              onClick={() => window.open(currentUrl, '_blank', 'noopener,noreferrer')}
               className="text-purple-600 hover:text-purple-800"
             >
               <ExternalLink className="w-4 h-4 mr-1" />
@@ -85,6 +110,31 @@ export const ExternalUrlField: React.FC<ExternalUrlFieldProps> = ({
               <X className="w-4 h-4" />
             </Button>
           </div>
+        </div>
+      ) : currentUrl ? (
+        <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <X className="w-5 h-5 text-red-600" />
+            <div>
+              <span className="text-sm font-medium text-red-700">
+                Invalid URL Entry
+              </span>
+              <p className="text-xs text-red-600">
+                This entry is not a valid URL
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleRemoveUrl}
+            disabled={disabled}
+            className="text-red-600 hover:text-red-800"
+          >
+            <X className="w-4 h-4" />
+            Remove
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -109,7 +159,7 @@ export const ExternalUrlField: React.FC<ExternalUrlFieldProps> = ({
                 className="w-full"
               />
               <p className="text-xs text-gray-500">
-                Enter a direct link to publicly verifiable information about your business
+                Enter a direct link starting with http:// or https://
               </p>
             </div>
           </div>

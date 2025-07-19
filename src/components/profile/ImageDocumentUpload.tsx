@@ -26,22 +26,57 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
   const [fileName, setFileName] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isValidImageUrl = (url: string) => {
+    // Check if it's a valid image URL
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
+    const hasImageExtension = imageExtensions.some(ext => url.toLowerCase().includes(ext));
+    const isFromImageStorage = url.includes('supabase') && url.includes('proof-of-trust/images');
+    return hasImageExtension || isFromImageStorage;
+  };
+
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    console.log('Selected image file:', file.name, 'Type:', file.type, 'Size:', file.size);
+    console.log('Selected file:', file.name, 'Type:', file.type, 'Size:', file.size);
 
-    // Validate file type - Only images
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only JPG, JPEG, and PNG files are allowed');
+    // Validate file type - Accept all standard image formats
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'image/gif',
+      'image/webp',
+      'image/bmp',
+      'image/tiff'
+    ];
+    
+    const allowedExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!allowedTypes.includes(file.type) && !allowedExtensions.includes(fileExtension)) {
+      toast.error('Only image files are allowed (JPG, PNG, GIF, WebP, BMP, TIFF)');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    // Additional validation to reject PDFs and documents
+    if (file.type === 'application/pdf' || fileExtension === '.pdf') {
+      toast.error('PDF files should be uploaded in the PDF section');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File size must be less than 5MB');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
       return;
     }
 
@@ -94,6 +129,9 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
       toast.error(`Upload failed: ${errorMessage}`);
     } finally {
       setUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -117,11 +155,14 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
 
   const displayFileName = fileName || (currentUrl ? getFileNameFromUrl(currentUrl) : '');
 
+  // Check if current URL is actually a valid image
+  const isCurrentUrlValid = currentUrl && isValidImageUrl(currentUrl);
+
   return (
     <div className="space-y-4">
       <Label className="text-base font-medium">{label}</Label>
       
-      {currentUrl || fileName ? (
+      {isCurrentUrlValid ? (
         <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center space-x-3">
             <div className="flex items-center space-x-2">
@@ -146,7 +187,7 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
               className="text-green-600 hover:text-green-800"
             >
               <ExternalLink className="w-4 h-4 mr-1" />
-              View
+              View Image
             </Button>
             <Button
               type="button"
@@ -159,6 +200,31 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
               <X className="w-4 h-4" />
             </Button>
           </div>
+        </div>
+      ) : currentUrl ? (
+        <div className="flex items-center justify-between p-4 bg-red-50 border border-red-200 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <X className="w-5 h-5 text-red-600" />
+            <div>
+              <span className="text-sm font-medium text-red-700">
+                Invalid Image Entry
+              </span>
+              <p className="text-xs text-red-600">
+                This entry is not a valid image file
+              </p>
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleRemoveDocument}
+            disabled={disabled}
+            className="text-red-600 hover:text-red-800"
+          >
+            <X className="w-4 h-4" />
+            Remove
+          </Button>
         </div>
       ) : (
         <div className="space-y-4">
@@ -174,14 +240,14 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
               Click to select your image file
             </p>
             <p className="text-xs text-gray-400">
-              Maximum file size: 5MB | JPG, JPEG, PNG formats
+              Maximum file size: 5MB | JPG, PNG, GIF, WebP, BMP, TIFF formats
             </p>
           </div>
           
           <Input
             ref={fileInputRef}
             type="file"
-            accept=".jpg,.jpeg,.png"
+            accept=".jpg,.jpeg,.png,.gif,.webp,.bmp,.tiff,image/*"
             onChange={handleImageUpload}
             disabled={disabled || uploading}
             className="hidden"

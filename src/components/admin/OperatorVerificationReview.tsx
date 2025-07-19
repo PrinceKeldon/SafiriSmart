@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, MessageSquare, Download, Link, Image, Shield } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, Download, Link, Image, Shield, AlertTriangle } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -32,14 +32,32 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
   const [reviewNotes, setReviewNotes] = useState('');
   const [processing, setProcessing] = useState(false);
 
+  const isValidPdfUrl = (url: string) => {
+    return url.includes('.pdf') || (url.includes('supabase') && url.includes('proof-of-trust/pdfs'));
+  };
+
+  const isValidImageUrl = (url: string) => {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
+    const hasImageExtension = imageExtensions.some(ext => url.toLowerCase().includes(ext));
+    const isFromImageStorage = url.includes('supabase') && url.includes('proof-of-trust/images');
+    return hasImageExtension || isFromImageStorage;
+  };
+
+  const isValidUrl = (url: string): boolean => {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   const getVerificationStatus = (operator: OperatorRow): VerificationStatus => {
-    const hasAnyDocument = [
-      operator.certificate_of_incorporation_url,
-      operator.business_permit_url,
-      operator.kato_membership_url
-    ].some(url => url && url.length > 0);
+    const hasValidPdf = operator.certificate_of_incorporation_url && isValidPdfUrl(operator.certificate_of_incorporation_url);
+    const hasValidImage = operator.business_permit_url && isValidImageUrl(operator.business_permit_url);
+    const hasValidUrl = operator.kato_membership_url && isValidUrl(operator.kato_membership_url);
     
-    if (!hasAnyDocument) {
+    if (hasValidPdf || hasValidImage || hasValidUrl) {
       return { status: 'pending' };
     }
     
@@ -48,12 +66,12 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
 
   const operatorsNeedingReview = operators.filter(op => {
     const status = getVerificationStatus(op);
-    const hasProofOfTrust = [
-      op.certificate_of_incorporation_url,
-      op.business_permit_url,
-      op.kato_membership_url
-    ].some(url => url && url.length > 0);
-    return status.status === 'pending' && hasProofOfTrust;
+    const hasAnyValidProofOfTrust = [
+      op.certificate_of_incorporation_url && isValidPdfUrl(op.certificate_of_incorporation_url),
+      op.business_permit_url && isValidImageUrl(op.business_permit_url),
+      op.kato_membership_url && isValidUrl(op.kato_membership_url)
+    ].some(Boolean);
+    return status.status === 'pending' && hasAnyValidProofOfTrust;
   });
 
   const handleApproveDocument = async (operator: OperatorRow, approved: boolean) => {
@@ -82,13 +100,17 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
     }
   };
 
-  const getDocumentType = (url: string) => {
-    if (url.includes('supabase')) {
-      if (url.includes('proof-of-trust/pdfs')) return 'PDF Document';
-      if (url.includes('proof-of-trust/images')) return 'Image Document';
-      return 'Uploaded File';
+  const getDocumentType = (url: string, field: string) => {
+    if (field === 'certificate_of_incorporation_url' && isValidPdfUrl(url)) {
+      return 'PDF Document';
     }
-    return 'External URL';
+    if (field === 'business_permit_url' && isValidImageUrl(url)) {
+      return 'Image Document';
+    }
+    if (field === 'kato_membership_url' && isValidUrl(url)) {
+      return 'External URL';
+    }
+    return 'Invalid Entry';
   };
 
   const getFileName = (url: string) => {
@@ -97,14 +119,15 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
       const lastPart = parts[parts.length - 1];
       return lastPart.replace(/^\d+-/, '') || 'Document';
     }
-    return 'External Link';
+    return url;
   };
 
-  const getDocumentIcon = (url: string) => {
-    const type = getDocumentType(url);
+  const getDocumentIcon = (url: string, field: string) => {
+    const type = getDocumentType(url, field);
     if (type === 'PDF Document') return FileText;
     if (type === 'Image Document') return Image;
-    return Link;
+    if (type === 'External URL') return Link;
+    return XCircle;
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
@@ -147,10 +170,27 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
           <div className="space-y-6">
             {operatorsNeedingReview.map((operator) => {
               const status = getVerificationStatus(operator);
-              const proofOfTrustDocs = [
-                { url: operator.certificate_of_incorporation_url, label: 'PDF Document' },
-                { url: operator.business_permit_url, label: 'Image Document' },
-                { url: operator.kato_membership_url, label: 'External URL' }
+              
+              // Get valid proof of trust documents
+              const validProofOfTrustDocs = [
+                { 
+                  url: operator.certificate_of_incorporation_url, 
+                  field: 'certificate_of_incorporation_url',
+                  label: 'PDF Document',
+                  isValid: operator.certificate_of_incorporation_url && isValidPdfUrl(operator.certificate_of_incorporation_url)
+                },
+                { 
+                  url: operator.business_permit_url, 
+                  field: 'business_permit_url',
+                  label: 'Image Document',
+                  isValid: operator.business_permit_url && isValidImageUrl(operator.business_permit_url)
+                },
+                { 
+                  url: operator.kato_membership_url, 
+                  field: 'kato_membership_url',
+                  label: 'External URL',
+                  isValid: operator.kato_membership_url && isValidUrl(operator.kato_membership_url)
+                }
               ].filter(doc => doc.url && doc.url.length > 0);
               
               return (
@@ -189,48 +229,95 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                     <div className="space-y-3">
                       <h5 className="font-medium text-gray-900">Proof of Trust</h5>
                       <div className="space-y-3">
-                        {proofOfTrustDocs.map((doc, index) => {
-                          const docType = getDocumentType(doc.url);
+                        {validProofOfTrustDocs.map((doc, index) => {
+                          const docType = getDocumentType(doc.url, doc.field);
                           const fileName = getFileName(doc.url);
-                          const DocIcon = getDocumentIcon(doc.url);
+                          const DocIcon = getDocumentIcon(doc.url, doc.field);
                           const isUploadedFile = doc.url.includes('supabase');
+                          const isValidEntry = doc.isValid;
                           
                           return (
-                            <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div key={index} className={`border rounded-lg p-4 ${
+                              isValidEntry 
+                                ? docType === 'PDF Document' 
+                                  ? 'bg-blue-50 border-blue-200' 
+                                  : docType === 'Image Document'
+                                  ? 'bg-green-50 border-green-200'
+                                  : 'bg-purple-50 border-purple-200'
+                                : 'bg-red-50 border-red-200'
+                            }`}>
                               <div className="flex items-center gap-3 mb-3">
-                                <DocIcon className="w-5 h-5 text-blue-600" />
+                                <DocIcon className={`w-5 h-5 ${
+                                  isValidEntry 
+                                    ? docType === 'PDF Document' 
+                                      ? 'text-blue-600' 
+                                      : docType === 'Image Document'
+                                      ? 'text-green-600'
+                                      : 'text-purple-600'
+                                    : 'text-red-600'
+                                }`} />
                                 <div>
-                                  <p className="font-medium text-blue-900">{fileName}</p>
-                                  <p className="text-xs text-blue-600">{docType}</p>
+                                  <p className={`font-medium ${
+                                    isValidEntry 
+                                      ? docType === 'PDF Document' 
+                                        ? 'text-blue-900' 
+                                        : docType === 'Image Document'
+                                        ? 'text-green-900'
+                                        : 'text-purple-900'
+                                      : 'text-red-900'
+                                  }`}>
+                                    {isValidEntry ? fileName : 'Invalid Entry'}
+                                  </p>
+                                  <p className={`text-xs ${
+                                    isValidEntry 
+                                      ? docType === 'PDF Document' 
+                                        ? 'text-blue-600' 
+                                        : docType === 'Image Document'
+                                        ? 'text-green-600'
+                                        : 'text-purple-600'
+                                      : 'text-red-600'
+                                  }`}>
+                                    {isValidEntry ? docType : 'Not a valid ' + doc.label.toLowerCase()}
+                                  </p>
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => window.open(doc.url, '_blank')}
-                                  className="flex items-center gap-2"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  {docType === 'External URL' ? 'Visit Link' : 'View Document'}
-                                </Button>
-                                {isUploadedFile && (
+                              {isValidEntry && (
+                                <div className="flex gap-2">
                                   <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() => {
-                                      const link = document.createElement('a');
-                                      link.href = doc.url;
-                                      link.download = fileName;
-                                      link.click();
-                                    }}
+                                    onClick={() => window.open(doc.url, '_blank', 'noopener,noreferrer')}
                                     className="flex items-center gap-2"
                                   >
-                                    <Download className="w-4 h-4" />
-                                    Download
+                                    <Eye className="w-4 h-4" />
+                                    {docType === 'External URL' ? 'Visit Link' : 'View Document'}
                                   </Button>
-                                )}
-                              </div>
+                                  {isUploadedFile && docType !== 'External URL' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        const link = document.createElement('a');
+                                        link.href = doc.url;
+                                        link.download = fileName;
+                                        link.click();
+                                      }}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <Download className="w-4 h-4" />
+                                      Download
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
+                              {!isValidEntry && (
+                                <div className="flex items-center gap-2 mt-2">
+                                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                                  <span className="text-xs text-red-600">
+                                    This entry should be removed and re-uploaded in the correct format
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           );
                         })}
