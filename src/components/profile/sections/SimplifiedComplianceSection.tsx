@@ -7,7 +7,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Edit, Save, X, Shield, CheckCircle, Clock, XCircle, AlertTriangle } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { useUpdateOperatorProfile } from '@/hooks/useOperatorProfile';
-import { EnhancedFileUploadField } from '../EnhancedFileUploadField';
+import { BusinessDocumentUpload } from '../BusinessDocumentUpload';
 import { toast } from 'sonner';
 
 type OperatorRow = Tables<'operators'>;
@@ -54,11 +54,11 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
       );
       
       await updateProfile.mutateAsync(updateData);
-      toast.success('Verification document updated successfully');
+      toast.success('Business verification document updated successfully');
       onCancel();
     } catch (error) {
-      console.error('Failed to update verification document:', error);
-      toast.error('Failed to update verification document');
+      console.error('Failed to update business verification document:', error);
+      toast.error('Failed to update business verification document');
     }
   };
 
@@ -120,7 +120,7 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
               Verify your operation
             </CardTitle>
             <p className="text-sm text-muted-foreground mt-1">
-              Provide verifiable proof the business is legit
+              Upload your business verification document to build trust with customers
             </p>
           </div>
         </CardHeader>
@@ -132,18 +132,24 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
                 name="certificate_of_incorporation_url"
                 render={({ field }) => (
                   <FormItem>
-                    <EnhancedFileUploadField
-                      label="Business Verification Document"
+                    <BusinessDocumentUpload
+                      label="Upload Business doc. (PDF)"
                       currentUrl={field.value}
                       onUrlChange={(url) => {
-                        console.log('URL changed:', url);
+                        console.log('Document URL changed:', url);
                         field.onChange(url || '');
                       }}
                       disabled={updateProfile.isPending}
                     />
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Upload your business registration certificate, tourism board license, or other official documentation that proves your business legitimacy. You can upload a file or provide a URL link.
-                    </p>
+                    <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium mb-1">Accepted Documents:</p>
+                      <ul className="text-xs text-blue-700 space-y-1">
+                        <li>• Business Registration Certificate</li>
+                        <li>• Tourism Board License</li>
+                        <li>• Certificate of Incorporation</li>
+                        <li>• Other official business documentation</li>
+                      </ul>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -176,7 +182,7 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
               Verify your operation
             </CardTitle>  
             <p className="text-sm text-muted-foreground mt-1">
-              Provide verifiable proof the business is legit
+              Upload business documentation to verify legitimacy and build trust
             </p>
           </div>
           <Button variant="outline" size="sm" onClick={onEdit}>
@@ -239,11 +245,11 @@ export const SimplifiedComplianceSection: React.FC<SimplifiedComplianceSectionPr
           <div className="text-center py-8">
             <Shield className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Verify Your Operation</h3>
-            <p className="text-muted-foreground mb-4">
-              Upload documentation to verify your business is legitimate and build trust with customers.
+            <p className="text-muted-foreground mb-4 max-w-md mx-auto">
+              Upload your business registration certificate, tourism board license, or other official documentation to verify your business legitimacy.
             </p>
             <Button onClick={onEdit}>
-              Upload Verification Document
+              Upload Business Document
             </Button>
           </div>
         )}

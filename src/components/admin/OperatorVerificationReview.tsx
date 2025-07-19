@@ -3,11 +3,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, MessageSquare } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, MessageSquare, Download, Link } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -85,6 +84,22 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
     }
   };
 
+  const getDocumentType = (url: string) => {
+    if (url.includes('supabase')) {
+      return 'Uploaded PDF';
+    }
+    return 'External Link';
+  };
+
+  const getFileName = (url: string) => {
+    if (url.includes('supabase')) {
+      const parts = url.split('/');
+      const lastPart = parts[parts.length - 1];
+      return lastPart.replace(/^\d+-/, '') || 'Business Document';
+    }
+    return 'External Document';
+  };
+
   const StatusBadge = ({ status }: { status: string }) => {
     const variants = {
       pending: { variant: 'secondary' as const, icon: Clock, color: 'text-yellow-600' },
@@ -108,70 +123,112 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <FileText className="w-5 h-5" />
-          Operator Verification Review ({operatorsNeedingReview.length} pending)
+          Verification of Documents ({operatorsNeedingReview.length} pending review)
         </CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Review and approve business verification documents submitted by operators
+        </p>
       </CardHeader>
       <CardContent>
         {operatorsNeedingReview.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-            <p>No documents pending review</p>
+            <p className="text-lg font-medium">All documents reviewed</p>
+            <p className="text-sm">No verification documents pending review</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {operatorsNeedingReview.map((operator) => {
               const status = getVerificationStatus(operator);
+              const documentType = getDocumentType(operator.certificate_of_incorporation_url!);
+              const fileName = getFileName(operator.certificate_of_incorporation_url!);
+              const isUploadedFile = operator.certificate_of_incorporation_url!.includes('supabase');
               
               return (
-                <div key={operator.id} className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-3">
+                <div key={operator.id} className="border rounded-lg p-6 bg-white shadow-sm">
+                  <div className="flex items-center justify-between mb-4">
                     <div>
-                      <h4 className="font-medium">{operator.company_name || operator.company}</h4>
+                      <h4 className="font-semibold text-lg">{operator.company_name || operator.company}</h4>
                       <p className="text-sm text-muted-foreground">{operator.email}</p>
                     </div>
                     <StatusBadge status={status.status} />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Company Details:</p>
-                      <div className="text-sm text-muted-foreground space-y-1">
-                        <p>Registration: {operator.registration_number || 'Not provided'}</p>
-                        <p>Contact: {operator.contact_person_name || 'Not provided'}</p>
-                        <p>Phone: {operator.contact_person_phone || 'Not provided'}</p>
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div className="space-y-3">
+                      <h5 className="font-medium text-gray-900">Company Information</h5>
+                      <div className="text-sm space-y-2">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Registration:</span>
+                          <span className="font-medium">{operator.registration_number || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Contact Person:</span>
+                          <span className="font-medium">{operator.contact_person_name || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Phone:</span>
+                          <span className="font-medium">{operator.contact_person_phone || 'Not provided'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Location:</span>
+                          <span className="font-medium">{operator.city || 'Not provided'}, {operator.country}</span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Verification Document:</p>
-                      {operator.certificate_of_incorporation_url ? (
-                        <div className="flex items-center gap-2">
+                    <div className="space-y-3">
+                      <h5 className="font-medium text-gray-900">Verification Document</h5>
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          {isUploadedFile ? <FileText className="w-5 h-5 text-blue-600" /> : <Link className="w-5 h-5 text-blue-600" />}
+                          <div>
+                            <p className="font-medium text-blue-900">{fileName}</p>
+                            <p className="text-xs text-blue-600">{documentType}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => window.open(operator.certificate_of_incorporation_url, '_blank')}
+                            className="flex items-center gap-2"
                           >
-                            <Eye className="w-4 h-4 mr-2" />
+                            <Eye className="w-4 h-4" />
                             View Document
                           </Button>
-                          <ExternalLink className="w-4 h-4 text-muted-foreground" />
+                          {isUploadedFile && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = operator.certificate_of_incorporation_url!;
+                                link.download = fileName;
+                                link.click();
+                              }}
+                              className="flex items-center gap-2"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </Button>
+                          )}
                         </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">No document uploaded</p>
-                      )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-2 mt-4">
+                  <div className="flex gap-3">
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
                           variant="default"
                           size="sm"
                           onClick={() => setSelectedOperator(operator)}
+                          className="bg-green-600 hover:bg-green-700"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          Approve
+                          Approve Document
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
@@ -179,7 +236,7 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                           <DialogTitle>Approve Verification Document</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <p>Are you sure you want to approve the verification document for <strong>{operator.company_name || operator.company}</strong>?</p>
+                          <p>Are you sure you want to approve the business verification document for <strong>{operator.company_name || operator.company}</strong>?</p>
                           <div>
                             <label className="text-sm font-medium">Review Notes (Optional)</label>
                             <Textarea
@@ -193,8 +250,9 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                             <Button
                               onClick={() => handleApproveDocument(operator, true)}
                               disabled={processing}
+                              className="bg-green-600 hover:bg-green-700"
                             >
-                              {processing ? 'Processing...' : 'Approve'}
+                              {processing ? 'Processing...' : 'Approve Document'}
                             </Button>
                             <DialogTrigger asChild>
                               <Button variant="outline">Cancel</Button>
@@ -212,21 +270,21 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                           onClick={() => setSelectedOperator(operator)}
                         >
                           <XCircle className="w-4 h-4 mr-2" />
-                          Reject
+                          Reject Document
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
                           <AlertDialogTitle>Reject Verification Document</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to reject the verification document for {operator.company_name || operator.company}? 
+                            Are you sure you want to reject the verification document for <strong>{operator.company_name || operator.company}</strong>? 
                             This action will notify the operator to resubmit their documentation.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="my-4">
-                          <label className="text-sm font-medium">Rejection Reason</label>
+                          <label className="text-sm font-medium">Rejection Reason (Required)</label>
                           <Textarea
-                            placeholder="Please provide a reason for rejection..."
+                            placeholder="Please provide a clear reason for rejection..."
                             value={reviewNotes}
                             onChange={(e) => setReviewNotes(e.target.value)}
                             className="mt-2"
@@ -238,8 +296,9 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                           <AlertDialogAction
                             onClick={() => handleApproveDocument(operator, false)}
                             disabled={processing || !reviewNotes.trim()}
+                            className="bg-red-600 hover:bg-red-700"
                           >
-                            {processing ? 'Processing...' : 'Reject'}
+                            {processing ? 'Processing...' : 'Reject Document'}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
