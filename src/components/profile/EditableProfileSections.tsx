@@ -4,7 +4,7 @@ import { Tables } from '@/integrations/supabase/types';
 import { EditableCompanySection } from './sections/EditableCompanySection';
 import { EditableContactSection } from './sections/EditableContactSection';
 import { EnhancedServicesSection } from './sections/EnhancedServicesSection';
-import { SimplifiedComplianceSection } from './sections/SimplifiedComplianceSection';
+import { ProofOfTrustSection } from './sections/ProofOfTrustSection';
 
 type OperatorRow = Tables<'operators'>;
 
@@ -42,10 +42,10 @@ export const EditableProfileSections: React.FC<EditableProfileSectionsProps> = (
         onCancel={() => setEditingSection(null)}
       />
       
-      <SimplifiedComplianceSection
+      <ProofOfTrustSection
         profile={profile}
-        isEditing={editingSection === 'compliance'}
-        onEdit={() => setEditingSection('compliance')}
+        isEditing={editingSection === 'proof-of-trust'}
+        onEdit={() => setEditingSection('proof-of-trust')}
         onCancel={() => setEditingSection(null)}
       />
     </div>

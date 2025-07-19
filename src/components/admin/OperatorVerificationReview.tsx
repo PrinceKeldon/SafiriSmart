@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, MessageSquare, Download, Link } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, MessageSquare, Download, Link, Image, Shield } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -33,35 +33,33 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
   const [processing, setProcessing] = useState(false);
 
   const getVerificationStatus = (operator: OperatorRow): VerificationStatus => {
-    // In a real implementation, this would come from a separate verification_status table
-    // For now, we'll simulate based on document presence
-    const hasDocument = operator.certificate_of_incorporation_url && operator.certificate_of_incorporation_url.length > 0;
+    const hasAnyDocument = [
+      operator.certificate_of_incorporation_url,
+      operator.business_permit_url,
+      operator.kato_membership_url
+    ].some(url => url && url.length > 0);
     
-    if (!hasDocument) {
+    if (!hasAnyDocument) {
       return { status: 'pending' };
     }
     
-    // Simulate different statuses for demo
     return { status: 'pending' };
   };
 
   const operatorsNeedingReview = operators.filter(op => {
     const status = getVerificationStatus(op);
-    return status.status === 'pending' && op.certificate_of_incorporation_url;
+    const hasProofOfTrust = [
+      op.certificate_of_incorporation_url,
+      op.business_permit_url,
+      op.kato_membership_url
+    ].some(url => url && url.length > 0);
+    return status.status === 'pending' && hasProofOfTrust;
   });
 
   const handleApproveDocument = async (operator: OperatorRow, approved: boolean) => {
     setProcessing(true);
     try {
-      // In a real implementation, you would update a verification_status table
-      // For now, we'll use a custom field or simulate the approval
-      
-      const updateData = {
-        // You could add a verification_status field to the operators table
-        // verification_status: approved ? 'approved' : 'rejected',
-        // verification_reviewed_at: new Date().toISOString(),
-        // verification_notes: reviewNotes || null
-      };
+      const updateData = {};
 
       const { data, error } = await supabase
         .from('operators')
@@ -72,7 +70,7 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
 
       if (error) throw error;
 
-      toast.success(`Document ${approved ? 'approved' : 'rejected'} successfully`);
+      toast.success(`Proof of Trust ${approved ? 'approved' : 'rejected'} successfully`);
       onOperatorUpdate(data);
       setReviewNotes('');
       setSelectedOperator(null);
@@ -86,18 +84,27 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
 
   const getDocumentType = (url: string) => {
     if (url.includes('supabase')) {
-      return 'Uploaded PDF';
+      if (url.includes('proof-of-trust/pdfs')) return 'PDF Document';
+      if (url.includes('proof-of-trust/images')) return 'Image Document';
+      return 'Uploaded File';
     }
-    return 'External Link';
+    return 'External URL';
   };
 
   const getFileName = (url: string) => {
     if (url.includes('supabase')) {
       const parts = url.split('/');
       const lastPart = parts[parts.length - 1];
-      return lastPart.replace(/^\d+-/, '') || 'Business Document';
+      return lastPart.replace(/^\d+-/, '') || 'Document';
     }
-    return 'External Document';
+    return 'External Link';
+  };
+
+  const getDocumentIcon = (url: string) => {
+    const type = getDocumentType(url);
+    if (type === 'PDF Document') return FileText;
+    if (type === 'Image Document') return Image;
+    return Link;
   };
 
   const StatusBadge = ({ status }: { status: string }) => {
@@ -122,27 +129,29 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <FileText className="w-5 h-5" />
-          Verification of Documents ({operatorsNeedingReview.length} pending review)
+          <Shield className="w-5 h-5" />
+          Proof of Trust Review ({operatorsNeedingReview.length} pending review)
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Review and approve business verification documents submitted by operators
+          Review and verify proof of trust materials submitted by operators
         </p>
       </CardHeader>
       <CardContent>
         {operatorsNeedingReview.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-            <p className="text-lg font-medium">All documents reviewed</p>
-            <p className="text-sm">No verification documents pending review</p>
+            <p className="text-lg font-medium">All submissions reviewed</p>
+            <p className="text-sm">No proof of trust materials pending review</p>
           </div>
         ) : (
           <div className="space-y-6">
             {operatorsNeedingReview.map((operator) => {
               const status = getVerificationStatus(operator);
-              const documentType = getDocumentType(operator.certificate_of_incorporation_url!);
-              const fileName = getFileName(operator.certificate_of_incorporation_url!);
-              const isUploadedFile = operator.certificate_of_incorporation_url!.includes('supabase');
+              const proofOfTrustDocs = [
+                { url: operator.certificate_of_incorporation_url, label: 'PDF Document' },
+                { url: operator.business_permit_url, label: 'Image Document' },
+                { url: operator.kato_membership_url, label: 'External URL' }
+              ].filter(doc => doc.url && doc.url.length > 0);
               
               return (
                 <div key={operator.id} className="border rounded-lg p-6 bg-white shadow-sm">
@@ -178,42 +187,53 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                     </div>
 
                     <div className="space-y-3">
-                      <h5 className="font-medium text-gray-900">Verification Document</h5>
-                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <div className="flex items-center gap-3 mb-3">
-                          {isUploadedFile ? <FileText className="w-5 h-5 text-blue-600" /> : <Link className="w-5 h-5 text-blue-600" />}
-                          <div>
-                            <p className="font-medium text-blue-900">{fileName}</p>
-                            <p className="text-xs text-blue-600">{documentType}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => window.open(operator.certificate_of_incorporation_url, '_blank')}
-                            className="flex items-center gap-2"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View Document
-                          </Button>
-                          {isUploadedFile && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = operator.certificate_of_incorporation_url!;
-                                link.download = fileName;
-                                link.click();
-                              }}
-                              className="flex items-center gap-2"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download
-                            </Button>
-                          )}
-                        </div>
+                      <h5 className="font-medium text-gray-900">Proof of Trust</h5>
+                      <div className="space-y-3">
+                        {proofOfTrustDocs.map((doc, index) => {
+                          const docType = getDocumentType(doc.url);
+                          const fileName = getFileName(doc.url);
+                          const DocIcon = getDocumentIcon(doc.url);
+                          const isUploadedFile = doc.url.includes('supabase');
+                          
+                          return (
+                            <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                              <div className="flex items-center gap-3 mb-3">
+                                <DocIcon className="w-5 h-5 text-blue-600" />
+                                <div>
+                                  <p className="font-medium text-blue-900">{fileName}</p>
+                                  <p className="text-xs text-blue-600">{docType}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => window.open(doc.url, '_blank')}
+                                  className="flex items-center gap-2"
+                                >
+                                  <Eye className="w-4 h-4" />
+                                  {docType === 'External URL' ? 'Visit Link' : 'View Document'}
+                                </Button>
+                                {isUploadedFile && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      const link = document.createElement('a');
+                                      link.href = doc.url;
+                                      link.download = fileName;
+                                      link.click();
+                                    }}
+                                    className="flex items-center gap-2"
+                                  >
+                                    <Download className="w-4 h-4" />
+                                    Download
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
@@ -228,15 +248,15 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                           className="bg-green-600 hover:bg-green-700"
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          Approve Document
+                          Approve Proof of Trust
                         </Button>
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Approve Verification Document</DialogTitle>
+                          <DialogTitle>Approve Proof of Trust</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <p>Are you sure you want to approve the business verification document for <strong>{operator.company_name || operator.company}</strong>?</p>
+                          <p>Are you sure you want to approve the proof of trust materials for <strong>{operator.company_name || operator.company}</strong>?</p>
                           <div>
                             <label className="text-sm font-medium">Review Notes (Optional)</label>
                             <Textarea
@@ -252,7 +272,7 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                               disabled={processing}
                               className="bg-green-600 hover:bg-green-700"
                             >
-                              {processing ? 'Processing...' : 'Approve Document'}
+                              {processing ? 'Processing...' : 'Approve Proof of Trust'}
                             </Button>
                             <DialogTrigger asChild>
                               <Button variant="outline">Cancel</Button>
@@ -270,15 +290,15 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                           onClick={() => setSelectedOperator(operator)}
                         >
                           <XCircle className="w-4 h-4 mr-2" />
-                          Reject Document
+                          Reject Proof of Trust
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Reject Verification Document</AlertDialogTitle>
+                          <AlertDialogTitle>Reject Proof of Trust</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Are you sure you want to reject the verification document for <strong>{operator.company_name || operator.company}</strong>? 
-                            This action will notify the operator to resubmit their documentation.
+                            Are you sure you want to reject the proof of trust materials for <strong>{operator.company_name || operator.company}</strong>? 
+                            This action will notify the operator to resubmit their materials.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="my-4">
@@ -298,7 +318,7 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                             disabled={processing || !reviewNotes.trim()}
                             className="bg-red-600 hover:bg-red-700"
                           >
-                            {processing ? 'Processing...' : 'Reject Document'}
+                            {processing ? 'Processing...' : 'Reject Proof of Trust'}
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
