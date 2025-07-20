@@ -2,13 +2,21 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
-import { EnhancedOperatorCard } from '@/components/admin/EnhancedOperatorCard';
+import { ComprehensiveOperatorCard } from '@/components/admin/ComprehensiveOperatorCard';
 import { Tables } from '@/integrations/supabase/types';
 
 type Operator = Tables<'operators'>;
 
+interface OperatorWithDocuments extends Operator {
+  documents?: {
+    certificate_of_incorporation?: { url: string; valid: boolean; type: string };
+    business_permit?: { url: string; valid: boolean; type: string };
+    kato_membership?: { url: string; valid: boolean; type: string };
+  };
+}
+
 interface OperatorsManagementCardProps {
-  operators: Operator[];
+  operators: OperatorWithDocuments[];
   loading: boolean;
   onCreateOperator: (operatorData: any) => Promise<void>;
   onUpdateOperator: (updatedOperator: Operator) => void;
@@ -53,7 +61,7 @@ export const OperatorsManagementCard: React.FC<OperatorsManagementCardProps> = (
         ) : (
           <div className="grid gap-6">
             {operators.map((operator) => (
-              <EnhancedOperatorCard
+              <ComprehensiveOperatorCard
                 key={operator.id}
                 operator={operator}
                 onUpdateOperator={onUpdateOperator}

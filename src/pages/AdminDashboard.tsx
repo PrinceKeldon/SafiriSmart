@@ -12,20 +12,28 @@ import { ErrorDisplay } from '@/components/admin/ErrorDisplay';
 
 type Operator = Tables<'operators'>;
 
+interface OperatorWithDocuments extends Operator {
+  documents?: {
+    certificate_of_incorporation?: { url: string; valid: boolean; type: string };
+    business_permit?: { url: string; valid: boolean; type: string };
+    kato_membership?: { url: string; valid: boolean; type: string };
+  };
+}
+
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
-  const [operators, setOperators] = useState<Operator[]>([]);
+  const [operators, setOperators] = useState<OperatorWithDocuments[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch operators data with proper refresh mechanism
+  // Fetch operators data with enhanced document processing
   const fetchOperators = async () => {
     try {
       setLoading(true);
       const result = await adminService.getOperators();
       
       if (result.success) {
-        console.log('Fetched operators with proof of trust data:', result.data);
+        console.log('Fetched operators with enhanced document data:', result.data);
         setOperators(result.data);
       } else {
         setError(result.errors?.join(', ') || 'Failed to fetch operators');
@@ -47,8 +55,8 @@ const AdminDashboard = () => {
       const result = await adminService.createOperator(operatorData);
       
       if (result.success) {
-        // Add the new operator to the local state
-        setOperators(prev => [result.data, ...prev]);
+        // Refresh the operators list to get the new operator with proper document processing
+        await fetchOperators();
         toast.success('Operator created successfully!');
         
         // Show temporary password if provided
@@ -64,16 +72,13 @@ const AdminDashboard = () => {
       }
     } catch (err) {
       console.error('Error creating operator:', err);
-      throw err; // Re-throw to let the dialog handle the error
+      throw err;
     }
   };
 
   const handleUpdateOperator = (updatedOperator: Operator) => {
-    setOperators(prev => 
-      prev.map(op => 
-        op.id === updatedOperator.id ? updatedOperator : op
-      )
-    );
+    // Refresh the operators list to get the updated operator with proper document processing
+    fetchOperators();
   };
 
   const handleDeleteOperator = (operatorId: string) => {
