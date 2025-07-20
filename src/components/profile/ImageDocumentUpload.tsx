@@ -30,7 +30,7 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
     // Check if it's a valid image URL
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
     const hasImageExtension = imageExtensions.some(ext => url.toLowerCase().includes(ext));
-    const isFromImageStorage = url.includes('supabase') && url.includes('proof-of-trust/images');
+    const isFromImageStorage = url.includes('supabase') && url.includes('image-uploads');
     return hasImageExtension || isFromImageStorage;
   };
 
@@ -91,13 +91,13 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
       // Create unique file path
       const timestamp = Date.now();
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = `${storagePath}/${user.id}/${timestamp}-${sanitizedFileName}`;
+      const filePath = `${user.id}/${timestamp}-${sanitizedFileName}`;
 
-      console.log('Uploading image to path:', filePath);
+      console.log('Uploading image to bucket: image-uploads, path:', filePath);
 
-      // Upload file to Supabase Storage
+      // Upload file to Supabase Storage - using new image-uploads bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('operator-documents')
+        .from('image-uploads')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -115,7 +115,7 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('operator-documents')
+        .from('image-uploads')
         .getPublicUrl(uploadData.path);
 
       console.log('Generated public URL:', publicUrl);
@@ -210,7 +210,7 @@ export const ImageDocumentUpload: React.FC<ImageDocumentUploadProps> = ({
                 Invalid Image Entry
               </span>
               <p className="text-xs text-red-600">
-                This entry is not a valid image file
+                This entry is not a valid image file. Please remove and upload an image.
               </p>
             </div>
           </div>

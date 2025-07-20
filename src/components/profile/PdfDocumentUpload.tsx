@@ -27,8 +27,8 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isValidPdfUrl = (url: string) => {
-    // Check if it's a valid PDF URL (either contains .pdf or is from our storage with PDF path)
-    return url.includes('.pdf') || (url.includes('supabase') && url.includes('proof-of-trust/pdfs'));
+    // Check if it's a valid PDF URL (either contains .pdf or is from our PDF storage)
+    return url.includes('.pdf') || (url.includes('supabase') && url.includes('pdf-uploads'));
   };
 
   const handlePdfUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,13 +75,13 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
       // Create unique file path
       const timestamp = Date.now();
       const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = `${storagePath}/${user.id}/${timestamp}-${sanitizedFileName}`;
+      const filePath = `${user.id}/${timestamp}-${sanitizedFileName}`;
 
-      console.log('Uploading PDF to path:', filePath);
+      console.log('Uploading PDF to bucket: pdf-uploads, path:', filePath);
 
-      // Upload file to Supabase Storage
+      // Upload file to Supabase Storage - using new pdf-uploads bucket
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('operator-documents')
+        .from('pdf-uploads')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -99,7 +99,7 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from('operator-documents')
+        .from('pdf-uploads')
         .getPublicUrl(uploadData.path);
 
       console.log('Generated public URL:', publicUrl);
@@ -194,7 +194,7 @@ export const PdfDocumentUpload: React.FC<PdfDocumentUploadProps> = ({
                 Invalid PDF Entry
               </span>
               <p className="text-xs text-red-600">
-                This entry is not a valid PDF file
+                This entry is not a valid PDF file. Please remove and upload a PDF document.
               </p>
             </div>
           </div>

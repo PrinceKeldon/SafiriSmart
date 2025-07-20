@@ -33,20 +33,21 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
   const [processing, setProcessing] = useState(false);
 
   const isValidPdfUrl = (url: string) => {
-    return url.includes('.pdf') || (url.includes('supabase') && url.includes('proof-of-trust/pdfs'));
+    return url.includes('.pdf') || (url.includes('supabase') && url.includes('pdf-uploads'));
   };
 
   const isValidImageUrl = (url: string) => {
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
     const hasImageExtension = imageExtensions.some(ext => url.toLowerCase().includes(ext));
-    const isFromImageStorage = url.includes('supabase') && url.includes('proof-of-trust/images');
+    const isFromImageStorage = url.includes('supabase') && url.includes('image-uploads');
     return hasImageExtension || isFromImageStorage;
   };
 
   const isValidUrl = (url: string): boolean => {
     try {
       const urlObj = new URL(url);
-      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+      return (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') && 
+             !url.includes('supabase'); // External URLs should not be from our storage
     } catch {
       return false;
     }
