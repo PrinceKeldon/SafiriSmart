@@ -19,28 +19,34 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch operators data
-  useEffect(() => {
-    const fetchOperators = async () => {
-      try {
-        setLoading(true);
-        const result = await adminService.getOperators();
-        
-        if (result.success) {
-          setOperators(result.data);
-        } else {
-          setError(result.errors?.join(', ') || 'Failed to fetch operators');
-        }
-      } catch (err) {
-        setError('An unexpected error occurred while fetching operators');
-        console.error('Error fetching operators:', err);
-      } finally {
-        setLoading(false);
+  // Fetch operators data with proper refresh mechanism
+  const fetchOperators = async () => {
+    try {
+      setLoading(true);
+      const result = await adminService.getOperators();
+      
+      if (result.success) {
+        console.log('Fetched operators with proof of trust data:', result.data);
+        setOperators(result.data);
+      } else {
+        setError(result.errors?.join(', ') || 'Failed to fetch operators');
       }
-    };
+    } catch (err) {
+      setError('An unexpected error occurred while fetching operators');
+      console.error('Error fetching operators:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOperators();
   }, []);
+
+  // Add refresh function to update operators list when verification changes
+  const handleRefreshOperators = () => {
+    fetchOperators();
+  };
 
   const handleCreateOperator = async (operatorData: any) => {
     try {
@@ -109,6 +115,7 @@ const AdminDashboard = () => {
             <OperatorVerificationReview
               operators={operators}
               onOperatorUpdate={handleUpdateOperator}
+              onRefreshOperators={handleRefreshOperators}
             />
           </div>
 

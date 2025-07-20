@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, Download, Link, Image, Shield, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Eye, FileText, ExternalLink, Download, Link, Image, Shield, AlertTriangle, RefreshCw } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -16,6 +16,7 @@ type OperatorRow = Tables<'operators'>;
 interface OperatorVerificationReviewProps {
   operators: OperatorRow[];
   onOperatorUpdate: (updatedOperator: OperatorRow) => void;
+  onRefreshOperators?: () => void;
 }
 
 interface VerificationStatus {
@@ -26,17 +27,19 @@ interface VerificationStatus {
 
 export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProps> = ({
   operators,
-  onOperatorUpdate
+  onOperatorUpdate,
+  onRefreshOperators
 }) => {
   const [selectedOperator, setSelectedOperator] = useState<OperatorRow | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [processing, setProcessing] = useState(false);
 
   const isValidPdfUrl = (url: string) => {
-    return url.includes('.pdf') || (url.includes('supabase') && url.includes('pdf-uploads'));
+    return url && (url.includes('.pdf') || (url.includes('supabase') && url.includes('pdf-uploads')));
   };
 
   const isValidImageUrl = (url: string) => {
+    if (!url) return false;
     const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.tiff'];
     const hasImageExtension = imageExtensions.some(ext => url.toLowerCase().includes(ext));
     const isFromImageStorage = url.includes('supabase') && url.includes('image-uploads');
@@ -44,6 +47,7 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
   };
 
   const isValidUrl = (url: string): boolean => {
+    if (!url) return false;
     try {
       const urlObj = new URL(url);
       return (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') && 
@@ -65,20 +69,25 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
     return { status: 'pending' };
   };
 
-  const operatorsNeedingReview = operators.filter(op => {
-    const status = getVerificationStatus(op);
-    const hasAnyValidProofOfTrust = [
-      op.certificate_of_incorporation_url && isValidPdfUrl(op.certificate_of_incorporation_url),
-      op.business_permit_url && isValidImageUrl(op.business_permit_url),
-      op.kato_membership_url && isValidUrl(op.kato_membership_url)
-    ].some(Boolean);
-    return status.status === 'pending' && hasAnyValidProofOfTrust;
+  // Get operators that have any proof of trust materials (valid or invalid)
+  const operatorsWithProofOfTrust = operators.filter(op => {
+    const hasAnyProofOfTrust = [
+      op.certificate_of_incorporation_url,
+      op.business_permit_url,
+      op.kato_membership_url
+    ].some(url => url && url.length > 0);
+    return hasAnyProofOfTrust;
   });
 
   const handleApproveDocument = async (operator: OperatorRow, approved: boolean) => {
     setProcessing(true);
     try {
-      const updateData = {};
+      // For now, we'll just show a success message since we don't have verification status fields
+      // In a real implementation, you would update verification status fields
+      const updateData = {
+        // Add verification fields when they exist in the database
+        updated_at: new Date().toISOString()
+      };
 
       const { data, error } = await supabase
         .from('operators')
@@ -93,6 +102,11 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
       onOperatorUpdate(data);
       setReviewNotes('');
       setSelectedOperator(null);
+      
+      // Refresh operators list to get latest data
+      if (onRefreshOperators) {
+        onRefreshOperators();
+      }
     } catch (error) {
       console.error('Error updating verification status:', error);
       toast.error('Failed to update verification status');
@@ -102,25 +116,31 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
   };
 
   const getDocumentType = (url: string, field: string) => {
-    if (field === 'certificate_of_incorporation_url' && isValidPdfUrl(url)) {
-      return 'PDF Document';
+    if (!url) return 'No Document';
+    
+    if (field === 'certificate_of_incorporation_url') {
+      if (isValidPdfUrl(url)) return 'PDF Document';
+      return 'Invalid PDF Entry';
     }
-    if (field === 'business_permit_url' && isValidImageUrl(url)) {
-      return 'Image Document';
+    if (field === 'business_permit_url') {
+      if (isValidImageUrl(url)) return 'Image Document';
+      return 'Invalid Image Entry';
     }
-    if (field === 'kato_membership_url' && isValidUrl(url)) {
-      return 'External URL';
+    if (field === 'kato_membership_url') {
+      if (isValidUrl(url)) return 'External URL';
+      return 'Invalid URL Entry';
     }
-    return 'Invalid Entry';
+    return 'Unknown Entry';
   };
 
   const getFileName = (url: string) => {
+    if (!url) return 'No File';
     if (url.includes('supabase')) {
       const parts = url.split('/');
       const lastPart = parts[parts.length - 1];
       return lastPart.replace(/^\d+-/, '') || 'Document';
     }
-    return url;
+    return url.length > 50 ? url.substring(0, 50) + '...' : url;
   };
 
   const getDocumentIcon = (url: string, field: string) => {
@@ -152,45 +172,60 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Proof of Trust Review ({operatorsNeedingReview.length} pending review)
-        </CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Review and verify proof of trust materials submitted by operators
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              Operator Proof of Trust Review ({operatorsWithProofOfTrust.length} operators with materials)
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Review and verify proof of trust materials submitted by operators
+            </p>
+          </div>
+          {onRefreshOperators && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRefreshOperators}
+              className="flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
-        {operatorsNeedingReview.length === 0 ? (
+        {operatorsWithProofOfTrust.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
-            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-green-500" />
-            <p className="text-lg font-medium">All submissions reviewed</p>
-            <p className="text-sm">No proof of trust materials pending review</p>
+            <Shield className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+            <p className="text-lg font-medium">No proof of trust materials</p>
+            <p className="text-sm">No operators have submitted proof of trust materials yet</p>
           </div>
         ) : (
           <div className="space-y-6">
-            {operatorsNeedingReview.map((operator) => {
+            {operatorsWithProofOfTrust.map((operator) => {
               const status = getVerificationStatus(operator);
               
-              // Get valid proof of trust documents
-              const validProofOfTrustDocs = [
+              // Get all proof of trust documents with their validation status
+              const proofOfTrustDocs = [
                 { 
                   url: operator.certificate_of_incorporation_url, 
                   field: 'certificate_of_incorporation_url',
                   label: 'PDF Document',
-                  isValid: operator.certificate_of_incorporation_url && isValidPdfUrl(operator.certificate_of_incorporation_url)
+                  expectedType: 'PDF'
                 },
                 { 
                   url: operator.business_permit_url, 
                   field: 'business_permit_url',
                   label: 'Image Document',
-                  isValid: operator.business_permit_url && isValidImageUrl(operator.business_permit_url)
+                  expectedType: 'Image'
                 },
                 { 
                   url: operator.kato_membership_url, 
                   field: 'kato_membership_url',
                   label: 'External URL',
-                  isValid: operator.kato_membership_url && isValidUrl(operator.kato_membership_url)
+                  expectedType: 'URL'
                 }
               ].filter(doc => doc.url && doc.url.length > 0);
               
@@ -205,6 +240,7 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    {/* Company Information */}
                     <div className="space-y-3">
                       <h5 className="font-medium text-gray-900">Company Information</h5>
                       <div className="text-sm space-y-2">
@@ -227,49 +263,32 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                       </div>
                     </div>
 
+                    {/* Proof of Trust Documents */}
                     <div className="space-y-3">
-                      <h5 className="font-medium text-gray-900">Proof of Trust</h5>
+                      <h5 className="font-medium text-gray-900">Submitted Proof of Trust Materials</h5>
                       <div className="space-y-3">
-                        {validProofOfTrustDocs.map((doc, index) => {
-                          const docType = getDocumentType(doc.url, doc.field);
-                          const fileName = getFileName(doc.url);
-                          const DocIcon = getDocumentIcon(doc.url, doc.field);
-                          const isUploadedFile = doc.url.includes('supabase');
-                          const isValidEntry = doc.isValid;
-                          
-                          return (
-                            <div key={index} className={`border rounded-lg p-4 ${
-                              isValidEntry 
-                                ? docType === 'PDF Document' 
-                                  ? 'bg-blue-50 border-blue-200' 
-                                  : docType === 'Image Document'
-                                  ? 'bg-green-50 border-green-200'
-                                  : 'bg-purple-50 border-purple-200'
-                                : 'bg-red-50 border-red-200'
-                            }`}>
-                              <div className="flex items-center gap-3 mb-3">
-                                <DocIcon className={`w-5 h-5 ${
-                                  isValidEntry 
-                                    ? docType === 'PDF Document' 
-                                      ? 'text-blue-600' 
-                                      : docType === 'Image Document'
-                                      ? 'text-green-600'
-                                      : 'text-purple-600'
-                                    : 'text-red-600'
-                                }`} />
-                                <div>
-                                  <p className={`font-medium ${
-                                    isValidEntry 
-                                      ? docType === 'PDF Document' 
-                                        ? 'text-blue-900' 
-                                        : docType === 'Image Document'
-                                        ? 'text-green-900'
-                                        : 'text-purple-900'
-                                      : 'text-red-900'
-                                  }`}>
-                                    {isValidEntry ? fileName : 'Invalid Entry'}
-                                  </p>
-                                  <p className={`text-xs ${
+                        {proofOfTrustDocs.length === 0 ? (
+                          <p className="text-sm text-gray-500 italic">No materials submitted</p>
+                        ) : (
+                          proofOfTrustDocs.map((doc, index) => {
+                            const docType = getDocumentType(doc.url, doc.field);
+                            const fileName = getFileName(doc.url);
+                            const DocIcon = getDocumentIcon(doc.url, doc.field);
+                            const isUploadedFile = doc.url.includes('supabase');
+                            const isValidEntry = docType.includes('Document') || docType === 'External URL';
+                            
+                            return (
+                              <div key={index} className={`border rounded-lg p-4 ${
+                                isValidEntry 
+                                  ? docType === 'PDF Document' 
+                                    ? 'bg-blue-50 border-blue-200' 
+                                    : docType === 'Image Document'
+                                    ? 'bg-green-50 border-green-200'
+                                    : 'bg-purple-50 border-purple-200'
+                                  : 'bg-red-50 border-red-200'
+                              }`}>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <DocIcon className={`w-5 h-5 ${
                                     isValidEntry 
                                       ? docType === 'PDF Document' 
                                         ? 'text-blue-600' 
@@ -277,56 +296,79 @@ export const OperatorVerificationReview: React.FC<OperatorVerificationReviewProp
                                         ? 'text-green-600'
                                         : 'text-purple-600'
                                       : 'text-red-600'
-                                  }`}>
-                                    {isValidEntry ? docType : 'Not a valid ' + doc.label.toLowerCase()}
-                                  </p>
+                                  }`} />
+                                  <div className="flex-1">
+                                    <p className={`font-medium text-sm ${
+                                      isValidEntry 
+                                        ? docType === 'PDF Document' 
+                                          ? 'text-blue-900' 
+                                          : docType === 'Image Document'
+                                          ? 'text-green-900'
+                                          : 'text-purple-900'
+                                        : 'text-red-900'
+                                    }`}>
+                                      {isValidEntry ? fileName : `Invalid ${doc.expectedType} Entry`}
+                                    </p>
+                                    <p className={`text-xs ${
+                                      isValidEntry 
+                                        ? docType === 'PDF Document' 
+                                          ? 'text-blue-600' 
+                                          : docType === 'Image Document'
+                                          ? 'text-green-600'
+                                          : 'text-purple-600'
+                                        : 'text-red-600'
+                                    }`}>
+                                      {isValidEntry ? `Valid ${docType}` : `Expected: ${doc.expectedType}, Got: ${docType.replace('Invalid ', '').replace(' Entry', '')}`}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                              {isValidEntry && (
-                                <div className="flex gap-2">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => window.open(doc.url, '_blank', 'noopener,noreferrer')}
-                                    className="flex items-center gap-2"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    {docType === 'External URL' ? 'Visit Link' : 'View Document'}
-                                  </Button>
-                                  {isUploadedFile && docType !== 'External URL' && (
+                                
+                                {isValidEntry ? (
+                                  <div className="flex gap-2">
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => {
-                                        const link = document.createElement('a');
-                                        link.href = doc.url;
-                                        link.download = fileName;
-                                        link.click();
-                                      }}
+                                      onClick={() => window.open(doc.url, '_blank', 'noopener,noreferrer')}
                                       className="flex items-center gap-2"
                                     >
-                                      <Download className="w-4 h-4" />
-                                      Download
+                                      <Eye className="w-4 h-4" />
+                                      {docType === 'External URL' ? 'Visit Link' : 'View Document'}
                                     </Button>
-                                  )}
-                                </div>
-                              )}
-                              {!isValidEntry && (
-                                <div className="flex items-center gap-2 mt-2">
-                                  <AlertTriangle className="w-4 h-4 text-red-600" />
-                                  <span className="text-xs text-red-600">
-                                    This entry should be removed and re-uploaded in the correct format
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
+                                    {isUploadedFile && docType !== 'External URL' && (
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          const link = document.createElement('a');
+                                          link.href = doc.url;
+                                          link.download = fileName;
+                                          link.click();
+                                        }}
+                                        className="flex items-center gap-2"
+                                      >
+                                        <Download className="w-4 h-4" />
+                                        Download
+                                      </Button>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-red-600" />
+                                    <span className="text-xs text-red-600">
+                                      This entry needs to be corrected by the operator. Expected {doc.expectedType.toLowerCase()} format.
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 border-t pt-4">
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
