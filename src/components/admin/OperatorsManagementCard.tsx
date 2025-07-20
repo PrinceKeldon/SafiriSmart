@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
-import { OperatorsList } from '@/components/admin/OperatorsList';
+import { EnhancedOperatorCard } from '@/components/admin/EnhancedOperatorCard';
 import { Tables } from '@/integrations/supabase/types';
 
 type Operator = Tables<'operators'>;
@@ -24,11 +24,6 @@ export const OperatorsManagementCard: React.FC<OperatorsManagementCardProps> = (
 }) => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  const handleSelectOperator = (operator: Operator) => {
-    // Handle operator selection - could be used for detailed view
-    console.log('Selected operator:', operator);
-  };
-
   return (
     <Card className="mb-8">
       <CardHeader>
@@ -36,7 +31,7 @@ export const OperatorsManagementCard: React.FC<OperatorsManagementCardProps> = (
           <div>
             <CardTitle>Operator Management</CardTitle>
             <CardDescription>
-              Manage tour operators, approve registrations, and view operator details
+              Manage tour operators, review proof of trust documents, and approve registrations
             </CardDescription>
           </div>
           <CreateOperatorDialog
@@ -56,12 +51,16 @@ export const OperatorsManagementCard: React.FC<OperatorsManagementCardProps> = (
             <p className="text-sm text-gray-500">No operators found</p>
           </div>
         ) : (
-          <OperatorsList
-            operators={operators}
-            onSelectOperator={handleSelectOperator}
-            onUpdateOperator={onUpdateOperator}
-            onDeleteOperator={onDeleteOperator}
-          />
+          <div className="grid gap-6">
+            {operators.map((operator) => (
+              <EnhancedOperatorCard
+                key={operator.id}
+                operator={operator}
+                onUpdateOperator={onUpdateOperator}
+                onDeleteOperator={onDeleteOperator}
+              />
+            ))}
+          </div>
         )}
       </CardContent>
     </Card>

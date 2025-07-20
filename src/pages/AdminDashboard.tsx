@@ -7,7 +7,6 @@ import { toast } from 'sonner';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { AdminStatsCards } from '@/components/admin/AdminStatsCards';
 import { OperatorsManagementCard } from '@/components/admin/OperatorsManagementCard';
-import { OperatorVerificationReview } from '@/components/admin/OperatorVerificationReview';
 import { SystemConfigurationCard } from '@/components/admin/SystemConfigurationCard';
 import { ErrorDisplay } from '@/components/admin/ErrorDisplay';
 
@@ -42,11 +41,6 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchOperators();
   }, []);
-
-  // Add refresh function to update operators list when verification changes
-  const handleRefreshOperators = () => {
-    fetchOperators();
-  };
 
   const handleCreateOperator = async (operatorData: any) => {
     try {
@@ -109,15 +103,6 @@ const AdminDashboard = () => {
               onDismiss={() => setError(null)} 
             />
           )}
-
-          {/* Operator Verification Review */}
-          <div className="mb-8">
-            <OperatorVerificationReview
-              operators={operators}
-              onOperatorUpdate={handleUpdateOperator}
-              onRefreshOperators={handleRefreshOperators}
-            />
-          </div>
 
           <OperatorsManagementCard
             operators={operators}
