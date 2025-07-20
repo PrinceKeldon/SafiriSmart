@@ -23,7 +23,10 @@ import {
   Phone,
   Calendar,
   MapPin,
-  Shield
+  Shield,
+  Settings,
+  Power,
+  PowerOff
 } from 'lucide-react';
 import { Tables } from '@/integrations/supabase/types';
 import { adminService } from '@/services/AdminService';
@@ -210,30 +213,101 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
 
   const hasAnyDocuments = proofOfTrustDocs.length > 0;
 
+  // Calculate profile completion percentage
+  const profileFields = [
+    operator.company_name || operator.company,
+    operator.email,
+    operator.name,
+    operator.contact_person_phone,
+    operator.city,
+    operator.country,
+    operator.registration_number,
+    operator.address,
+    operator.website_url,
+    operator.description
+  ];
+  
+  const completedFields = profileFields.filter(field => field && field.length > 0).length;
+  const profileCompletionPercentage = Math.round((completedFields / profileFields.length) * 100);
+
   return (
-    <Card className="w-full">
+    <Card className="w-full border-l-4 border-l-primary/20 hover:border-l-primary/50 transition-all duration-200">
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-4">
             <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                <Building className="w-6 h-6 text-primary" />
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <Building className="w-8 h-8 text-primary" />
               </div>
             </div>
-            <div>
-              <CardTitle className="text-lg font-semibold">
+            <div className="flex-1">
+              <CardTitle className="text-xl font-bold text-gray-900 mb-2">
                 {operator.company_name || operator.company}
               </CardTitle>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant={operator.is_active ? "default" : "secondary"}>
+              
+              {/* Status and Document Badges */}
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <Badge 
+                  variant={operator.is_active ? "default" : "secondary"}
+                  className={`flex items-center gap-1 ${
+                    operator.is_active ? 'bg-green-100 text-green-800 border-green-200' : 'bg-gray-100 text-gray-600 border-gray-200'
+                  }`}
+                >
+                  {operator.is_active ? <Power className="w-3 h-3" /> : <PowerOff className="w-3 h-3" />}
                   {operator.is_active ? "Active" : "Inactive"}
                 </Badge>
+                
+                {/* Profile Completion Status */}
+                <Badge 
+                  variant="outline" 
+                  className={`${
+                    profileCompletionPercentage >= 80 
+                      ? 'bg-green-50 text-green-700 border-green-200' 
+                      : profileCompletionPercentage >= 50 
+                      ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                      : 'bg-red-50 text-red-700 border-red-200'
+                  }`}
+                >
+                  Profile {profileCompletionPercentage}% Complete
+                </Badge>
+
+                {/* Proof of Trust Document Status */}
                 {hasAnyDocuments && (
-                  <Badge variant={hasValidDocuments ? "default" : "destructive"} className="flex items-center gap-1">
+                  <Badge 
+                    variant={hasValidDocuments ? "default" : "destructive"} 
+                    className={`flex items-center gap-1 ${
+                      hasValidDocuments 
+                        ? 'bg-blue-100 text-blue-800 border-blue-200' 
+                        : 'bg-red-100 text-red-800 border-red-200'
+                    }`}
+                  >
                     <Shield className="w-3 h-3" />
-                    {hasValidDocuments ? "Documents OK" : "Invalid Documents"}
+                    {hasValidDocuments ? "Documents Valid" : "Invalid Documents"}
                   </Badge>
                 )}
+                
+                {!hasAnyDocuments && (
+                  <Badge variant="secondary" className="flex items-center gap-1 bg-gray-100 text-gray-600 border-gray-200">
+                    <AlertTriangle className="w-3 h-3" />
+                    No Documents
+                  </Badge>
+                )}
+              </div>
+
+              {/* Quick Contact Info */}
+              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  <span>{operator.name}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Mail className="w-4 h-4" />
+                  <span>{operator.email}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  <span>{operator.city || 'Unknown'}, {operator.country}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -245,36 +319,26 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm">
-              <User className="w-4 h-4 text-gray-500" />
-              <span className="font-medium">Contact:</span>
-              <span>{operator.name}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <Mail className="w-4 h-4 text-gray-500" />
-              <span className="font-medium">Email:</span>
-              <span>{operator.email}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
               <Phone className="w-4 h-4 text-gray-500" />
               <span className="font-medium">Phone:</span>
               <span>{operator.contact_person_phone || 'Not provided'}</span>
             </div>
+            <div className="flex items-center gap-2 text-sm">
+              <Building className="w-4 h-4 text-gray-500" />
+              <span className="font-medium">Registration:</span>
+              <span>{operator.registration_number || 'Not provided'}</span>
+            </div>
           </div>
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span className="font-medium">Location:</span>
-              <span>{operator.city || 'Not provided'}, {operator.country}</span>
-            </div>
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="w-4 h-4 text-gray-500" />
               <span className="font-medium">Joined:</span>
               <span>{formatDate(operator.created_at)}</span>
             </div>
             <div className="flex items-center gap-2 text-sm">
-              <Building className="w-4 h-4 text-gray-500" />
-              <span className="font-medium">Registration:</span>
-              <span>{operator.registration_number || 'Not provided'}</span>
+              <Link className="w-4 h-4 text-gray-500" />
+              <span className="font-medium">Website:</span>
+              <span>{operator.website_url || 'Not provided'}</span>
             </div>
           </div>
         </div>
@@ -293,12 +357,15 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
           </div>
         )}
 
-        {/* Proof of Trust Documents */}
+        {/* Proof of Trust Documents - Enhanced Display */}
         {hasAnyDocuments && (
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center gap-2">
               <Shield className="w-4 h-4" />
               Proof of Trust Documents
+              <Badge variant="outline" className="text-xs">
+                {proofOfTrustDocs.length} document{proofOfTrustDocs.length > 1 ? 's' : ''} submitted
+              </Badge>
             </h4>
             <div className="space-y-3">
               {proofOfTrustDocs.map((doc, index) => {
@@ -309,17 +376,17 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
                 const isValidEntry = docType.includes('Document') || docType === 'External URL';
                 
                 return (
-                  <div key={index} className={`border rounded-lg p-3 ${
+                  <div key={index} className={`border-2 rounded-lg p-4 transition-all ${
                     isValidEntry 
                       ? docType === 'PDF Document' 
-                        ? 'bg-blue-50 border-blue-200' 
+                        ? 'bg-blue-50 border-blue-200 hover:bg-blue-100' 
                         : docType === 'Image Document'
-                        ? 'bg-green-50 border-green-200'
-                        : 'bg-purple-50 border-purple-200'
+                        ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                        : 'bg-purple-50 border-purple-200 hover:bg-purple-100'
                       : 'bg-red-50 border-red-200'
                   }`}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <DocIcon className={`w-4 h-4 ${
+                    <div className="flex items-center gap-3 mb-3">
+                      <DocIcon className={`w-5 h-5 ${
                         isValidEntry 
                           ? docType === 'PDF Document' 
                             ? 'text-blue-600' 
@@ -329,7 +396,7 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
                           : 'text-red-600'
                       }`} />
                       <div className="flex-1">
-                        <p className={`font-medium text-xs ${
+                        <p className={`font-semibold text-sm ${
                           isValidEntry 
                             ? docType === 'PDF Document' 
                               ? 'text-blue-900' 
@@ -352,6 +419,18 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
                           {isValidEntry ? fileName : `Invalid ${doc.expectedType} Entry`}
                         </p>
                       </div>
+                      
+                      {/* Document Status Badge */}
+                      <Badge 
+                        variant={isValidEntry ? "default" : "destructive"}
+                        className={`text-xs ${
+                          isValidEntry 
+                            ? 'bg-green-100 text-green-800 border-green-200' 
+                            : 'bg-red-100 text-red-800 border-red-200'
+                        }`}
+                      >
+                        {isValidEntry ? 'Valid' : 'Invalid'}
+                      </Badge>
                     </div>
                     
                     {isValidEntry ? (
@@ -360,7 +439,7 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
                           variant="outline"
                           size="sm"
                           onClick={() => window.open(doc.url, '_blank', 'noopener,noreferrer')}
-                          className="flex items-center gap-1 text-xs h-7"
+                          className="flex items-center gap-1 text-xs h-8"
                         >
                           <Eye className="w-3 h-3" />
                           {docType === 'External URL' ? 'Visit' : 'View'}
@@ -375,7 +454,7 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
                               link.download = fileName;
                               link.click();
                             }}
-                            className="flex items-center gap-1 text-xs h-7"
+                            className="flex items-center gap-1 text-xs h-8"
                           >
                             <Download className="w-3 h-3" />
                             Download
@@ -384,8 +463,8 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
                       </div>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-3 h-3 text-red-600" />
-                        <span className="text-xs text-red-600">
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                        <span className="text-sm text-red-600 font-medium">
                           Invalid format - Expected {doc.expectedType.toLowerCase()}
                         </span>
                       </div>
@@ -395,17 +474,17 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
               })}
             </div>
 
-            {/* Document Actions */}
+            {/* Direct Document Review Actions */}
             {hasValidDocuments && (
-              <div className="flex gap-2 mt-4 pt-3 border-t">
+              <div className="flex gap-3 mt-4 pt-3 border-t">
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
                       variant="default"
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-xs"
+                      className="bg-green-600 hover:bg-green-700 text-white font-medium"
                     >
-                      <CheckCircle className="w-3 h-3 mr-1" />
+                      <CheckCircle className="w-4 h-4 mr-1" />
                       Approve Documents
                     </Button>
                   </DialogTrigger>
@@ -444,8 +523,8 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
 
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="destructive" size="sm" className="text-xs">
-                      <XCircle className="w-3 h-3 mr-1" />
+                    <Button variant="destructive" size="sm" className="font-medium">
+                      <XCircle className="w-4 h-4 mr-1" />
                       Reject Documents
                     </Button>
                   </AlertDialogTrigger>
@@ -483,20 +562,20 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
           </div>
         )}
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-2 pt-4 border-t">
+        {/* Direct Action Buttons */}
+        <div className="flex flex-wrap gap-3 pt-4 border-t bg-gray-50 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg">
           <Dialog>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Eye className="h-4 w-4 mr-1" />
-                View Details
+              <Button variant="default" size="sm" className="font-medium">
+                <Settings className="h-4 w-4 mr-1" />
+                Manage Operator
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Operator Details</DialogTitle>
+                <DialogTitle>Operator Management</DialogTitle>
                 <DialogDescription>
-                  View and edit operator profile information
+                  View and edit detailed operator profile information
                 </DialogDescription>
               </DialogHeader>
               <OperatorDetailView 
@@ -507,11 +586,23 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
           </Dialog>
 
           <Button 
-            variant="outline" 
+            variant={operator.is_active ? "outline" : "default"} 
             size="sm"
             onClick={handleToggleStatus}
             disabled={loadingStates[operator.id]}
+            className={`font-medium ${
+              operator.is_active 
+                ? 'text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200' 
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            }`}
           >
+            {loadingStates[operator.id] ? (
+              <Clock className="h-4 w-4 mr-1 animate-spin" />
+            ) : operator.is_active ? (
+              <PowerOff className="h-4 w-4 mr-1" />
+            ) : (
+              <Power className="h-4 w-4 mr-1" />
+            )}
             {loadingStates[operator.id] 
               ? 'Updating...' 
               : operator.is_active ? "Deactivate" : "Activate"
@@ -523,9 +614,10 @@ export const EnhancedOperatorCard: React.FC<EnhancedOperatorCardProps> = ({
             size="sm"
             onClick={handleDeleteOperator}
             disabled={loadingStates[operator.id]}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 font-medium"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4 mr-1" />
+            Delete
           </Button>
         </div>
       </CardContent>
