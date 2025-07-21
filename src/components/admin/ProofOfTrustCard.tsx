@@ -12,7 +12,8 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Shield
+  Shield,
+  RefreshCw
 } from 'lucide-react';
 import { DocumentViewer } from './DocumentViewer';
 
@@ -41,6 +42,10 @@ export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
     key: string;
   } | null>(null);
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  console.log('ProofOfTrustCard documents:', documents);
+
   const documentEntries = [
     {
       key: 'certificate_of_incorporation',
@@ -60,10 +65,17 @@ export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
       doc: documents.kato_membership,
       expectedType: 'URL'
     }
-  ].filter(entry => entry.doc);
+  ];
 
-  const validDocuments = documentEntries.filter(entry => entry.doc?.valid);
+  const submittedDocuments = documentEntries.filter(entry => entry.doc);
+  const validDocuments = submittedDocuments.filter(entry => entry.doc?.valid);
   const hasValidDocuments = validDocuments.length > 0;
+
+  console.log('Document analysis:', {
+    submittedDocuments: submittedDocuments.length,
+    validDocuments: validDocuments.length,
+    hasValidDocuments
+  });
 
   const getDocumentIcon = (type: string) => {
     switch (type) {
@@ -91,6 +103,7 @@ export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
   };
 
   const handleDocumentClick = (entry: any) => {
+    console.log('Opening document:', entry);
     setSelectedDocument({
       url: entry.doc.url,
       type: entry.doc.type,
@@ -107,7 +120,16 @@ export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
     }
   };
 
-  if (documentEntries.length === 0) {
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    // Trigger a refresh of the parent component
+    setTimeout(() => {
+      setRefreshing(false);
+      window.location.reload();
+    }, 1000);
+  };
+
+  if (submittedDocuments.length === 0) {
     return (
       <Card className="border-gray-200">
         <CardHeader>
@@ -117,12 +139,24 @@ export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
             <Badge variant="secondary" className="text-xs">
               No documents submitted
             </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="ml-auto"
+            >
+              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-4">
             <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-500">No documents have been submitted yet</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Check operator profile or refresh to see latest documents
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -140,12 +174,21 @@ export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
               variant={hasValidDocuments ? "default" : "destructive"}
               className="text-xs"
             >
-              {validDocuments.length}/{documentEntries.length} Valid
+              {validDocuments.length}/{submittedDocuments.length} Valid
             </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="ml-auto"
+            >
+              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          {documentEntries.map((entry, index) => {
+          {submittedDocuments.map((entry, index) => {
             const doc = entry.doc!;
             const DocIcon = getDocumentIcon(doc.type);
             const colorClass = getDocumentColor(doc.type, doc.valid);

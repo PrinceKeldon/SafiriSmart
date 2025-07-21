@@ -30,17 +30,34 @@ const AdminDashboard = () => {
   const fetchOperators = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
+      console.log('Starting to fetch operators...');
       const result = await adminService.getOperators();
       
       if (result.success) {
-        console.log('Fetched operators with enhanced document data:', result.data);
+        console.log('Successfully fetched operators:', result.data.length);
+        
+        // Log document status for each operator
+        result.data.forEach(operator => {
+          console.log(`Operator ${operator.email} documents:`, {
+            certificate_of_incorporation: operator.certificate_of_incorporation_url,
+            business_permit: operator.business_permit_url,
+            kato_membership: operator.kato_membership_url,
+            processed_documents: operator.documents
+          });
+        });
+        
         setOperators(result.data);
       } else {
-        setError(result.errors?.join(', ') || 'Failed to fetch operators');
+        const errorMessage = result.errors?.join(', ') || 'Failed to fetch operators';
+        console.error('Failed to fetch operators:', errorMessage);
+        setError(errorMessage);
       }
     } catch (err) {
-      setError('An unexpected error occurred while fetching operators');
-      console.error('Error fetching operators:', err);
+      const errorMessage = 'An unexpected error occurred while fetching operators';
+      console.error('Unexpected error:', err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
