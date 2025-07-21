@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -39,19 +40,12 @@ All colors MUST be HSL.
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -101,5 +95,80 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    /* Prevent horizontal scrolling on mobile */
+    overflow-x: hidden;
+  }
+
+  /* Ensure images are responsive by default */
+  img {
+    @apply max-w-full h-auto;
+  }
+
+  /* Responsive container utilities */
+  .container {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 100%;
+  }
+
+  /* Mobile-first responsive text utilities */
+  .text-responsive {
+    @apply text-sm sm:text-base md:text-lg lg:text-xl;
+  }
+
+  .heading-responsive {
+    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl;
+  }
+
+  /* Touch target utilities for mobile */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Prevent text overflow */
+  .text-container {
+    @apply break-words overflow-wrap-anywhere;
+  }
+
+  /* Mobile-optimized spacing */
+  .mobile-spacing {
+    @apply p-4 sm:p-6 md:p-8;
+  }
+
+  /* Responsive grid utilities */
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+
+  /* Mobile-first flex utilities */
+  .flex-mobile {
+    @apply flex flex-col sm:flex-row;
+  }
+
+  /* Responsive card utilities */
+  .card-mobile {
+    @apply w-full max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg;
+  }
+}
+
+/* Mobile-specific animations */
+@layer utilities {
+  .animate-mobile-safe {
+    animation: fade-in 0.3s ease-out;
+  }
+
+  /* Disable animations on mobile for better performance */
+  @media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* Fix for Safari mobile viewport units */
+@supports (-webkit-touch-callout: none) {
+  .min-h-screen {
+    min-height: -webkit-fill-available;
   }
 }

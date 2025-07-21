@@ -23,22 +23,22 @@ export const DashboardFilters = ({
   onStatusFilterChange
 }: DashboardFiltersProps) => {
   return (
-    <div className="flex flex-col gap-4 bg-white p-4 rounded-lg shadow-sm border">
-      <div className="flex-1">
+    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 bg-white p-4 rounded-lg shadow-sm border w-full">
+      <div className="flex-1 min-w-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="Search leads by name, email, or destination..."
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
       </div>
       
       <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-        <SelectTrigger className="w-full">
-          <Filter className="h-4 w-4 mr-2" />
+        <SelectTrigger className="w-full sm:w-48">
+          <Filter className="h-4 w-4 mr-2 flex-shrink-0" />
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
