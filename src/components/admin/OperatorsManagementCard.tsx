@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreateOperatorDialog } from '@/components/admin/CreateOperatorDialog';
-import { ComprehensiveOperatorCard } from '@/components/admin/ComprehensiveOperatorCard';
+import { NewOperatorCard } from '@/components/admin/NewOperatorCard';
 import { Tables } from '@/integrations/supabase/types';
 
 type Operator = Tables<'operators'>;
@@ -61,7 +61,7 @@ export const OperatorsManagementCard: React.FC<OperatorsManagementCardProps> = (
         ) : (
           <div className="grid gap-6">
             {operators.map((operator) => (
-              <ComprehensiveOperatorCard
+              <NewOperatorCard
                 key={operator.id}
                 operator={operator}
                 onUpdateOperator={onUpdateOperator}
