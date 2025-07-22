@@ -26,8 +26,8 @@ const convertToOperatorProfile = (profile: OperatorRow): OperatorProfile => {
     name: profile.name,
     email: profile.email,
     company: profile.company,
-    password_hash: profile.password_hash,
-    role: profile.role,
+    password_hash: profile.password_hash || undefined,
+    role: profile.role || undefined,
     company_name: profile.company_name || undefined,
     registration_number: profile.registration_number || undefined,
     address: profile.address || undefined,
@@ -72,7 +72,7 @@ export const EditableProfileSections: React.FC<EditableProfileSectionsProps> = (
       />
       
       <EditableContactSection
-        profile={operatorProfile}
+        profile={profile}
         isEditing={editingSection === 'contact'}
         onEdit={() => setEditingSection('contact')}
         onCancel={() => setEditingSection(null)}

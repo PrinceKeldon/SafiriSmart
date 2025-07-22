@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,24 +9,22 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Edit, Save, X, Building } from 'lucide-react';
-import { Tables } from '@/integrations/supabase/types';
+import { OperatorProfile } from '@/types/operator';
 import { useUpdateOperatorProfile } from '@/hooks/useOperatorProfile';
 import { toast } from 'sonner';
 
-type OperatorRow = Tables<'operators'>;
-
 interface EditableCompanySectionProps {
-  profile: OperatorRow | undefined;
+  profile: OperatorProfile;
   isEditing: boolean;
   onEdit: () => void;
   onCancel: () => void;
 }
 
 const companySchema = z.object({
-  company_name: z.string().min(1, 'Company name is required'),
+  company_name: z.string().optional(),
   registration_number: z.string().optional(),
-  description: z.string().optional(),
   website_url: z.string().url().optional().or(z.literal('')),
+  description: z.string().optional(),
 });
 
 type CompanyFormData = z.infer<typeof companySchema>;
@@ -41,10 +40,10 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
   const form = useForm<CompanyFormData>({
     resolver: zodResolver(companySchema),
     defaultValues: {
-      company_name: profile?.company_name || '',
-      registration_number: profile?.registration_number || '',
-      description: profile?.description || '',
-      website_url: profile?.website_url || '',
+      company_name: profile.company_name || '',
+      registration_number: profile.registration_number || '',
+      website_url: profile.website_url || '',
+      description: profile.description || '',
     },
   });
 
@@ -53,8 +52,8 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
       form.reset({
         company_name: profile.company_name || '',
         registration_number: profile.registration_number || '',
-        description: profile.description || '',
         website_url: profile.website_url || '',
+        description: profile.description || '',
       });
     }
   }, [profile, isEditing, form]);
@@ -69,7 +68,7 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
     }
   };
 
-  const hasData = profile?.company_name || profile?.registration_number || profile?.description || profile?.website_url;
+  const hasData = profile.company_name || profile.registration_number || profile.website_url || profile.description;
 
   if (isEditing) {
     return (
@@ -89,7 +88,7 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
                   name="company_name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Company Name *</FormLabel>
+                      <FormLabel>Company Name</FormLabel>
                       <FormControl>
                         <Input placeholder="Enter company name" {...field} />
                       </FormControl>
@@ -115,16 +114,12 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
 
               <FormField
                 control={form.control}
-                name="description"
+                name="website_url"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company Description</FormLabel>
+                    <FormLabel>Website URL</FormLabel>
                     <FormControl>
-                      <Textarea 
-                        placeholder="Describe your company, services, and expertise..." 
-                        className="min-h-24"
-                        {...field} 
-                      />
+                      <Input placeholder="https://www.example.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -133,12 +128,12 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
 
               <FormField
                 control={form.control}
-                name="website_url"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website URL</FormLabel>
+                    <FormLabel>Company Description</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://www.example.com" {...field} />
+                      <Textarea placeholder="Describe your company and services" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -179,32 +174,32 @@ export const EditableCompanySection: React.FC<EditableCompanySectionProps> = ({
       <CardContent>
         {hasData ? (
           <div className="space-y-3">
-            {profile?.company_name && (
+            {profile.company_name && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Company Name</label>
                 <p className="text-sm">{profile.company_name}</p>
               </div>
             )}
-            {profile?.registration_number && (
+            {profile.registration_number && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Registration Number</label>
                 <p className="text-sm">{profile.registration_number}</p>
               </div>
             )}
-            {profile?.description && (
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Description</label>
-                <p className="text-sm">{profile.description}</p>
-              </div>
-            )}
-            {profile?.website_url && (
+            {profile.website_url && (
               <div>
                 <label className="text-sm font-medium text-muted-foreground">Website</label>
                 <p className="text-sm">
-                  <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                     {profile.website_url}
                   </a>
                 </p>
+              </div>
+            )}
+            {profile.description && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Description</label>
+                <p className="text-sm">{profile.description}</p>
               </div>
             )}
           </div>
