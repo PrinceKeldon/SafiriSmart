@@ -140,6 +140,9 @@ export const NewOperatorCard: React.FC<NewOperatorCardProps> = ({
     }
   };
 
+  // Fix the type casting for verification status
+  const verificationStatus = (operator.document_verification_status || 'pending') as 'pending' | 'under_review' | 'approved' | 'rejected';
+
   return (
     <Card className="w-full shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-l-primary/20 hover:border-l-primary/50">
       <CardHeader className="pb-4">
@@ -161,7 +164,7 @@ export const NewOperatorCard: React.FC<NewOperatorCardProps> = ({
                   isActive={operator.is_active}
                   profileCompletion={profileCompletionPercentage}
                   documentStatus={documentStatus}
-                  verificationStatus={operator.document_verification_status || 'pending'}
+                  verificationStatus={verificationStatus}
                 />
               </div>
 
@@ -235,7 +238,6 @@ export const NewOperatorCard: React.FC<NewOperatorCardProps> = ({
           </div>
         </div>
 
-        {/* Specializations */}
         {operator.specializations && operator.specializations.length > 0 && (
           <div>
             <h4 className="text-sm font-medium text-gray-700 mb-2">Specializations</h4>
@@ -255,7 +257,7 @@ export const NewOperatorCard: React.FC<NewOperatorCardProps> = ({
             documents={operator.documents}
             operatorId={operator.id}
             operatorName={operator.company_name || operator.company}
-            verificationStatus={operator.document_verification_status || 'pending'}
+            verificationStatus={verificationStatus}
             verificationNotes={operator.document_verification_notes || undefined}
             onDocumentAction={handleDocumentAction}
           />

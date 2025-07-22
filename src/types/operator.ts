@@ -22,6 +22,10 @@ export interface OperatorProfile {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  document_verification_status?: 'pending' | 'under_review' | 'approved' | 'rejected';
+  document_verification_notes?: string;
+  document_verified_at?: string;
+  document_verified_by?: string;
 }
 
 export interface OperatorProfileUpdate {
