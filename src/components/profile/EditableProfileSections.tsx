@@ -15,6 +15,11 @@ interface EditableProfileSectionsProps {
   setEditingSection: (section: string | null) => void;
 }
 
+const convertJsonArrayToStringArray = (jsonArray: any): string[] => {
+  if (!Array.isArray(jsonArray)) return [];
+  return jsonArray.filter(item => typeof item === 'string');
+};
+
 const convertToOperatorProfile = (profile: OperatorRow): OperatorProfile => {
   return {
     id: profile.id,
@@ -33,9 +38,9 @@ const convertToOperatorProfile = (profile: OperatorRow): OperatorProfile => {
     certificate_of_incorporation_url: profile.certificate_of_incorporation_url || undefined,
     business_permit_url: profile.business_permit_url || undefined,
     kato_membership_url: profile.kato_membership_url || undefined,
-    specializations: Array.isArray(profile.specializations) ? profile.specializations : [],
-    services_offered: Array.isArray(profile.services_offered) ? profile.services_offered : [],
-    destinations_covered: Array.isArray(profile.destinations_covered) ? profile.destinations_covered : [],
+    specializations: convertJsonArrayToStringArray(profile.specializations),
+    services_offered: convertJsonArrayToStringArray(profile.services_offered),
+    destinations_covered: convertJsonArrayToStringArray(profile.destinations_covered),
     is_active: profile.is_active || false,
     created_at: profile.created_at || '',
     updated_at: profile.updated_at || '',
