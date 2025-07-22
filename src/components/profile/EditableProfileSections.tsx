@@ -26,6 +26,8 @@ const convertToOperatorProfile = (profile: OperatorRow): OperatorProfile => {
     name: profile.name,
     email: profile.email,
     company: profile.company,
+    password_hash: profile.password_hash,
+    role: profile.role,
     company_name: profile.company_name || undefined,
     registration_number: profile.registration_number || undefined,
     address: profile.address || undefined,

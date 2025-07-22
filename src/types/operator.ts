@@ -4,6 +4,8 @@ export interface OperatorProfile {
   name: string;
   email: string;
   company: string;
+  password_hash?: string;
+  role?: string;
   company_name?: string;
   registration_number?: string;
   address?: string;
