@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/integrations/supabase/types";
 
@@ -306,13 +307,37 @@ class AdminService {
   }
 
   async approveOperatorDocuments(id: string, notes?: string): Promise<ApiResponse<Operator>> {
+    const { data: { user } } = await supabase.auth.getUser();
+    
     return this.updateOperator(id, { 
+      document_verification_status: 'approved',
+      document_verification_notes: notes || 'Documents approved by admin',
+      document_verified_at: new Date().toISOString(),
+      document_verified_by: user?.id,
       updated_at: new Date().toISOString()
     });
   }
 
   async rejectOperatorDocuments(id: string, reason: string): Promise<ApiResponse<Operator>> {
+    const { data: { user } } = await supabase.auth.getUser();
+    
     return this.updateOperator(id, { 
+      document_verification_status: 'rejected',
+      document_verification_notes: reason,
+      document_verified_at: new Date().toISOString(),
+      document_verified_by: user?.id,
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  async setDocumentsUnderReview(id: string): Promise<ApiResponse<Operator>> {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    return this.updateOperator(id, { 
+      document_verification_status: 'under_review',
+      document_verification_notes: 'Documents are being reviewed by admin team',
+      document_verified_at: new Date().toISOString(),
+      document_verified_by: user?.id,
       updated_at: new Date().toISOString()
     });
   }

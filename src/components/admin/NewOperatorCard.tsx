@@ -161,6 +161,7 @@ export const NewOperatorCard: React.FC<NewOperatorCardProps> = ({
                   isActive={operator.is_active}
                   profileCompletion={profileCompletionPercentage}
                   documentStatus={documentStatus}
+                  verificationStatus={operator.document_verification_status || 'pending'}
                 />
               </div>
 
@@ -254,6 +255,8 @@ export const NewOperatorCard: React.FC<NewOperatorCardProps> = ({
             documents={operator.documents}
             operatorId={operator.id}
             operatorName={operator.company_name || operator.company}
+            verificationStatus={operator.document_verification_status || 'pending'}
+            verificationNotes={operator.document_verification_notes || undefined}
             onDocumentAction={handleDocumentAction}
           />
         )}

@@ -263,6 +263,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           destinations_covered: Json | null
+          document_verification_notes: string | null
+          document_verification_status: string | null
+          document_verified_at: string | null
+          document_verified_by: string | null
           email: string
           id: string
           is_active: boolean | null
@@ -289,6 +293,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           destinations_covered?: Json | null
+          document_verification_notes?: string | null
+          document_verification_status?: string | null
+          document_verified_at?: string | null
+          document_verified_by?: string | null
           email: string
           id?: string
           is_active?: boolean | null
@@ -315,6 +323,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           destinations_covered?: Json | null
+          document_verification_notes?: string | null
+          document_verification_status?: string | null
+          document_verified_at?: string | null
+          document_verified_by?: string | null
           email?: string
           id?: string
           is_active?: boolean | null
@@ -328,7 +340,15 @@ export type Database = {
           updated_at?: string | null
           website_url?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "operators_document_verified_by_fkey"
+            columns: ["document_verified_by"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

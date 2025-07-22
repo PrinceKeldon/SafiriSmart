@@ -3,276 +3,336 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { 
-  FileText, 
-  Image, 
-  ExternalLink, 
-  Eye,
-  Download,
+  Shield, 
+  Download, 
+  Eye, 
+  ExternalLink,
   CheckCircle,
   XCircle,
-  AlertTriangle,
-  Shield,
-  RefreshCw
+  Clock,
+  FileText,
+  Image as ImageIcon,
+  Link as LinkIcon
 } from 'lucide-react';
-import { DocumentViewer } from './DocumentViewer';
+import { toast } from 'sonner';
+import { adminService } from '@/services/AdminService';
+
+interface DocumentInfo {
+  url: string;
+  valid: boolean;
+  type: string;
+}
 
 interface ProofOfTrustCardProps {
   documents: {
-    certificate_of_incorporation?: { url: string; valid: boolean; type: string };
-    business_permit?: { url: string; valid: boolean; type: string };
-    kato_membership?: { url: string; valid: boolean; type: string };
+    certificate_of_incorporation?: DocumentInfo;
+    business_permit?: DocumentInfo;
+    kato_membership?: DocumentInfo;
   };
   operatorId: string;
   operatorName: string;
-  onDocumentAction: (documentType: string, action: 'approve' | 'reject', notes?: string) => void;
+  verificationStatus?: string;
+  verificationNotes?: string;
+  onDocumentAction?: (documentType: string, action: 'approve' | 'reject', notes?: string) => Promise<void>;
 }
 
 export const ProofOfTrustCard: React.FC<ProofOfTrustCardProps> = ({
   documents,
   operatorId,
   operatorName,
+  verificationStatus = 'pending',
+  verificationNotes,
   onDocumentAction
 }) => {
-  const [selectedDocument, setSelectedDocument] = useState<{
-    url: string;
-    type: string;
-    valid: boolean;
-    label: string;
-    key: string;
-  } | null>(null);
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const [refreshing, setRefreshing] = useState(false);
-
-  console.log('ProofOfTrustCard documents:', documents);
-
-  const documentEntries = [
+  const documentTypes = [
     {
       key: 'certificate_of_incorporation',
       label: 'Certificate of Incorporation',
-      doc: documents.certificate_of_incorporation,
-      expectedType: 'PDF'
+      icon: FileText,
+      description: 'Legal incorporation document (PDF)'
     },
     {
       key: 'business_permit',
       label: 'Business Permit',
-      doc: documents.business_permit,
-      expectedType: 'Image'
+      icon: ImageIcon,
+      description: 'Valid business operating permit (Image)'
     },
     {
       key: 'kato_membership',
       label: 'KATO Membership',
-      doc: documents.kato_membership,
-      expectedType: 'URL'
+      icon: LinkIcon,
+      description: 'Kenya Association of Tour Operators membership'
     }
   ];
 
-  const submittedDocuments = documentEntries.filter(entry => entry.doc);
-  const validDocuments = submittedDocuments.filter(entry => entry.doc?.valid);
-  const hasValidDocuments = validDocuments.length > 0;
-
-  console.log('Document analysis:', {
-    submittedDocuments: submittedDocuments.length,
-    validDocuments: validDocuments.length,
-    hasValidDocuments
-  });
-
-  const getDocumentIcon = (type: string) => {
-    switch (type) {
-      case 'pdf': return FileText;
-      case 'image': return Image;
-      case 'external_url': return ExternalLink;
-      default: return AlertTriangle;
+  const getStatusConfig = () => {
+    switch (verificationStatus) {
+      case 'approved':
+        return {
+          label: 'Approved',
+          icon: CheckCircle,
+          className: 'bg-green-100 text-green-800 border-green-200'
+        };
+      case 'rejected':
+        return {
+          label: 'Rejected',
+          icon: XCircle,
+          className: 'bg-red-100 text-red-800 border-red-200'
+        };
+      case 'under_review':
+        return {
+          label: 'Under Review',
+          icon: Eye,
+          className: 'bg-blue-100 text-blue-800 border-blue-200'
+        };
+      default:
+        return {
+          label: 'Pending Review',
+          icon: Clock,
+          className: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+        };
     }
   };
 
-  const getDocumentColor = (type: string, valid: boolean) => {
-    if (!valid) return 'text-red-600 bg-red-50 border-red-200';
-    switch (type) {
-      case 'pdf': return 'text-blue-600 bg-blue-50 border-blue-200';
-      case 'image': return 'text-green-600 bg-green-50 border-green-200';
-      case 'external_url': return 'text-purple-600 bg-purple-50 border-purple-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+  const statusConfig = getStatusConfig();
+  const StatusIcon = statusConfig.icon;
+
+  const handleDownload = async (url: string, filename: string) => {
+    try {
+      await adminService.downloadDocument(url);
+      toast.success(`Downloaded ${filename}`);
+    } catch (error) {
+      toast.error(`Failed to download ${filename}`);
     }
   };
 
-  const getFileName = (url: string) => {
-    const urlParts = url.split('/');
-    const fileName = urlParts[urlParts.length - 1];
-    return fileName.replace(/^\d+-/, '') || 'Document';
-  };
-
-  const handleDocumentClick = (entry: any) => {
-    console.log('Opening document:', entry);
-    setSelectedDocument({
-      url: entry.doc.url,
-      type: entry.doc.type,
-      valid: entry.doc.valid,
-      label: entry.label,
-      key: entry.key
-    });
-  };
-
-  const handleDocumentAction = async (action: 'approve' | 'reject', notes?: string) => {
-    if (selectedDocument) {
-      await onDocumentAction(selectedDocument.key, action, notes);
-      setSelectedDocument(null);
+  const handleApproveAll = async () => {
+    if (!onDocumentAction) return;
+    
+    setIsProcessing(true);
+    try {
+      await onDocumentAction('all', 'approve', approvalNotes || 'All documents approved');
+      toast.success('Documents approved successfully');
+      setApprovalNotes('');
+    } catch (error) {
+      toast.error('Failed to approve documents');
+    } finally {
+      setIsProcessing(false);
     }
   };
 
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    // Trigger a refresh of the parent component
-    setTimeout(() => {
-      setRefreshing(false);
-      window.location.reload();
-    }, 1000);
+  const handleRejectAll = async () => {
+    if (!onDocumentAction || !rejectionReason.trim()) {
+      toast.error('Please provide a rejection reason');
+      return;
+    }
+    
+    setIsProcessing(true);
+    try {
+      await onDocumentAction('all', 'reject', rejectionReason);
+      toast.success('Documents rejected');
+      setRejectionReason('');
+    } catch (error) {
+      toast.error('Failed to reject documents');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
-  if (submittedDocuments.length === 0) {
-    return (
-      <Card className="border-gray-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Shield className="w-4 h-4 text-gray-500" />
-            Proof of Trust Documents
-            <Badge variant="secondary" className="text-xs">
-              No documents submitted
-            </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="ml-auto"
-            >
-              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">
-            <AlertTriangle className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-            <p className="text-sm text-gray-500">No documents have been submitted yet</p>
-            <p className="text-xs text-gray-400 mt-1">
-              Check operator profile or refresh to see latest documents
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  const validDocumentsCount = Object.values(documents).filter(doc => doc?.valid).length;
+  const totalDocuments = Object.keys(documents).length;
 
   return (
-    <>
-      <Card className="border-gray-200">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <Shield className="w-4 h-4 text-gray-600" />
-            Proof of Trust Documents
-            <Badge 
-              variant={hasValidDocuments ? "default" : "destructive"}
-              className="text-xs"
-            >
-              {validDocuments.length}/{submittedDocuments.length} Valid
-            </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="ml-auto"
-            >
-              <RefreshCw className={`w-3 h-3 ${refreshing ? 'animate-spin' : ''}`} />
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {submittedDocuments.map((entry, index) => {
-            const doc = entry.doc!;
-            const DocIcon = getDocumentIcon(doc.type);
-            const colorClass = getDocumentColor(doc.type, doc.valid);
-            const fileName = getFileName(doc.url);
+    <Card className="mt-6">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-blue-600" />
+            <CardTitle className="text-lg">Proof of Trust Documents</CardTitle>
+          </div>
+          
+          <Badge 
+            variant="outline" 
+            className={`flex items-center gap-1 ${statusConfig.className}`}
+          >
+            <StatusIcon className="w-3 h-3" />
+            {statusConfig.label}
+          </Badge>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Document Status Summary */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium">Document Status</span>
+            <span className="text-sm text-gray-600">
+              {validDocumentsCount}/{totalDocuments} documents uploaded
+            </span>
+          </div>
+          
+          {verificationNotes && (
+            <div className="mt-2 p-2 bg-white rounded border-l-4 border-blue-500">
+              <p className="text-sm text-gray-700">{verificationNotes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Document List */}
+        <div className="space-y-3">
+          {documentTypes.map(({ key, label, icon: Icon, description }) => {
+            const doc = documents[key as keyof typeof documents];
             
             return (
-              <div key={index} className={`border-2 rounded-lg p-3 transition-all cursor-pointer hover:shadow-md ${colorClass}`}>
-                <div className="flex items-center gap-3 mb-2">
-                  <DocIcon className="w-4 h-4" />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{entry.label}</p>
-                    <p className="text-xs opacity-75">
-                      {doc.valid ? fileName : `Invalid ${entry.expectedType} Entry`}
-                    </p>
+              <div key={key} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Icon className="h-5 w-5 text-gray-500" />
+                  <div>
+                    <p className="font-medium">{label}</p>
+                    <p className="text-sm text-gray-500">{description}</p>
                   </div>
-                  <Badge variant={doc.valid ? "default" : "destructive"} className="text-xs">
-                    {doc.valid ? 'Valid' : 'Invalid'}
-                  </Badge>
                 </div>
                 
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDocumentClick(entry)}
-                    className="flex items-center gap-1 text-xs h-7"
-                  >
-                    <Eye className="w-3 h-3" />
-                    {doc.type === 'external_url' ? 'Visit' : 'View'}
-                  </Button>
-                  
-                  {doc.type !== 'external_url' && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(doc.url, '_blank')}
-                      className="flex items-center gap-1 text-xs h-7"
-                    >
-                      <Download className="w-3 h-3" />
-                      Download
-                    </Button>
+                <div className="flex items-center gap-2">
+                  {doc?.valid ? (
+                    <>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        ✓ Uploaded
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDownload(doc.url, label)}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Download
+                      </Button>
+                      {doc.type === 'external_url' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => window.open(doc.url, '_blank')}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          View
+                        </Button>
+                      )}
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="bg-gray-50 text-gray-600 border-gray-200">
+                      Not uploaded
+                    </Badge>
                   )}
                 </div>
               </div>
             );
           })}
-          
-          {/* Document Actions */}
-          {hasValidDocuments && (
-            <div className="flex gap-2 pt-3 border-t">
-              <Button
-                size="sm"
-                className="flex items-center gap-1 bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => onDocumentAction('all', 'approve')}
-              >
-                <CheckCircle className="w-3 h-3" />
-                Approve All
-              </Button>
-              
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => onDocumentAction('all', 'reject')}
-              >
-                <XCircle className="w-3 h-3" />
-                Reject All
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* Document Viewer Modal */}
-      {selectedDocument && (
-        <DocumentViewer
-          isOpen={!!selectedDocument}
-          onClose={() => setSelectedDocument(null)}
-          document={selectedDocument}
-          operatorId={operatorId}
-          operatorName={operatorName}
-          onDocumentAction={handleDocumentAction}
-        />
-      )}
-    </>
+        {/* Admin Action Buttons */}
+        {onDocumentAction && validDocumentsCount > 0 && verificationStatus !== 'approved' && (
+          <div className="flex gap-2 pt-4 border-t">
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="default" 
+                  className="bg-green-600 hover:bg-green-700"
+                  disabled={isProcessing}
+                >
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  Approve All
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Approve Documents</DialogTitle>
+                  <DialogDescription>
+                    Approve all documents for {operatorName}. You can add optional notes.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="approval-notes">Approval Notes (Optional)</Label>
+                    <Textarea
+                      id="approval-notes"
+                      value={approvalNotes}
+                      onChange={(e) => setApprovalNotes(e.target.value)}
+                      placeholder="Add any notes for the operator..."
+                      rows={3}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <DialogTrigger asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogTrigger>
+                    <Button 
+                      onClick={handleApproveAll}
+                      disabled={isProcessing}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      {isProcessing ? 'Processing...' : 'Approve Documents'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  disabled={isProcessing}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject All
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Reject Documents</DialogTitle>
+                  <DialogDescription>
+                    Reject all documents for {operatorName}. Please provide a reason.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="rejection-reason">Rejection Reason *</Label>
+                    <Textarea
+                      id="rejection-reason"
+                      value={rejectionReason}
+                      onChange={(e) => setRejectionReason(e.target.value)}
+                      placeholder="Please explain why the documents are being rejected..."
+                      rows={3}
+                      required
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <DialogTrigger asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogTrigger>
+                    <Button 
+                      onClick={handleRejectAll}
+                      disabled={isProcessing || !rejectionReason.trim()}
+                      variant="destructive"
+                    >
+                      {isProcessing ? 'Processing...' : 'Reject Documents'}
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

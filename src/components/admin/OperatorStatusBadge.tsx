@@ -9,7 +9,8 @@ import {
   Clock,
   AlertTriangle,
   Shield,
-  Percent
+  Percent,
+  Eye
 } from 'lucide-react';
 
 interface OperatorStatusBadgeProps {
@@ -20,7 +21,7 @@ interface OperatorStatusBadgeProps {
     validDocuments: number;
     totalDocuments: number;
   };
-  verificationStatus?: 'pending' | 'approved' | 'rejected';
+  verificationStatus?: 'pending' | 'under_review' | 'approved' | 'rejected';
 }
 
 export const OperatorStatusBadge: React.FC<OperatorStatusBadgeProps> = ({
@@ -47,6 +48,7 @@ export const OperatorStatusBadge: React.FC<OperatorStatusBadgeProps> = ({
     switch (verificationStatus) {
       case 'approved': return 'bg-green-100 text-green-800 border-green-200';
       case 'rejected': return 'bg-red-100 text-red-800 border-red-200';
+      case 'under_review': return 'bg-blue-100 text-blue-800 border-blue-200';
       default: return 'bg-yellow-100 text-yellow-700 border-yellow-200';
     }
   };
@@ -93,9 +95,11 @@ export const OperatorStatusBadge: React.FC<OperatorStatusBadgeProps> = ({
       >
         {verificationStatus === 'approved' && <CheckCircle className="w-3 h-3" />}
         {verificationStatus === 'rejected' && <XCircle className="w-3 h-3" />}
+        {verificationStatus === 'under_review' && <Eye className="w-3 h-3" />}
         {verificationStatus === 'pending' && <Clock className="w-3 h-3" />}
         {verificationStatus === 'approved' ? 'Verified' : 
-         verificationStatus === 'rejected' ? 'Rejected' : 'Pending Review'}
+         verificationStatus === 'rejected' ? 'Rejected' : 
+         verificationStatus === 'under_review' ? 'Under Review' : 'Pending Review'}
       </Badge>
     </div>
   );
