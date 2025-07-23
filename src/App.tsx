@@ -1,49 +1,37 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster } from '@/components/ui/toaster';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { PrivateRoute } from '@/components/auth/PrivateRoute';
-
-// Pages
 import Index from '@/pages/Index';
-import SafariGuide from '@/pages/SafariGuide';
 import Login from '@/pages/Login';
 import AdminLogin from '@/pages/AdminLogin';
+import ResetPassword from '@/pages/ResetPassword';
 import Dashboard from '@/pages/Dashboard';
-import LeadInbox from '@/pages/LeadInbox';
-import Packages from '@/pages/Packages';
-import Profile from '@/pages/Profile';
 import AdminDashboard from '@/pages/AdminDashboard';
-import SystemConfig from '@/pages/SystemConfig';
-import EnvConfig from '@/pages/EnvConfig';
+import LeadInbox from '@/pages/LeadInbox';
+import Profile from '@/pages/Profile';
+import Packages from '@/pages/Packages';
+import SafariGuide from '@/pages/SafariGuide';
 import NewLead from '@/pages/NewLead';
+import NoticeBoard from '@/pages/NoticeBoard';
+import NotFound from '@/pages/NotFound';
 
-import './App.css';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
-          <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+          <div className="App">
             <Routes>
-              {/* Public Routes */}
               <Route path="/" element={<Index />} />
-              <Route path="/safari-guide" element={<SafariGuide />} />
               <Route path="/login" element={<Login />} />
               <Route path="/admin/login" element={<AdminLogin />} />
-              
-              {/* Protected Operator Routes */}
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/safari-guide" element={<SafariGuide />} />
               <Route
                 path="/dashboard"
                 element={
@@ -53,7 +41,15 @@ function App() {
                 }
               />
               <Route
-                path="/dashboard/notice-board"
+                path="/admin/dashboard"
+                element={
+                  <PrivateRoute requireAdmin>
+                    <AdminDashboard />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/leads"
                 element={
                   <PrivateRoute>
                     <LeadInbox />
@@ -61,18 +57,18 @@ function App() {
                 }
               />
               <Route
-                path="/dashboard/packages"
+                path="/profile"
                 element={
                   <PrivateRoute>
-                    <Packages />
+                    <Profile />
                   </PrivateRoute>
                 }
               />
               <Route
-                path="/dashboard/profile"
+                path="/packages"
                 element={
                   <PrivateRoute>
-                    <Profile />
+                    <Packages />
                   </PrivateRoute>
                 }
               />
@@ -84,38 +80,15 @@ function App() {
                   </PrivateRoute>
                 }
               />
-
-              {/* Protected Admin Routes */}
               <Route
-                path="/admin/dashboard"
+                path="/notice-board"
                 element={
-                  <PrivateRoute requireAdmin={true}>
-                    <AdminDashboard />
+                  <PrivateRoute>
+                    <NoticeBoard />
                   </PrivateRoute>
                 }
               />
-              <Route
-                path="/admin/system-config"
-                element={
-                  <PrivateRoute requireAdmin={true}>
-                    <SystemConfig />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/admin/env-config"
-                element={
-                  <PrivateRoute requireAdmin={true}>
-                    <EnvConfig />
-                  </PrivateRoute>
-                }
-              />
-
-              {/* Legacy admin route - redirect to new admin dashboard */}
-              <Route
-                path="/admin"
-                element={<Navigate to="/admin/dashboard" replace />}
-              />
+              <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
           </div>

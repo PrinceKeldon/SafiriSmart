@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2, ArrowLeft, Shield } from 'lucide-react';
+import { PasswordInput } from '@/components/auth/PasswordInput';
+import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -34,6 +36,7 @@ const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, signup, user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -115,6 +118,26 @@ const Login = () => {
     navigate('/admin/login');
   };
 
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md">
+          <div className="mb-6">
+            <Link 
+              to="/" 
+              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to SafiriSmart
+            </Link>
+          </div>
+          
+          <ForgotPasswordForm onBackToLogin={() => setShowForgotPassword(false)} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -192,9 +215,8 @@ const Login = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="login-password">Password</Label>
-                      <Input
+                      <PasswordInput
                         id="login-password"
-                        type="password"
                         placeholder="Enter your password"
                         {...loginForm.register('password')}
                         className={loginForm.formState.errors.password ? 'border-red-500' : ''}
@@ -219,6 +241,17 @@ const Login = () => {
                       )}
                     </Button>
                   </form>
+
+                  {/* Forgot Password Link */}
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotPassword(true)}
+                      className="text-sm text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -260,9 +293,8 @@ const Login = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
-                    <Input
+                    <PasswordInput
                       id="signup-password"
-                      type="password"
                       placeholder="Choose a strong password"
                       {...signupForm.register('password')}
                       className={signupForm.formState.errors.password ? 'border-red-500' : ''}
