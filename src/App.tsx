@@ -1,26 +1,27 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
-import PrivateRoute from "@/components/auth/PrivateRoute";
-import Index from "./pages/Index";
-import Login from "./pages/Login";
-import AdminLogin from "./pages/AdminLogin";
-import ResetPassword from "./pages/ResetPassword";
-import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile";
-import LeadInbox from "./pages/LeadInbox";
-import NoticeBoard from "./pages/NoticeBoard";
-import NewLead from "./pages/NewLead";
-import Packages from "./pages/Packages";
-import AdminDashboard from "./pages/AdminDashboard";
-import SafariGuide from "./pages/SafariGuide";
-import SystemConfig from "./pages/SystemConfig";
-import EnvConfig from "./pages/EnvConfig";
-import NotFound from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { Toaster } from '@/components/ui/toaster';
+import PrivateRoute from '@/components/auth/PrivateRoute';
+import DashboardLayout from '@/components/layout/DashboardLayout';
+
+// Pages
+import Index from '@/pages/Index';
+import Login from '@/pages/Login';
+import Dashboard from '@/pages/Dashboard';
+import Profile from '@/pages/Profile';
+import LeadInbox from '@/pages/LeadInbox';
+import NoticeBoard from '@/pages/NoticeBoard';
+import NewLead from '@/pages/NewLead';
+import Packages from '@/pages/Packages';
+import AdminDashboard from '@/pages/AdminDashboard';
+import SystemConfig from '@/pages/SystemConfig';
+import EnvConfig from '@/pages/EnvConfig';
+import SafariGuideOptimized from '@/pages/SafariGuideOptimized';
+import NotFound from '@/pages/NotFound';
+import ResetPassword from '@/pages/ResetPassword';
 
 const queryClient = new QueryClient();
 
@@ -28,72 +29,88 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+        <Router>
+          <div className="min-h-screen bg-background">
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Index />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/safari-guide" element={<SafariGuide />} />
+              <Route path="/safari-guide" element={<SafariGuideOptimized />} />
               
-              {/* Protected operator routes */}
+              {/* Protected routes with dashboard layout */}
               <Route path="/dashboard" element={
                 <PrivateRoute>
-                  <Dashboard />
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/profile" element={
                 <PrivateRoute>
-                  <Profile />
+                  <DashboardLayout>
+                    <Profile />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/leads" element={
                 <PrivateRoute>
-                  <LeadInbox />
+                  <DashboardLayout>
+                    <LeadInbox />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/notice-board" element={
                 <PrivateRoute>
-                  <NoticeBoard />
+                  <DashboardLayout>
+                    <NoticeBoard />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/new-lead" element={
                 <PrivateRoute>
-                  <NewLead />
+                  <DashboardLayout>
+                    <NewLead />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/packages" element={
                 <PrivateRoute>
-                  <Packages />
+                  <DashboardLayout>
+                    <Packages />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               
-              {/* Protected admin routes */}
+              {/* Admin routes */}
               <Route path="/admin/dashboard" element={
-                <PrivateRoute requireAdmin>
-                  <AdminDashboard />
+                <PrivateRoute>
+                  <DashboardLayout>
+                    <AdminDashboard />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/admin/system-config" element={
-                <PrivateRoute requireAdmin>
-                  <SystemConfig />
+                <PrivateRoute>
+                  <DashboardLayout>
+                    <SystemConfig />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               <Route path="/admin/env-config" element={
-                <PrivateRoute requireAdmin>
-                  <EnvConfig />
+                <PrivateRoute>
+                  <DashboardLayout>
+                    <EnvConfig />
+                  </DashboardLayout>
                 </PrivateRoute>
               } />
               
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+            <Toaster />
+          </div>
+        </Router>
       </AuthProvider>
     </QueryClientProvider>
   );
