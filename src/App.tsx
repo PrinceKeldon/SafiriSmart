@@ -57,6 +57,14 @@ function App() {
                 }
               />
               <Route
+                path="/dashboard/profile"
+                element={
+                  <PrivateRoute>
+                    <Profile />
+                  </PrivateRoute>
+                }
+              />
+              <Route
                 path="/profile"
                 element={
                   <PrivateRoute>
@@ -65,10 +73,26 @@ function App() {
                 }
               />
               <Route
+                path="/dashboard/packages"
+                element={
+                  <PrivateRoute>
+                    <Packages />
+                  </PrivateRoute>
+                }
+              />
+              <Route
                 path="/packages"
                 element={
                   <PrivateRoute>
                     <Packages />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/dashboard/notice-board"
+                element={
+                  <PrivateRoute>
+                    <NoticeBoard />
                   </PrivateRoute>
                 }
               />
