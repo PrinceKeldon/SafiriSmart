@@ -18,7 +18,6 @@ import NewLead from "./pages/NewLead";
 import Packages from "./pages/Packages";
 import AdminDashboard from "./pages/AdminDashboard";
 import SafariGuide from "./pages/SafariGuide";
-import SafariGuideOptimized from "./pages/SafariGuideOptimized";
 import SystemConfig from "./pages/SystemConfig";
 import EnvConfig from "./pages/EnvConfig";
 import NotFound from "./pages/NotFound";
@@ -40,7 +39,6 @@ function App() {
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/safari-guide" element={<SafariGuide />} />
-              <Route path="/safari-guide-optimized" element={<SafariGuideOptimized />} />
               
               {/* Protected operator routes */}
               <Route path="/dashboard" element={
