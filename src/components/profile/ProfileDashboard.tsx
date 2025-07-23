@@ -4,7 +4,7 @@ import { useOperatorProfile } from '@/hooks/useOperatorProfile';
 import { ProfileOverview } from './ProfileOverview';
 import { EditableProfileSections } from './EditableProfileSections';
 import { PendingTasksList } from './PendingTasksList';
-import { ChangePasswordForm } from './ChangePasswordForm';
+import ChangePasswordForm from './ChangePasswordForm';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { User, Shield, CheckSquare } from 'lucide-react';
@@ -14,6 +14,7 @@ import { Loader2 } from 'lucide-react';
 export const ProfileDashboard = () => {
   const { data: profile, isLoading, error } = useOperatorProfile();
   const [activeTab, setActiveTab] = useState('overview');
+  const [editingSection, setEditingSection] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -75,7 +76,11 @@ export const ProfileDashboard = () => {
         </TabsContent>
 
         <TabsContent value="edit" className="space-y-6">
-          <EditableProfileSections profile={profile} />
+          <EditableProfileSections 
+            profile={profile} 
+            editingSection={editingSection}
+            setEditingSection={setEditingSection}
+          />
         </TabsContent>
 
         <TabsContent value="security" className="space-y-6">
