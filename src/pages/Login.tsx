@@ -12,8 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, ArrowLeft, Shield, Eye, EyeOff } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { Loader2, ArrowLeft, Shield } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -28,21 +27,13 @@ const signupSchema = z.object({
   specializations: z.string().optional(),
 });
 
-const forgotPasswordSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-});
-
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 const Login = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, signup, user, isAdmin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,10 +53,6 @@ const Login = () => {
 
   const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
-  });
-
-  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
-    resolver: zodResolver(forgotPasswordSchema),
   });
 
   const onLogin = async (data: LoginFormData) => {
@@ -120,29 +107,6 @@ const Login = () => {
     setIsSubmitting(false);
   };
 
-  const onForgotPassword = async (data: ForgotPasswordFormData) => {
-    setIsSubmitting(true);
-    setError(null);
-    setSuccessMessage(null);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-
-      if (error) {
-        setError(error.message);
-      } else {
-        setSuccessMessage('Password reset email sent! Please check your inbox.');
-        forgotPasswordForm.reset();
-      }
-    } catch (error) {
-      setError('Failed to send password reset email. Please try again.');
-    }
-
-    setIsSubmitting(false);
-  };
-
   const handleSwitchToAdminLogin = async () => {
     // If user is logged in as admin, log them out first
     if (user && isAdmin()) {
@@ -150,71 +114,6 @@ const Login = () => {
     }
     navigate('/admin/login');
   };
-
-  if (showForgotPassword) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-        <div className="sm:mx-auto sm:w-full sm:max-w-md">
-          <div className="mb-6">
-            <button 
-              onClick={() => setShowForgotPassword(false)}
-              className="inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Login
-            </button>
-          </div>
-
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>Reset Password</CardTitle>
-              <CardDescription>
-                Enter your email address and we'll send you a password reset link
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={forgotPasswordForm.handleSubmit(onForgotPassword)} className="space-y-4">
-                {(error || successMessage) && (
-                  <Alert variant={error ? "destructive" : "default"}>
-                    <AlertDescription>{error || successMessage}</AlertDescription>
-                  </Alert>
-                )}
-
-                <div className="space-y-2">
-                  <Label htmlFor="forgot-email">Email Address</Label>
-                  <Input
-                    id="forgot-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    {...forgotPasswordForm.register('email')}
-                    className={forgotPasswordForm.formState.errors.email ? 'border-red-500' : ''}
-                  />
-                  {forgotPasswordForm.formState.errors.email && (
-                    <p className="text-sm text-red-600">{forgotPasswordForm.formState.errors.email.message}</p>
-                  )}
-                </div>
-
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    'Send Reset Link'
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -293,39 +192,16 @@ const Login = () => {
 
                     <div className="space-y-2">
                       <Label htmlFor="login-password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="login-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Enter your password"
-                          {...loginForm.register('password')}
-                          className={`pr-10 ${loginForm.formState.errors.password ? 'border-red-500' : ''}`}
-                        />
-                        <button
-                          type="button"
-                          className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                          onClick={() => setShowPassword(!showPassword)}
-                        >
-                          {showPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-400" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-gray-400" />
-                          )}
-                        </button>
-                      </div>
+                      <Input
+                        id="login-password"
+                        type="password"
+                        placeholder="Enter your password"
+                        {...loginForm.register('password')}
+                        className={loginForm.formState.errors.password ? 'border-red-500' : ''}
+                      />
                       {loginForm.formState.errors.password && (
                         <p className="text-sm text-red-600">{loginForm.formState.errors.password.message}</p>
                       )}
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotPassword(true)}
-                        className="text-sm text-blue-600 hover:text-blue-500"
-                      >
-                        Forgot your password?
-                      </button>
                     </div>
 
                     <Button
@@ -384,26 +260,13 @@ const Login = () => {
 
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
-                    <div className="relative">
-                      <Input
-                        id="signup-password"
-                        type={showSignupPassword ? "text" : "password"}
-                        placeholder="Choose a strong password"
-                        {...signupForm.register('password')}
-                        className={`pr-10 ${signupForm.formState.errors.password ? 'border-red-500' : ''}`}
-                      />
-                      <button
-                        type="button"
-                        className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                        onClick={() => setShowSignupPassword(!showSignupPassword)}
-                      >
-                        {showSignupPassword ? (
-                          <EyeOff className="h-4 w-4 text-gray-400" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-gray-400" />
-                        )}
-                      </button>
-                    </div>
+                    <Input
+                      id="signup-password"
+                      type="password"
+                      placeholder="Choose a strong password"
+                      {...signupForm.register('password')}
+                      className={signupForm.formState.errors.password ? 'border-red-500' : ''}
+                    />
                     {signupForm.formState.errors.password && (
                       <p className="text-sm text-red-600">{signupForm.formState.errors.password.message}</p>
                     )}
