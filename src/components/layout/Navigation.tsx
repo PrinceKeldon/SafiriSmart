@@ -1,111 +1,91 @@
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
-  Home, 
+  LayoutDashboard, 
+  Users, 
+  Package, 
   User, 
-  Mail, 
-  Bell, 
-  UserPlus, 
-  Package,
+  Inbox,
   LogOut,
   Settings
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Navigation = () => {
   const location = useLocation();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
 
-  const navItems = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Profile', href: '/profile', icon: User },
-    { name: 'Leads', href: '/leads', icon: Mail },
-    { name: 'Notice Board', href: '/notice-board', icon: Bell },
-    { name: 'New Lead', href: '/new-lead', icon: UserPlus },
-    { name: 'Packages', href: '/packages', icon: Package },
+  const navigationItems = [
+    {
+      name: 'Dashboard',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      name: 'Lead Inbox',
+      href: '/dashboard/notice-board',
+      icon: Inbox,
+    },
+    {
+      name: 'Packages',
+      href: '/dashboard/packages',
+      icon: Package,
+    },
+    {
+      name: 'Profile',
+      href: '/dashboard/profile',
+      icon: User,
+    },
   ];
 
-  const adminNavItems = [
-    { name: 'Admin Dashboard', href: '/admin/dashboard', icon: Settings },
-    { name: 'System Config', href: '/admin/system-config', icon: Settings },
-    { name: 'Env Config', href: '/admin/env-config', icon: Settings },
-  ];
-
-  const handleSignOut = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+  const handleLogout = () => {
+    logout();
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex-shrink-0 flex items-center">
-              <Link to="/dashboard" className="text-xl font-bold text-gray-900">
-                Safari Connect
-              </Link>
-            </div>
-            <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                return (
+    <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-48 sm:w-64 z-10 overflow-y-auto">
+      <div className="flex flex-col h-full">
+        <div className="p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900">TourMaster AI</h2>
+          <p className="text-xs sm:text-sm text-gray-600">B2B Dashboard</p>
+        </div>
+        
+        <div className="flex-1 px-2 sm:px-4">
+          <ul className="space-y-2">
+            {navigationItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <li key={item.name}>
                   <Link
-                    key={item.name}
                     to={item.href}
                     className={cn(
-                      'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium',
-                      location.pathname === item.href
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                      'flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                      isActive
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                     )}
                   >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.name}
+                    <item.icon className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+                    <span className="truncate">{item.name}</span>
                   </Link>
-                );
-              })}
-              
-              {user?.role === 'admin' && adminNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.name}
-                    to={item.href}
-                    className={cn(
-                      'inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium',
-                      location.pathname === item.href
-                        ? 'border-blue-500 text-gray-900'
-                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                    )}
-                  >
-                    <Icon className="w-4 h-4 mr-2" />
-                    {item.name}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-700">
-              {user?.name || user?.email}
-            </span>
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              size="sm"
-              className="flex items-center gap-2"
-            >
-              <LogOut className="w-4 h-4" />
-              Sign Out
-            </Button>
-          </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+        
+        <div className="p-2 sm:p-4 border-t">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            className="w-full justify-start text-gray-600 hover:text-gray-900 text-sm"
+          >
+            <LogOut className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+            <span className="truncate">Logout</span>
+          </Button>
         </div>
       </div>
     </nav>

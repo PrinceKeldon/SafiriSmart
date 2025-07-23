@@ -93,21 +93,9 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
-  html {
-    height: 100%;
-    overflow-x: hidden;
-  }
-
   body {
     @apply bg-background text-foreground;
-    height: 100%;
-    overflow-x: hidden;
-    margin: 0;
-    padding: 0;
-  }
-
-  #root {
-    height: 100%;
+    /* Prevent horizontal scrolling on mobile */
     overflow-x: hidden;
   }
 
@@ -182,16 +170,5 @@ All colors MUST be HSL.
 @supports (-webkit-touch-callout: none) {
   .min-h-screen {
     min-height: -webkit-fill-available;
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
