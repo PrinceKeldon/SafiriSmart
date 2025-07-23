@@ -46,14 +46,14 @@ const Navigation = () => {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-48 sm:w-64 z-10 overflow-y-auto">
+    <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-48 lg:w-64 z-30 overflow-y-auto">
       <div className="flex flex-col h-full">
-        <div className="p-4 sm:p-6">
+        <div className="p-4 sm:p-6 border-b">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">TourMaster AI</h2>
           <p className="text-xs sm:text-sm text-gray-600">B2B Dashboard</p>
         </div>
         
-        <div className="flex-1 px-2 sm:px-4">
+        <div className="flex-1 px-2 sm:px-4 py-4">
           <ul className="space-y-2">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;
@@ -62,7 +62,7 @@ const Navigation = () => {
                   <Link
                     to={item.href}
                     className={cn(
-                      'flex items-center px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors',
+                      'flex items-center px-3 sm:px-4 py-3 text-sm font-medium rounded-md transition-colors',
                       isActive
                         ? 'bg-blue-100 text-blue-700'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -81,7 +81,7 @@ const Navigation = () => {
           <Button
             variant="ghost"
             onClick={handleLogout}
-            className="w-full justify-start text-gray-600 hover:text-gray-900 text-sm"
+            className="w-full justify-start text-gray-600 hover:text-gray-900 text-sm py-3"
           >
             <LogOut className="mr-2 sm:mr-3 h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
             <span className="truncate">Logout</span>
