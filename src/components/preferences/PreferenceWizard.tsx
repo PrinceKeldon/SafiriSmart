@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
@@ -194,26 +195,30 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     };
 
     return (
-      <ItineraryDisplay
-        itinerary={mockItinerary}
-        preferences={preferences}
-        schedule={schedule}
-        travel={travel}
-        dietary={dietary}
-        userDetails={userDetails}
-        onBack={handleItineraryBack}
-        onComplete={handleItineraryComplete}
-      />
+      <div className="w-full max-w-full px-2 sm:px-4">
+        <ItineraryDisplay
+          itinerary={mockItinerary}
+          preferences={preferences}
+          schedule={schedule}
+          travel={travel}
+          dietary={dietary}
+          userDetails={userDetails}
+          onBack={handleItineraryBack}
+          onComplete={handleItineraryComplete}
+        />
+      </div>
     );
   }
 
   // Show wizard steps (including step 10 - user details)
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <WizardProgress currentStep={currentStep} steps={steps} />
+    <div className="w-full max-w-4xl mx-auto p-3 sm:p-4 md:p-6">
+      <div className="mb-6 sm:mb-8">
+        <WizardProgress currentStep={currentStep} steps={steps} />
+      </div>
       
-      <Card className="mt-8">
-        <CardContent className="p-8">
+      <Card className="w-full">
+        <CardContent className="p-4 sm:p-6 md:p-8">
           <WizardSteps
             currentStep={currentStep}
             preferences={preferences}  

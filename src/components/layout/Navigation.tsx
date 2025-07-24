@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 import { 
@@ -9,14 +9,18 @@ import {
   User, 
   Inbox,
   LogOut,
-  Settings
+  Menu,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Navigation = () => {
   const location = useLocation();
   const { logout } = useAuth();
+  const isMobile = useIsMobile();
+  const [isOpen, setIsOpen] = useState(false);
 
   const navigationItems = [
     {
@@ -43,8 +47,92 @@ const Navigation = () => {
 
   const handleLogout = () => {
     logout();
+    setIsOpen(false);
   };
 
+  const toggleMenu = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
+  };
+
+  // Mobile menu button
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile menu button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleMenu}
+          className="fixed top-4 left-4 z-50 bg-white shadow-md"
+        >
+          {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+        </Button>
+
+        {/* Mobile menu overlay */}
+        {isOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            onClick={closeMenu}
+          />
+        )}
+
+        {/* Mobile menu */}
+        <nav className={cn(
+          "fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-50 transform transition-transform duration-300",
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        )}>
+          <div className="flex flex-col h-full">
+            <div className="p-4 border-b mt-12">
+              <h2 className="text-lg font-bold text-gray-900">TourMaster AI</h2>
+              <p className="text-sm text-gray-600">B2B Dashboard</p>
+            </div>
+            
+            <div className="flex-1 px-4 py-4">
+              <ul className="space-y-2">
+                {navigationItems.map((item) => {
+                  const isActive = location.pathname === item.href;
+                  return (
+                    <li key={item.name}>
+                      <Link
+                        to={item.href}
+                        onClick={closeMenu}
+                        className={cn(
+                          'flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors',
+                          isActive
+                            ? 'bg-blue-100 text-blue-700'
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                        )}
+                      >
+                        <item.icon className="mr-3 h-5 w-5 flex-shrink-0" />
+                        <span>{item.name}</span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+            
+            <div className="p-4 border-t">
+              <Button
+                variant="ghost"
+                onClick={handleLogout}
+                className="w-full justify-start text-gray-600 hover:text-gray-900"
+              >
+                <LogOut className="mr-3 h-5 w-5 flex-shrink-0" />
+                <span>Logout</span>
+              </Button>
+            </div>
+          </div>
+        </nav>
+      </>
+    );
+  }
+
+  // Desktop navigation
   return (
     <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-48 lg:w-64 z-30 overflow-y-auto">
       <div className="flex flex-col h-full">
