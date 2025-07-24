@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Wand2, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,6 +19,7 @@ export const DescriptionGenerator: React.FC<DescriptionGeneratorProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDescription, setGeneratedDescription] = useState(currentDescription);
+  const [keywords, setKeywords] = useState('');
 
   const generateDescription = async () => {
     if (!packageName.trim()) {
@@ -34,7 +36,8 @@ export const DescriptionGenerator: React.FC<DescriptionGeneratorProps> = ({
         },
         body: JSON.stringify({
           packageName,
-          context: 'safari tour package in Kenya'
+          context: keywords.trim() || 'safari tour package in Kenya',
+          userKeywords: keywords.trim()
         }),
       });
 
@@ -63,39 +66,62 @@ export const DescriptionGenerator: React.FC<DescriptionGeneratorProps> = ({
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-gray-700">
           Package Description
         </label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={generateDescription}
-          disabled={isGenerating || !packageName.trim()}
-          className="flex items-center gap-2"
-        >
-          {isGenerating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Wand2 className="w-4 h-4" />
-          )}
-          {isGenerating ? 'Generating...' : 'Generate Description'}
-        </Button>
       </div>
       
+      {/* Keywords/Context Input */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-gray-600">
+          AI Keywords & Context (Optional)
+        </label>
+        <div className="flex gap-2">
+          <Input
+            value={keywords}
+            onChange={(e) => setKeywords(e.target.value)}
+            placeholder="Optional: Add keywords or phrases to inspire the AI description"
+            className="flex-1 text-sm"
+            maxLength={200}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={generateDescription}
+            disabled={isGenerating || !packageName.trim()}
+            className="flex items-center gap-2 whitespace-nowrap"
+          >
+            {isGenerating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Wand2 className="w-4 h-4" />
+            )}
+            {isGenerating ? 'Generating...' : 'Generate Description'}
+          </Button>
+        </div>
+      </div>
+      
+      {/* Main Description Textarea */}
       <Textarea
         value={generatedDescription}
         onChange={(e) => handleDescriptionChange(e.target.value)}
-        placeholder="Enter package description or use the generate button..."
-        className="min-h-[100px]"
-        rows={4}
+        placeholder="Enter package description or use the generate button above..."
+        className="min-h-[120px]"
+        rows={5}
       />
       
-      <p className="text-xs text-gray-500">
-        Tip: Use the generate button to create an AI-powered description based on your package name.
-      </p>
+      {/* User Notice */}
+      <div className="flex flex-col space-y-1">
+        <p className="text-xs text-gray-500">
+          💡 <strong>Tip:</strong> Use the generate button to create an AI-powered description based on your package name and keywords.
+        </p>
+        <p className="text-xs text-amber-600">
+          ⚠️ <strong>Note:</strong> AI-generated content may occasionally include errors. Please review and adjust before publishing.
+        </p>
+      </div>
     </div>
   );
 };

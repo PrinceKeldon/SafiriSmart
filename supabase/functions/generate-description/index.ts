@@ -13,15 +13,19 @@ serve(async (req) => {
   }
 
   try {
-    const { packageName, context } = await req.json();
+    const { packageName, context, userKeywords } = await req.json();
     
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       throw new Error('OpenAI API key not configured');
     }
 
+    // Enhanced prompt with user keywords integration
+    const baseContext = context || 'safari tour package in Kenya';
+    const keywordSection = userKeywords ? `\n\nUSER KEYWORDS & CONTEXT: ${userKeywords}\nPlease incorporate these keywords and themes naturally into the description.` : '';
+    
     const prompt = `Write a compelling and professional description for a safari tour package called "${packageName}". 
-    Context: ${context || 'safari tour package in Kenya'}
+    Context: ${baseContext}${keywordSection}
     
     The description should be:
     - 2-3 paragraphs long
@@ -30,8 +34,11 @@ serve(async (req) => {
     - Include practical information about what's included
     - Professional tone suitable for travel operators
     - Around 150-200 words
+    - If user keywords are provided, incorporate them naturally and meaningfully
     
-    Do not include pricing information as that will be handled separately.`;
+    Do not include pricing information as that will be handled separately.
+    
+    Make the description sound authentic and specific to Kenya's safari experience.`;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -44,14 +51,14 @@ serve(async (req) => {
         messages: [
           {
             role: 'system',
-            content: 'You are a professional travel and safari marketing expert who writes compelling package descriptions.'
+            content: 'You are a professional travel and safari marketing expert who writes compelling package descriptions. You excel at incorporating user-provided keywords naturally into engaging content.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        max_tokens: 300,
+        max_tokens: 350,
         temperature: 0.7,
       }),
     });
