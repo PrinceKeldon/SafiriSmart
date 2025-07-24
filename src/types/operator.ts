@@ -1,4 +1,3 @@
-
 export interface OperatorProfile {
   id: string;
   name: string;
@@ -52,6 +51,7 @@ export interface OperatorPackage {
   operator_id: string;
   package_name: string;
   description?: string;
+  contact_person?: string;
   min_duration: number;
   max_duration: number;
   min_group_size: number;
@@ -67,6 +67,7 @@ export interface OperatorPackage {
 export interface OperatorPackageCreate {
   package_name: string;
   description?: string;
+  contact_person?: string;
   min_duration: number;
   max_duration: number;
   min_group_size: number;
@@ -80,6 +81,7 @@ export interface OperatorPackageCreate {
 export interface OperatorPackageUpdate {
   package_name?: string;
   description?: string;
+  contact_person?: string;
   min_duration?: number;
   max_duration?: number;
   min_group_size?: number;

@@ -26,7 +26,7 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
     isEditing,
   } = usePackageForm(editPackage, onClose);
 
-  const { register, formState: { errors }, setValue } = form;
+  const { register, formState: { errors }, setValue, watch } = form;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -39,7 +39,12 @@ export const PackageForm: React.FC<PackageFormProps> = ({ isOpen, onClose, packa
 
         <form onSubmit={onSubmit} className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
-            <BasicPackageFields register={register} errors={errors} />
+            <BasicPackageFields 
+              register={register} 
+              errors={errors} 
+              watch={watch}
+              setValue={setValue}
+            />
             <DurationGroupFields register={register} errors={errors} />
             <BudgetPricingFields register={register} errors={errors} setValue={setValue} />
           </div>

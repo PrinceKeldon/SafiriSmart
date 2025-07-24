@@ -1,7 +1,8 @@
+
 import React, { useState } from 'react';
 import { OperatorPackage } from '@/types/operator';
 import { PackagePreviewModal } from './PackagePreviewModal';
-import { PackageCard } from './components/PackageCard';
+import { EnhancedPackageCard } from './components/EnhancedPackageCard';
 import { EmptyPackageState } from './components/EmptyPackageState';
 import { usePackageActions } from './hooks/usePackageActions';
 import { downloadPackageImage } from './utils/packageImageGenerator';
@@ -39,7 +40,7 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
     <>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {packages.map((pkg) => (
-          <PackageCard
+          <EnhancedPackageCard
             key={pkg.id}
             pkg={pkg}
             operatorProfile={operatorProfile}
