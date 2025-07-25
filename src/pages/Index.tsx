@@ -5,12 +5,18 @@ import { Link } from "react-router-dom";
 import { PageSEO } from '@/components/seo/PageSEO';
 import { createOrganizationSchema, createWebSiteSchema, createServiceSchema } from '@/utils/structuredData';
 import { trackPageView } from '@/utils/analytics';
+import { trackSafariGuideVisit } from '@/utils/trackingUtils';
+import { HomePageCounters } from '@/components/homepage/HomePageCounters';
 import { useEffect } from 'react';
 
 const Index = () => {
   useEffect(() => {
     trackPageView('Homepage');
   }, []);
+
+  const handleSafariGuideClick = () => {
+    trackSafariGuideVisit();
+  };
 
   const organizationSchema = createOrganizationSchema();
   const websiteSchema = createWebSiteSchema();
@@ -70,7 +76,7 @@ const Index = () => {
             
             {/* Main CTA Buttons */}
             <div className="flex flex-col gap-3 sm:gap-4 mb-8 sm:mb-12 md:mb-16">
-              <Link to="/safari-guide" className="w-full">
+              <Link to="/safari-guide" className="w-full" onClick={handleSafariGuideClick}>
                 <Button size="lg" className="w-full h-12 sm:h-14 md:h-16 px-4 sm:px-6 md:px-8 text-sm sm:text-base md:text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 touch-target">
                   <Compass className="h-4 w-4 sm:h-5 sm:w-5 md:h-6 md:w-6 mr-2 sm:mr-3 flex-shrink-0" />
                   <div className="text-left min-w-0">
@@ -89,6 +95,9 @@ const Index = () => {
                 </Button>
               </Link>
             </div>
+
+            {/* Counters */}
+            <HomePageCounters />
 
             {/* Trust Indicators */}
             <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 md:gap-8 text-xs sm:text-sm text-gray-600 mb-6 sm:mb-8">
@@ -255,7 +264,7 @@ const Index = () => {
               Join thousands of travelers and operators who trust SafiriSmart for unforgettable safari experiences
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
-              <Link to="/safari-guide" className="w-full sm:w-auto">
+              <Link to="/safari-guide" className="w-full sm:w-auto" onClick={handleSafariGuideClick}>
                 <Button size="lg" className="w-full sm:w-auto bg-white text-orange-600 hover:bg-gray-50 font-bold border-2 border-white hover:border-gray-100 touch-target">
                   <Compass className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
                   Plan My Safari

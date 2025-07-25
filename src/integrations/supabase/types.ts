@@ -350,6 +350,30 @@ export type Database = {
           },
         ]
       }
+      safari_guide_visits: {
+        Row: {
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_session: string | null
+          visited_at: string
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_session?: string | null
+          visited_at?: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_session?: string | null
+          visited_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
