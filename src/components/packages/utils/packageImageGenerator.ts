@@ -1,3 +1,4 @@
+
 import { OperatorPackage } from '@/types/operator';
 
 export const generatePackageImage = async (
@@ -10,7 +11,7 @@ export const generatePackageImage = async (
 
   // Set canvas size
   canvas.width = 800;
-  canvas.height = 1000;
+  canvas.height = 1200;
 
   // Background
   ctx.fillStyle = '#ffffff';
@@ -70,8 +71,36 @@ export const generatePackageImage = async (
   }
   ctx.fillText(line, 30, y);
 
-  // Details section
+  // Contact Information Section
   y += 50;
+  ctx.fillStyle = '#1f2937';
+  ctx.font = 'bold 24px Arial';
+  ctx.fillText('Contact Information', 30, y);
+
+  y += 40;
+  ctx.fillStyle = '#374151';
+  ctx.font = '18px Arial';
+  
+  // Contact person
+  if (pkg.contact_person) {
+    ctx.fillText(`Contact: ${pkg.contact_person}`, 30, y);
+    y += 30;
+  }
+  
+  // Email
+  if (operatorProfile?.email) {
+    ctx.fillText(`Email: ${operatorProfile.email}`, 30, y);
+    y += 30;
+  }
+  
+  // Website
+  if (operatorProfile?.website_url) {
+    ctx.fillText(`Website: ${operatorProfile.website_url}`, 30, y);
+    y += 30;
+  }
+
+  // Details section
+  y += 30;
   ctx.fillStyle = '#1f2937';
   ctx.font = 'bold 24px Arial';
   ctx.fillText('Package Details', 30, y);

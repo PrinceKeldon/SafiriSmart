@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { OperatorPackage } from '@/types/operator';
 import { PackagePreviewModal } from './PackagePreviewModal';
+import { ShareModal } from './components/ShareModal';
 import { EnhancedPackageCard } from './components/EnhancedPackageCard';
 import { EmptyPackageState } from './components/EmptyPackageState';
 import { usePackageActions } from './hooks/usePackageActions';
@@ -14,7 +15,14 @@ interface PackageListProps {
 }
 
 export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) => {
-  const { handleDelete, handleShare, operatorProfile } = usePackageActions();
+  const { 
+    handleDelete, 
+    handleShare, 
+    operatorProfile, 
+    sharePackage, 
+    isShareModalOpen, 
+    closeShareModal 
+  } = usePackageActions();
   const [previewPackage, setPreviewPackage] = useState<OperatorPackage | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
@@ -60,6 +68,13 @@ export const PackageList: React.FC<PackageListProps> = ({ packages, onEdit }) =>
           setIsPreviewOpen(false);
           setPreviewPackage(null);
         }}
+      />
+
+      <ShareModal
+        package={sharePackage}
+        operatorProfile={operatorProfile}
+        isOpen={isShareModalOpen}
+        onClose={closeShareModal}
       />
     </>
   );
