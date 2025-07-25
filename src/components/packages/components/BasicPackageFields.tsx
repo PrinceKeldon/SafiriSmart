@@ -22,8 +22,8 @@ export const BasicPackageFields: React.FC<BasicPackageFieldsProps> = ({
   const packageName = watch('package_name');
   const description = watch('description');
 
-  const handleDescriptionGenerated = (generatedDescription: string) => {
-    setValue('description', generatedDescription);
+  const handleDescriptionChange = (newDescription: string) => {
+    setValue('description', newDescription);
   };
 
   return (
@@ -55,8 +55,8 @@ export const BasicPackageFields: React.FC<BasicPackageFieldsProps> = ({
       <div className="col-span-2">
         <DescriptionGenerator
           packageName={packageName}
-          currentDescription={description}
-          onDescriptionGenerated={handleDescriptionGenerated}
+          value={description}
+          onChange={handleDescriptionChange}
         />
         {errors.description && (
           <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
