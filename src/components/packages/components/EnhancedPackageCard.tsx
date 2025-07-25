@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Edit, Trash2, MapPin, Users, Clock, DollarSign, Download, Share2, Eye, Mail, User, Sparkles } from 'lucide-react';
+import { Edit, Trash2, MapPin, Users, Clock, DollarSign, Download, Share2, Eye, Mail, User, Sparkles, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -95,6 +95,19 @@ export const EnhancedPackageCard: React.FC<EnhancedPackageCardProps> = ({
             <div className="flex items-center space-x-2">
               <Mail className="w-4 h-4 text-gray-500" />
               <span className="text-sm text-gray-700">{operatorProfile.email}</span>
+            </div>
+          )}
+          {operatorProfile?.website_url && (
+            <div className="flex items-center space-x-2">
+              <Globe className="w-4 h-4 text-gray-500" />
+              <a 
+                href={operatorProfile.website_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                {operatorProfile.website_url}
+              </a>
             </div>
           )}
           {pkg.contact_person && (
