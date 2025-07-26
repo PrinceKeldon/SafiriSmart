@@ -1,108 +1,143 @@
-
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { TravelPreferences, TourOutput, ItineraryDay } from '@/components/preferences/WizardTypes';
 import { Button } from '@/components/ui/button';
-import { Clock, MapPin, Users, DollarSign, Utensils, Plane, CheckCircle, Calendar } from 'lucide-react';
-import { DayItineraryCard } from './itinerary/DayItineraryCard';
-import { ItineraryHeader } from './itinerary/ItineraryHeader';
-import { InclusionsExclusions } from './itinerary/InclusionsExclusions';
-import { ImportantNotes } from './itinerary/ImportantNotes';
-import { CallToAction } from './itinerary/CallToAction';
-import { OperatorSelectionModal } from './OperatorSelectionModal';
-import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { DayItineraryCard } from '@/components/preferences/itinerary/DayItineraryCard';
+import { InclusionsExclusions } from '@/components/preferences/itinerary/InclusionsExclusions';
+import { ImportantNotes } from '@/components/preferences/itinerary/ImportantNotes';
+import { CallToAction } from '@/components/preferences/itinerary/CallToAction';
+import { ItineraryHeader } from '@/components/preferences/itinerary/ItineraryHeader';
 
 interface ItineraryDisplayProps {
-  itinerary: any;
-  preferences: any;
-  schedule: any;
-  travel: any;
-  dietary: any;
-  userDetails: any;
+  itinerary: TourOutput;
   onBack: () => void;
-  onComplete: () => void;
+  onContinue: () => void;
 }
 
-const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
-  itinerary,
-  preferences,
-  schedule,
-  travel,
-  dietary,
-  userDetails,
-  onBack,
-  onComplete
-}) => {
-  const { toast } = useToast();
-
-  console.log('ItineraryDisplay: Rendering itinerary display');
-
-  const handleContinueToUserDetails = () => {
-    console.log('ItineraryDisplay: Moving to user details step');
-    onComplete(); // This should trigger the transition to step 10 (User Details)
-  };
+export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, onBack, onContinue }) => {
+  const [showFullDetails, setShowFullDetails] = useState(false);
 
   if (!itinerary) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <p className="text-center text-gray-500">No itinerary available</p>
-        </CardContent>
-      </Card>
-    );
+    return <div>No itinerary to display.</div>;
   }
+
+  if (!itinerary.itinerary_details) {
+    return <div>Itinerary details are not available.</div>;
+  }
+
+  const isSmartGenerated = itinerary.creativity_metadata?.generation_method === 'smart_ai_with_package_matching';
+  const packageMatches = itinerary.creativity_metadata?.creativity_elements?.includes('Package-matched destinations');
 
   return (
     <div className="space-y-6">
-      <ItineraryHeader 
-        itinerary={itinerary}
-        preferences={preferences}
-      />
+      {/* Smart Generation Notice */}
+      {isSmartGenerated && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 text-sm font-bold">AI</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h4 className="text-blue-800 font-semibold mb-1">Smart Itinerary Suggestions</h4>
+              <p className="text-blue-700 text-sm">
+                This itinerary has been intelligently generated based on your preferences and 
+                {packageMatches ? ' matched with verified operator packages in our system' : ' available destination data'}.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {/* Itinerary Days */}
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Daily Itinerary</h2>
-        {itinerary.itinerary_details?.map((day: any, index: number) => (
-          <DayItineraryCard key={index} day={day} />
-        ))}
+      {/* Important Planning Notice */}
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="flex items-start space-x-3">
+          <div className="flex-shrink-0">
+            <AlertTriangle className="w-5 h-5 text-amber-600" />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-amber-800 font-semibold mb-2">Planning Guide Notice</h4>
+            <div className="text-amber-700 text-sm space-y-1">
+              <p>• <strong>This is a planning guide</strong>, not a final booking or confirmed itinerary</p>
+              <p>• Please <strong>discuss and adjust</strong> all details with your chosen tour operator</p>
+              <p>• Activities, accommodations, and pricing are <strong>subject to availability</strong> and operator confirmation</p>
+              <p>• Use this as a <strong>conversation starter</strong> when contacting operators for quotes</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <InclusionsExclusions 
-        inclusions={itinerary.inclusions_suggestions || []}
-        exclusions={itinerary.exclusions_suggestions || []}
-      />
-      
-      <ImportantNotes 
-        notes={itinerary.important_notes || []}
-      />
-      
-      {/* Updated Call to Action */}
-      <Card className="mt-8">
-        <CardContent className="p-6 text-center">
-          <h3 className="text-xl font-semibold text-gray-900 mb-4">
-            Ready to Book Your Safari Adventure?
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Continue to provide your contact details and we'll connect you with the best safari operators for your trip.
-          </p>
-          <div className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={onBack}
-            >
-              Back to Preferences
-            </Button>
-            <Button
-              onClick={handleContinueToUserDetails}
-              className="bg-orange-600 hover:bg-orange-700"
-            >
-              Continue to Contact Details
-            </Button>
+      {/* Itinerary Header */}
+      <ItineraryHeader itinerary={itinerary} />
+
+      {/* Package Matching Info */}
+      {isSmartGenerated && itinerary.creativity_metadata?.diversity_score && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="text-green-800 font-semibold">Package Matching Score</h4>
+              <p className="text-green-700 text-sm">
+                Matched with operator packages based on your preferences
+              </p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-green-600">
+                {Math.round((itinerary.creativity_metadata.diversity_score / 100) * 100)}%
+              </div>
+              <div className="text-xs text-green-600">Match Quality</div>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Show/Hide Details Toggle */}
+      <div className="flex justify-center">
+        <button
+          onClick={() => setShowFullDetails(!showFullDetails)}
+          className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 font-medium"
+        >
+          {showFullDetails ? (
+            <>
+              <ChevronUp className="w-4 h-4" />
+              <span>Show Less Details</span>
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-4 h-4" />
+              <span>Show Full Itinerary Details</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Itinerary Details */}
+      {showFullDetails && (
+        <div className="space-y-4">
+          {itinerary.itinerary_details.map((day, index) => (
+            <DayItineraryCard key={index} day={day} dayIndex={index} />
+          ))}
+        </div>
+      )}
+
+      {/* Inclusions & Exclusions */}
+      <InclusionsExclusions 
+        inclusions={itinerary.inclusions_suggestions}
+        exclusions={itinerary.exclusions_suggestions}
+      />
+
+      {/* Important Notes with Enhanced Messaging */}
+      <ImportantNotes 
+        notes={itinerary.important_notes}
+        isSmartGenerated={isSmartGenerated}
+      />
+
+      {/* Call to Action */}
+      <CallToAction 
+        onBack={onBack}
+        onContinue={onContinue}
+        isSmartGenerated={isSmartGenerated}
+      />
     </div>
   );
 };
-
-export default ItineraryDisplay;

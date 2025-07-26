@@ -1,18 +1,27 @@
 import { TravelPreferences, TourOutput } from './WizardTypes';
+import { generateSmartItinerary } from './SmartItineraryGenerator';
 import { generateEnhancedItinerary, generateCreativeMockItinerary } from './EnhancedItineraryGenerator';
 
 export const generateItinerary = async (preferences: TravelPreferences): Promise<TourOutput> => {
-  console.log('🎯 Starting enhanced itinerary generation process...');
+  console.log('🎯 Starting smart itinerary generation with package matching...');
   
   try {
-    // Use the enhanced AI service for creative and diverse itineraries
-    return await generateEnhancedItinerary(preferences);
+    // First try smart generation with package matching
+    console.log('🧠 Attempting smart generation with package matching');
+    return await generateSmartItinerary(preferences);
   } catch (error) {
-    console.error('❌ Enhanced itinerary generation failed completely:', error);
+    console.warn('⚠️ Smart generation failed, trying enhanced AI service:', error);
     
-    // Final fallback to creative mock generation
-    console.log('🎨 Using creative mock generation as final fallback');
-    return generateCreativeMockItinerary(preferences);
+    try {
+      // Fallback to enhanced AI service
+      return await generateEnhancedItinerary(preferences);
+    } catch (enhancedError) {
+      console.error('❌ Enhanced itinerary generation failed completely:', enhancedError);
+      
+      // Final fallback to creative mock generation
+      console.log('🎨 Using creative mock generation as final fallback');
+      return generateCreativeMockItinerary(preferences);
+    }
   }
 };
 
