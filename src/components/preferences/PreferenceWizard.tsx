@@ -13,6 +13,7 @@ interface PreferenceWizardProps {
     travel: any;
     dietary: any;
     userDetails: UserDetails;
+    fullItinerary?: any;
   }) => void;
 }
 
