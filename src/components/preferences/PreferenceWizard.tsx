@@ -175,23 +175,41 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   // Show itinerary display
   if (showItineraryDisplay) {
     const mockItinerary = {
-      title: `${preferences.duration}-Day Safari Adventure`,
-      overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
-      duration: preferences.duration,
-      estimatedCost: {
-        amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
-        currency: 'USD'
-      },
+      tour_name: `${preferences.duration}-Day Safari Adventure`,
+      summary: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
       itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
-        day: i + 1,
+        day_number: i + 1,
+        theme: i === 0 ? 'Arrival Day' : 'Safari Adventure',
         location: i === 0 ? 'Arrival' : 'Safari Location',
         activities: [
           i === 0 ? 'Airport Transfer' : 'Game Drive',
           i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
         ],
-        accommodation: `Safari Lodge ${i + 1}`,
+        accommodation_suggestion: `Safari Lodge ${i + 1}`,
         meals: ['Breakfast', 'Lunch', 'Dinner']
-      }))
+      })),
+      inclusions_suggestions: [
+        'All park entry fees',
+        'Professional safari guide',
+        'Game drives as specified',
+        'Accommodation as listed',
+        'All meals as specified',
+        'Transportation in safari vehicle'
+      ],
+      exclusions_suggestions: [
+        'International flights',
+        'Travel insurance',
+        'Personal expenses',
+        'Alcoholic beverages',
+        'Tips and gratuities',
+        'Optional activities'
+      ],
+      important_notes: [
+        'This is a sample itinerary and may be subject to changes',
+        'Weather conditions may affect some activities',
+        'Park regulations must be followed at all times',
+        'Please confirm all details with your tour operator'
+      ]
     };
 
     return (
