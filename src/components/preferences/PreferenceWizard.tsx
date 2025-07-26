@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
@@ -14,6 +14,7 @@ interface PreferenceWizardProps {
     dietary: any;
     userDetails: UserDetails;
     fullItinerary?: any;
+    costEstimation?: any;
   }) => void;
 }
 
@@ -57,6 +58,45 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   const totalSteps = 10;
 
   console.log('PreferenceWizard: Current step:', currentStep, 'showItineraryDisplay:', showItineraryDisplay, 'showOperatorSelection:', showOperatorSelection);
+
+  // Calculate cost estimation based on preferences
+  const calculateCostEstimation = useCallback(() => {
+    const basePricePerDay = {
+      budget: 150,
+      'mid-range': 350,
+      luxury: 800
+    };
+
+    const basePrice = basePricePerDay[preferences.budgetRange] * preferences.duration;
+    const groupDiscount = preferences.groupSize > 2 ? 0.9 : 1;
+    const finalPrice = basePrice * groupDiscount;
+
+    const priceRange = {
+      min: Math.round(finalPrice * 0.85),
+      max: Math.round(finalPrice * 1.15),
+      perPerson: Math.round(finalPrice / preferences.groupSize)
+    };
+
+    const total = priceRange.max;
+    const breakdown = {
+      accommodation: Math.round(total * 0.4),
+      transport: Math.round(total * 0.25),
+      activities: Math.round(total * 0.2),
+      meals: Math.round(total * 0.15)
+    };
+
+    return {
+      budgetRange: preferences.budgetRange,
+      duration: preferences.duration,
+      groupSize: preferences.groupSize,
+      priceRange,
+      breakdown,
+      currency: 'USD',
+      totalEstimate: priceRange.max,
+      perPersonEstimate: priceRange.perPerson,
+      basePricePerDay: basePricePerDay[preferences.budgetRange]
+    };
+  }, [preferences.budgetRange, preferences.duration, preferences.groupSize]);
 
   const handlePreferenceChange = (key: string, value: any) => {
     setPreferences(prev => ({ ...prev, [key]: value }));
@@ -114,13 +154,16 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
 
   const handleOperatorSelectionComplete = (selectedOperatorIds: string[]) => {
     console.log('PreferenceWizard: Operator selection complete with operators:', selectedOperatorIds);
+    const costEstimation = calculateCostEstimation();
+    
     onComplete({
       preferences,
       schedule,
       travel,
       dietary,
       userDetails,
-      fullItinerary: generatedItinerary
+      fullItinerary: generatedItinerary,
+      costEstimation
     });
   };
 
@@ -129,9 +172,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     setCurrentStep(10); // Go back to user details step
   };
 
-  const generateSmartMockItinerary = useMemo(() => {
-    return () => {
-      const { interests, duration, groupSize, budgetRange } = preferences;
+  const generateSmartMockItinerary = useCallback(() => {
+    const { interests, duration, groupSize, budgetRange } = preferences;
       
       // Map interests to destinations and activities
       const interestDestinations: Record<string, { destinations: string[], activities: string[], notes: string[] }> = {
@@ -347,7 +389,6 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
           generation_method: 'enhanced_smart_mock_with_comprehensive_planning'
         }
       };
-    };
   }, [preferences, schedule, travel, dietary]);
 
   const mockItinerary = useMemo(() => {
@@ -361,6 +402,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
 
   // Show operator selection modal
   if (showOperatorSelection) {
+    const costEstimation = calculateCostEstimation();
+    
     const travelerData = {
       traveler: {
         name: userDetails.name,
@@ -373,13 +416,15 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       schedule,
       travel,
       dietary,
+      costEstimation,
       itinerary: generatedItinerary || {
         tour_name: `${preferences.duration}-Day Safari Adventure`,
         summary: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
         duration: preferences.duration,
         estimatedCost: {
-          amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
-          currency: 'USD'
+          amount: costEstimation.totalEstimate,
+          currency: costEstimation.currency,
+          breakdown: costEstimation.breakdown
         },
         itinerary_details: generatedItinerary?.itinerary_details || Array.from({ length: preferences.duration }, (_, i) => ({
           day_number: i + 1,

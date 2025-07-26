@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -8,26 +9,27 @@ interface PriceEstimationProps {
   preferences: TravelPreferences;
 }
 
-export const PriceEstimation: React.FC<PriceEstimationProps> = ({ preferences }) => {
-  const calculatePriceRange = () => {
-    const basePricePerDay = {
-      budget: 150,
-      'mid-range': 350,
-      luxury: 800
-    };
-
-    const basePrice = basePricePerDay[preferences.budgetRange] * preferences.duration;
-    const groupDiscount = preferences.groupSize > 2 ? 0.9 : 1;
-    const finalPrice = basePrice * groupDiscount;
-
-    return {
-      min: Math.round(finalPrice * 0.85),
-      max: Math.round(finalPrice * 1.15),
-      perPerson: Math.round(finalPrice / preferences.groupSize)
-    };
+// Export the calculation function for reuse
+export const calculatePriceRange = (preferences: TravelPreferences) => {
+  const basePricePerDay = {
+    budget: 150,
+    'mid-range': 350,
+    luxury: 800
   };
 
-  const priceRange = calculatePriceRange();
+  const basePrice = basePricePerDay[preferences.budgetRange] * preferences.duration;
+  const groupDiscount = preferences.groupSize > 2 ? 0.9 : 1;
+  const finalPrice = basePrice * groupDiscount;
+
+  return {
+    min: Math.round(finalPrice * 0.85),
+    max: Math.round(finalPrice * 1.15),
+    perPerson: Math.round(finalPrice / preferences.groupSize)
+  };
+};
+
+export const PriceEstimation: React.FC<PriceEstimationProps> = ({ preferences }) => {
+  const priceRange = calculatePriceRange(preferences);
   
   const getBudgetColor = () => {
     switch (preferences.budgetRange) {
