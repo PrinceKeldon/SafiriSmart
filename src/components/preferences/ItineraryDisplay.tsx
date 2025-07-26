@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { TravelPreferences, TourOutput, ItineraryDay } from '@/components/preferences/WizardTypes';
 import { Button } from '@/components/ui/button';
@@ -10,11 +11,28 @@ import { ItineraryHeader } from '@/components/preferences/itinerary/ItineraryHea
 
 interface ItineraryDisplayProps {
   itinerary: TourOutput;
+  preferences?: TravelPreferences;
+  schedule?: any;
+  travel?: any;
+  dietary?: any;
+  userDetails?: any;
   onBack: () => void;
-  onContinue: () => void;
+  onComplete: () => void;
 }
 
-export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, onBack, onContinue }) => {
+const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ 
+  itinerary, 
+  preferences = {
+    interests: [],
+    duration: 7,
+    groupSize: 2,
+    budgetRange: 'mid-range',
+    travelPace: 'moderate',
+    languages: ['English']
+  },
+  onBack, 
+  onComplete 
+}) => {
   const [showFullDetails, setShowFullDetails] = useState(false);
 
   if (!itinerary) {
@@ -69,7 +87,7 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, o
       </div>
 
       {/* Itinerary Header */}
-      <ItineraryHeader itinerary={itinerary} />
+      <ItineraryHeader itinerary={itinerary} preferences={preferences} />
 
       {/* Package Matching Info */}
       {isSmartGenerated && itinerary.creativity_metadata?.diversity_score && (
@@ -135,9 +153,11 @@ export const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({ itinerary, o
       {/* Call to Action */}
       <CallToAction 
         onBack={onBack}
-        onContinue={onContinue}
+        onContinue={onComplete}
         isSmartGenerated={isSmartGenerated}
       />
     </div>
   );
 };
+
+export default ItineraryDisplay;

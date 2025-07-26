@@ -1,11 +1,12 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Users, Clock, MapPin } from 'lucide-react';
-import { TourOutput } from '../WizardTypes';
+import { TourOutput, TravelPreferences } from '../WizardTypes';
 
 interface ItineraryHeaderProps {
   itinerary: TourOutput;
-  preferences: any; // Replace 'any' with the actual type if available
+  preferences: TravelPreferences;
 }
 
 export const ItineraryHeader: React.FC<ItineraryHeaderProps> = ({ itinerary, preferences }) => {

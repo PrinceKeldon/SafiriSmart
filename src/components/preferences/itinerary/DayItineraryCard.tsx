@@ -14,10 +14,11 @@ interface DayItineraryCardProps {
     meals?: string[];
     travel_notes?: string;
     pickup_details?: {
-      time: string;
-      location: string;
+      time?: string;
+      location?: string;
     };
   };
+  dayIndex: number;
 }
 
 export const DayItineraryCard: React.FC<DayItineraryCardProps> = ({ day }) => {
@@ -82,7 +83,7 @@ export const DayItineraryCard: React.FC<DayItineraryCardProps> = ({ day }) => {
         )}
 
         {/* Pickup Details */}
-        {day.pickup_details && (
+        {day.pickup_details && (day.pickup_details.time || day.pickup_details.location) && (
           <div className="mt-6">
             <h4 className="font-semibold text-gray-900 mb-3 flex items-center">
               <Plane className="w-4 h-4 mr-2" />
@@ -90,16 +91,20 @@ export const DayItineraryCard: React.FC<DayItineraryCardProps> = ({ day }) => {
             </h4>
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
               <div className="flex items-center space-x-4 text-sm">
-                <div className="flex items-center">
-                  <Clock className="w-4 h-4 mr-1 text-blue-600" />
-                  <span className="font-medium">Time:</span>
-                  <span className="ml-1">{day.pickup_details.time}</span>
-                </div>
-                <div className="flex items-center">
-                  <MapPin className="w-4 h-4 mr-1 text-blue-600" />
-                  <span className="font-medium">Location:</span>
-                  <span className="ml-1">{day.pickup_details.location}</span>
-                </div>
+                {day.pickup_details.time && (
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1 text-blue-600" />
+                    <span className="font-medium">Time:</span>
+                    <span className="ml-1">{day.pickup_details.time}</span>
+                  </div>
+                )}
+                {day.pickup_details.location && (
+                  <div className="flex items-center">
+                    <MapPin className="w-4 h-4 mr-1 text-blue-600" />
+                    <span className="font-medium">Location:</span>
+                    <span className="ml-1">{day.pickup_details.location}</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
