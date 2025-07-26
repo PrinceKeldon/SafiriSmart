@@ -2,12 +2,13 @@
 import React, { useState } from 'react';
 import { TravelPreferences, TourOutput, ItineraryDay } from '@/components/preferences/WizardTypes';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, AlertTriangle, Download, Printer } from 'lucide-react';
 import { DayItineraryCard } from '@/components/preferences/itinerary/DayItineraryCard';
 import { InclusionsExclusions } from '@/components/preferences/itinerary/InclusionsExclusions';
 import { ImportantNotes } from '@/components/preferences/itinerary/ImportantNotes';
 import { CallToAction } from '@/components/preferences/itinerary/CallToAction';
 import { ItineraryHeader } from '@/components/preferences/itinerary/ItineraryHeader';
+import { downloadItineraryPDF, downloadItineraryHTML } from './utils/itineraryDownload';
 
 interface ItineraryDisplayProps {
   itinerary: TourOutput;
@@ -30,6 +31,7 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
     travelPace: 'moderate',
     languages: ['English']
   },
+  userDetails,
   onBack, 
   onComplete 
 }) => {
@@ -45,6 +47,14 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
 
   const isSmartGenerated = itinerary.creativity_metadata?.generation_method === 'smart_ai_with_package_matching';
   const packageMatches = itinerary.creativity_metadata?.creativity_elements?.includes('Package-matched destinations');
+
+  const handlePrintItinerary = () => {
+    downloadItineraryPDF(itinerary, userDetails);
+  };
+
+  const handleDownloadItinerary = () => {
+    downloadItineraryHTML(itinerary, userDetails);
+  };
 
   return (
     <div className="space-y-6">
@@ -88,6 +98,26 @@ const ItineraryDisplay: React.FC<ItineraryDisplayProps> = ({
 
       {/* Itinerary Header */}
       <ItineraryHeader itinerary={itinerary} preferences={preferences} />
+
+      {/* Download/Print Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 justify-center">
+        <Button 
+          onClick={handlePrintItinerary}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Printer className="w-4 h-4" />
+          Print Itinerary
+        </Button>
+        <Button 
+          onClick={handleDownloadItinerary}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          <Download className="w-4 h-4" />
+          Download Itinerary
+        </Button>
+      </div>
 
       {/* Package Matching Info */}
       {isSmartGenerated && itinerary.creativity_metadata?.diversity_score && (

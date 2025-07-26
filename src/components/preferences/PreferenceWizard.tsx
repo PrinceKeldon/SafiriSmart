@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
@@ -52,6 +51,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   });
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
   const [showOperatorSelection, setShowOperatorSelection] = useState(false);
+  const [generatedItinerary, setGeneratedItinerary] = useState(null);
 
   const totalSteps = 10;
 
@@ -118,7 +118,8 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       schedule,
       travel,
       dietary,
-      userDetails
+      userDetails,
+      fullItinerary: generatedItinerary
     });
   };
 
@@ -241,16 +242,16 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       
       if (isFirstDay) {
         theme = 'Arrival & Safari Introduction';
-        activities = ['Airport pickup and transfer', 'Welcome briefing', 'First game drive', 'Evening at lodge'];
+        activities = ['Airport pickup and transfer', 'Welcome briefing and orientation', 'First wildlife encounter game drive', 'Evening at safari lodge with dinner'];
       } else if (isLastDay) {
         theme = 'Final Safari Moments & Departure';
-        activities = ['Morning game drive', 'Packing and checkout', 'Transfer to airport', 'Departure'];
+        activities = ['Sunrise game drive - final wildlife viewing', 'Packing and lodge checkout', 'Transfer to airport with scenic route', 'Departure assistance and farewell'];
       } else if (dayInDestination === 1 && !isFirstDay) {
         theme = `Journey to ${destination.name}`;
-        activities = ['Transfer to new destination', 'Check-in and lunch', ...destination.activities.slice(0, 2)];
+        activities = [`Scenic transfer to ${destination.name}`, 'Check-in and welcome lunch', ...destination.activities.slice(0, 2)];
       } else {
         theme = `${destination.name} Adventure - Day ${dayInDestination}`;
-        activities = destination.activities.slice(0, 3);
+        activities = destination.activities.slice(0, 4);
       }
 
       return {
@@ -258,65 +259,96 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
         theme,
         location: destination.name,
         activities,
-        accommodation_suggestion: `${budgetRange === 'luxury' ? 'Premium safari lodge' : budgetRange === 'budget' ? 'Safari camp' : 'Comfortable safari lodge'} near ${destination.name}`,
-        meals: ['Breakfast', 'Lunch', 'Dinner'],
-        unique_experiences: [destination.note],
-        cultural_highlight: interests.includes('cultural') ? 'Local community interaction and traditional experiences' : undefined,
-        conservation_story: interests.includes('conservation') ? 'Learn about local wildlife conservation efforts' : undefined
+        accommodation_suggestion: `${budgetRange === 'luxury' ? 'Premium safari lodge with panoramic views' : budgetRange === 'budget' ? 'Authentic safari camp with local character' : 'Comfortable safari lodge with excellent facilities'} in ${destination.name}`,
+        meals: ['Continental breakfast', 'Buffet lunch', 'Three-course dinner'],
+        unique_experiences: [destination.note, interests.includes('photography') ? 'Professional photography guidance' : 'Wildlife behavior insights'],
+        flexibility_options: [
+          'Weather-dependent alternatives available',
+          'Activity timing adjustable based on wildlife movements',
+          'Optional upgrade experiences available'
+        ],
+        cultural_highlight: interests.includes('cultural') ? 'Traditional community visit and cultural exchange' : 'Local community conservation project visit',
+        conservation_story: interests.includes('conservation') ? 'Behind-the-scenes conservation project visit' : 'Learn about local wildlife conservation efforts and success stories',
+        travel_notes: isFirstDay ? `Arrival at ${travel.portOfEntry || 'Jomo Kenyatta International Airport'}` : undefined,
+        pickup_details: isFirstDay && travel.airportPickup ? {
+          time: travel.pickupTime || 'Upon arrival',
+          location: travel.pickupLocation || 'Airport arrivals hall'
+        } : undefined
       };
     });
 
-    // Generate contextual inclusions based on interests
+    // Enhanced inclusions based on user selections
     const baseInclusions = [
       'All national park and conservancy entrance fees',
-      'Professional safari guide services',
-      'Transportation in 4WD safari vehicle with pop-up roof',
-      'All accommodation as specified',
-      'All meals as outlined in itinerary',
-      'Bottled water during game drives'
+      `Professional safari guide services (fluent in ${preferences.languages.join(' and ')})`,
+      'Transportation in 4WD safari vehicle with pop-up roof and charging ports',
+      'All accommodation as specified in detailed itinerary',
+      'All meals as outlined in daily schedule (dietary requirements: ' + (dietary.allergies || 'None specified') + ')',
+      'Bottled water during all game drives and transfers',
+      'Airport transfers as specified',
+      'Emergency communication and first aid kit'
     ];
 
     const contextualInclusions = [];
-    if (interests.includes('cultural')) contextualInclusions.push('Traditional village visits and cultural performances');
-    if (interests.includes('photography')) contextualInclusions.push('Photography guidance and optimal timing for shoots');
-    if (interests.includes('bird-watching')) contextualInclusions.push('Specialized bird watching guides and equipment');
-    if (interests.includes('beach')) contextualInclusions.push('Beach activities and water sports equipment');
-    if (interests.includes('adventure')) contextualInclusions.push('Adventure activity equipment and safety gear');
+    if (interests.includes('cultural')) contextualInclusions.push('Traditional village visits with community guide', 'Cultural performances and demonstrations', 'Authentic craft workshop participation');
+    if (interests.includes('photography')) contextualInclusions.push('Photography guidance and optimal positioning', 'Extended time at prime photography locations', 'Sunrise and sunset positioning assistance');
+    if (interests.includes('bird-watching')) contextualInclusions.push('Specialized bird watching guides with identification books', 'Binoculars provided during tours', 'Bird checklist and recording assistance');
+    if (interests.includes('beach')) contextualInclusions.push('Beach activities and equipment', 'Snorkeling gear and marine life guides', 'Beach transfers and setup');
+    if (interests.includes('adventure')) contextualInclusions.push('Adventure activity safety equipment', 'Experienced adventure guides', 'Activity insurance coverage');
+    if (interests.includes('conservation')) contextualInclusions.push('Exclusive conservation project visits', 'Meet with conservation experts', 'Participation in conservation activities');
 
     const smartNotes = [
-      `🎯 This ${duration}-day itinerary is intelligently crafted based on your selected interests: ${interests.map(i => i.replace('-', ' ')).join(', ')}`,
-      '💡 PLANNING GUIDE: These suggestions serve as a conversation starter with tour operators',
-      '🤝 Please discuss and customize all details with your chosen operator to match their current offerings',
-      `👥 Designed for ${groupSize} traveler${groupSize > 1 ? 's' : ''} with a ${budgetRange} budget preference`,
-      '🌍 All suggested destinations are real locations in Kenya\'s tourism circuit',
-      '📋 Activities reflect your interests but are subject to operator availability and seasonal conditions',
-      '⚡ Flexible itinerary - operators can adjust based on weather, wildlife movements, and your preferences'
+      `🎯 This ${duration}-day itinerary is intelligently designed based on your selected interests: ${interests.map(i => i.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())).join(', ')}`,
+      '💡 IMPORTANT: This serves as a comprehensive planning guide and conversation starter with tour operators',
+      '🤝 Please review, discuss, and customize all details with your chosen operator to match their current offerings and availability',
+      `👥 Specifically designed for ${groupSize} traveler${groupSize > 1 ? 's' : ''} with ${budgetRange} budget preferences and ${preferences.travelPace} travel pace`,
+      '🌍 All destinations are verified Kenya safari locations with established tourism infrastructure',
+      '📋 Activities and experiences reflect your interests but require operator confirmation for availability',
+      '⚡ Flexible daily scheduling allows for wildlife movement adaptations and weather considerations',
+      '🏨 Accommodation suggestions match your budget tier and can be upgraded or modified by operators',
+      schedule.flexible ? '📅 Flexible travel dates allow operators to suggest optimal timing for wildlife viewing' : '📅 Specific travel dates noted - operators will confirm seasonal considerations',
+      dietary.allergies ? `🍽️ Special dietary requirements documented: ${dietary.allergies} - ensure operator can accommodate` : '🍽️ Standard meal preferences - operators can accommodate most dietary requirements',
+      travel.airportPickup ? '✈️ Airport pickup service included in planning - operators will confirm transfer details' : '✈️ Airport transfer arrangements to be confirmed with chosen operator'
     ];
 
     if (interests.length > 3) {
-      smartNotes.push('🎨 Multi-interest itinerary - operators may suggest focusing on fewer interests for deeper experiences');
+      smartNotes.push('🎨 Multi-interest itinerary - operators may suggest focusing on 2-3 primary interests for optimal experience depth');
     }
 
-    return {
-      tour_name: `${duration}-Day ${interests.slice(0, 2).map(i => i.replace('-', ' ')).join(' & ').replace(/\b\w/g, l => l.toUpperCase())} Kenya Experience`,
-      summary: `An intelligently designed ${duration}-day Kenya adventure for ${groupSize} traveler${groupSize > 1 ? 's' : ''}, featuring ${selectedDestinations.map(d => d.name).slice(0, 2).join(' and ')} with activities tailored to your interests: ${interests.map(i => i.replace('-', ' ')).join(', ')}. This ${budgetRange} tier experience serves as your planning guide for discussions with operators.`,
+    const fullItinerary = {
+      tour_name: `${duration}-Day ${interests.slice(0, 2).map(i => i.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())).join(' & ')} Kenya Safari Experience`,
+      summary: `An intelligently crafted ${duration}-day Kenya safari adventure for ${groupSize} traveler${groupSize > 1 ? 's' : ''}, featuring ${selectedDestinations.map(d => d.name).slice(0, 3).join(', ')} with personalized activities based on your interests: ${interests.map(i => i.replace('-', ' ')).join(', ')}. This ${budgetRange} tier experience serves as your comprehensive planning guide for detailed discussions with verified tour operators.`,
       itinerary_details: itineraryDetails,
       inclusions_suggestions: [...baseInclusions, ...contextualInclusions],
       exclusions_suggestions: [
-        'International flights and travel insurance',
-        'Kenya visa fees and required vaccinations',
-        'Personal shopping and souvenirs',
-        'Alcoholic beverages (unless specifically included)',
-        'Gratuities for guides, drivers, and lodge staff',
-        'Optional activity upgrades and extensions'
+        'International flights and comprehensive travel insurance',
+        'Kenya visa fees and required vaccinations/medical preparations',
+        'Personal shopping, souvenirs, and additional craft purchases',
+        'Alcoholic beverages (unless specifically included in package)',
+        'Gratuities for guides, drivers, lodge staff, and local communities',
+        'Optional activity upgrades, extensions, and premium experiences',
+        'Personal photography equipment, cameras, and accessories',
+        'International phone calls, internet usage, and communication costs',
+        'Laundry services, spa treatments, and personal wellness services'
       ],
       important_notes: smartNotes,
       creativity_metadata: {
-        diversity_score: interests.length * 15,
-        creativity_elements: ['Interest-matched destinations', 'Real Kenya locations', 'Activity-based suggestions'],
-        generation_method: 'smart_mock_with_interest_mapping'
+        diversity_score: interests.length * 18 + (preferences.travelPace === 'relaxed' ? 5 : preferences.travelPace === 'active' ? 10 : 7),
+        creativity_elements: [
+          'Interest-matched destinations and activities',
+          'Real Kenya locations with verified tourism infrastructure', 
+          'Activity-based suggestions tailored to user preferences',
+          'Budget-appropriate accommodation and experience suggestions',
+          'Dietary and travel logistics integration',
+          'Cultural and conservation elements based on interests'
+        ],
+        generation_method: 'enhanced_smart_mock_with_comprehensive_planning'
       }
     };
+
+    // Store the generated itinerary for later use
+    setGeneratedItinerary(fullItinerary);
+    return fullItinerary;
   };
 
   // Show operator selection modal
@@ -333,24 +365,46 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       schedule,
       travel,
       dietary,
-      itinerary: {
-        title: `${preferences.duration}-Day Safari Adventure`,
-        overview: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
+      itinerary: generatedItinerary || {
+        tour_name: `${preferences.duration}-Day Safari Adventure`,
+        summary: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
         duration: preferences.duration,
         estimatedCost: {
           amount: preferences.budgetRange === 'budget' ? 2000 : preferences.budgetRange === 'mid-range' ? 4000 : 8000,
           currency: 'USD'
         },
-        itinerary_details: Array.from({ length: preferences.duration }, (_, i) => ({
-          day: i + 1,
-          location: i === 0 ? 'Arrival' : 'Safari Location',
+        itinerary_details: generatedItinerary?.itinerary_details || Array.from({ length: preferences.duration }, (_, i) => ({
+          day_number: i + 1,
+          theme: i === 0 ? 'Arrival' : 'Safari Adventure',
+          location: i === 0 ? 'Arrival Location' : 'Safari Destination',
           activities: [
-            i === 0 ? 'Airport Transfer' : 'Game Drive',
-            i === 0 ? 'Welcome and transfer to lodge' : 'Wildlife viewing experience'
+            i === 0 ? 'Airport Transfer and Welcome' : 'Game Drive and Wildlife Viewing',
+            i === 0 ? 'Lodge check-in and orientation' : 'Cultural experiences and photography'
           ],
-          accommodation: `Safari Lodge ${i + 1}`,
-          meals: ['Breakfast', 'Lunch', 'Dinner']
-        }))
+          accommodation_suggestion: `Safari Lodge ${i + 1}`,
+          meals: ['Breakfast', 'Lunch', 'Dinner'],
+          unique_experiences: generatedItinerary?.itinerary_details?.[i]?.unique_experiences || ['Wildlife encounters', 'Cultural interactions'],
+          cultural_highlight: generatedItinerary?.itinerary_details?.[i]?.cultural_highlight || 'Local community interaction',
+          conservation_story: generatedItinerary?.itinerary_details?.[i]?.conservation_story || 'Conservation project visit'
+        })),
+        inclusions_suggestions: generatedItinerary?.inclusions_suggestions || [
+          'All park fees and permits',
+          'Professional guide services',
+          'Transportation and transfers',
+          'Accommodation as specified',
+          'Meals as outlined'
+        ],
+        exclusions_suggestions: generatedItinerary?.exclusions_suggestions || [
+          'International flights',
+          'Travel insurance',
+          'Personal expenses',
+          'Gratuities'
+        ],
+        important_notes: generatedItinerary?.important_notes || [
+          'This itinerary serves as a planning guide',
+          'All details subject to operator confirmation',
+          'Weather and wildlife movements may affect activities'
+        ]
       }
     };
 
