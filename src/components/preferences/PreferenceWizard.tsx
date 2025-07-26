@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
-import { ItineraryDisplay } from './ItineraryDisplay';
+import ItineraryDisplay from './ItineraryDisplay';
 import { OperatorSelectionModal } from './OperatorSelectionModal';
 import { UserDetails, steps } from './WizardTypes';
 
