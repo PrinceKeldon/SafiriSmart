@@ -123,7 +123,7 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <h3 className="text-xl sm:text-2xl md:text-4xl font-bold text-center mb-3 sm:mb-4 text-gray-900">How SafiriSmart Works</h3>
             <p className="text-center text-gray-600 mb-6 sm:mb-8 md:mb-16 max-w-2xl mx-auto text-sm sm:text-base">
-              Whether you're a traveler seeking adventure or a global tour operator promoting Kenya, we've got you covered.
+              Whether you're a traveler seeking adventure or a tour operator promoting Kenya, we've got you covered.
             </p>
             
             <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 max-w-6xl mx-auto">
@@ -174,7 +174,7 @@ const Index = () => {
                   <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4">
                     <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
                   </div>
-                  <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">For Global Tour Operators</h4>
+                  <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">For Tour Operators</h4>
                   <p className="text-gray-600 text-sm sm:text-base">Streamline your Kenya safari operations</p>
                 </div>
                 
@@ -250,7 +250,7 @@ const Index = () => {
                 </div>
                 <CardTitle className="text-base sm:text-lg md:text-xl">Seamless Coordination</CardTitle>
                 <CardDescription className="text-xs sm:text-sm md:text-base">
-                  Streamlined booking and communication between travelers and global operators
+                  Streamlined booking and communication between travelers and operators
                 </CardDescription>
               </CardHeader>
             </Card>
