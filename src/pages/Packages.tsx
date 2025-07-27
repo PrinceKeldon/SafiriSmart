@@ -20,9 +20,9 @@ export default function Packages() {
   return (
     <>
       <PageSEO
-        title="Tour Package Management - SafiriSmart Operator Dashboard"
-        description="Manage your Kenya safari tour packages with SafiriSmart. Create, edit, and organize your wildlife tour offerings for better customer matching and booking conversions."
-        keywords="tour package management, safari packages Kenya, tour operator dashboard, wildlife tour creation, safari booking system"
+        title="Kenya Safari Package Management - SafiriSmart Operator Dashboard"
+        description="Manage your Kenya safari tour packages with SafiriSmart. Create, edit, and organize your Kenya safari tour offerings for better customer matching and booking conversions."
+        keywords="Kenya safari package management, safari packages Kenya, tour operator dashboard, Kenya wildlife tour creation, safari booking system"
         canonicalUrl="/packages"
         structuredData={breadcrumbSchema}
         noIndex={true}

@@ -11,9 +11,9 @@ export const EmptyPackageState: React.FC = () => {
           <Package className="w-8 h-8 text-gray-400" />
         </div>
         <div className="text-gray-500 space-y-2">
-          <h3 className="text-lg font-medium">No packages created yet</h3>
+          <h3 className="text-lg font-medium">No Kenya safari packages created yet</h3>
           <p className="text-sm max-w-md break-words">
-            Create your first tour package to start managing your pricing and showcase your safari offerings to potential customers.
+            Create your first Kenya safari tour package to start managing your pricing and showcase your Kenya safari offerings to potential customers.
           </p>
         </div>
       </CardContent>

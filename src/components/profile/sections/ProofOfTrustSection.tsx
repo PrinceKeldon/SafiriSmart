@@ -15,7 +15,7 @@ export const ProofOfTrustSection: React.FC<ProofOfTrustSectionProps> = ({ profil
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-blue-600" />
-          Proof of Trust
+          Proof of Trust Verification
         </CardTitle>
       </CardHeader>
       <CardContent>

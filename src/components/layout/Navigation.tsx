@@ -34,7 +34,7 @@ const Navigation = () => {
       icon: Inbox,
     },
     {
-      name: 'Packages',
+      name: 'Kenya Packages',
       href: '/dashboard/packages',
       icon: Package,
     },
@@ -88,7 +88,7 @@ const Navigation = () => {
           <div className="flex flex-col h-full">
             <div className="p-4 border-b mt-12">
               <h2 className="text-lg font-bold text-gray-900">TourMaster AI</h2>
-              <p className="text-sm text-gray-600">B2B Dashboard</p>
+              <p className="text-sm text-gray-600">Global Operator Dashboard</p>
             </div>
             
             <div className="flex-1 px-4 py-4">
@@ -138,7 +138,7 @@ const Navigation = () => {
       <div className="flex flex-col h-full">
         <div className="p-4 sm:p-6 border-b">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900">TourMaster AI</h2>
-          <p className="text-xs sm:text-sm text-gray-600">B2B Dashboard</p>
+          <p className="text-xs sm:text-sm text-gray-600">Global Operator Dashboard</p>
         </div>
         
         <div className="flex-1 px-2 sm:px-4 py-4">

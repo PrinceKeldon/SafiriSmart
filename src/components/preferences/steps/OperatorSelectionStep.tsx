@@ -106,10 +106,10 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
       <div className="space-y-6">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Choose Safari Operators
+            Choose Global Safari Operators
           </h2>
           <p className="text-gray-600">
-            Finding the best safari packages for your preferences...
+            Finding the best Kenya safari packages for your preferences...
           </p>
         </div>
         
@@ -124,10 +124,10 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
     <div className="space-y-6">
       <div className="text-center">
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
-          Choose Safari Operators
+          Choose Global Safari Operators
         </h2>
         <p className="text-gray-600">
-          Select specific packages/operators you'd like to receive quotes from, or skip to connect with our recommended operators.
+          Select specific packages from global operators promoting Kenya as a safari destination, or skip to connect with our recommended operators.
         </p>
       </div>
 
@@ -143,7 +143,7 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
       {packages.length > 0 ? (
         <div className="space-y-4">
           <p className="text-sm text-gray-600">
-            Found {packages.length} matching package{packages.length !== 1 ? 's' : ''}. 
+            Found {packages.length} matching package{packages.length !== 1 ? 's' : ''} from global operators. 
             Select the ones you're interested in:
           </p>
           
@@ -223,7 +223,7 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
             <Alert>
               <AlertDescription>
                 You've selected {selectedPackages.length} package{selectedPackages.length !== 1 ? 's' : ''}. 
-                Your inquiry will be sent directly to these operators.
+                Your inquiry will be sent directly to these global operators.
               </AlertDescription>
             </Alert>
           )}
@@ -237,7 +237,7 @@ const OperatorSelectionStep: React.FC<OperatorSelectionStepProps> = ({
             </h3>
             <p className="text-gray-600">
               We couldn't load specific packages right now, but you can still continue. 
-              Our system will match you with suitable operators based on your preferences.
+              Our system will match you with suitable global operators based on your preferences.
             </p>
           </CardContent>
         </Card>

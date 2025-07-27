@@ -17,7 +17,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ userName, onLogout }) 
             <Shield className="h-8 w-8 text-red-600 mr-3" />
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-sm text-gray-500">SafiriSmart Administration</p>
+              <p className="text-sm text-gray-500">SafiriSmart Global Operator Administration</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">

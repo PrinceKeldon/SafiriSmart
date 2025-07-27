@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, MapPin, Users, Calendar, Settings, Compass, Shield, Zap, Globe, Star } from "lucide-react";
@@ -31,8 +32,8 @@ const Index = () => {
     <>
       <PageSEO
         title="SafiriSmart - AI-Powered Kenya Safari Planning & Tour Operations"
-        description="Plan your perfect Kenya safari with AI assistance. Connect with verified tour operators, create personalized itineraries, and experience wildlife adventures in Maasai Mara, Amboseli, and beyond."
-        keywords="Kenya safari, AI safari planner, tour operators Kenya, Maasai Mara tours, Amboseli safari, wildlife tours Kenya, safari booking platform, Kenya travel planning"
+        description="Plan your perfect Kenya safari with AI assistance. Connect with verified global tour operators promoting Kenya as a safari destination, create personalized itineraries, and experience wildlife adventures in Maasai Mara, Amboseli, and beyond."
+        keywords="Kenya safari, AI safari planner, global tour operators Kenya, Maasai Mara tours, Amboseli safari, wildlife tours Kenya, safari booking platform, Kenya travel planning"
         canonicalUrl="/"
         structuredData={structuredData}
         ogType="website"
@@ -69,7 +70,7 @@ const Index = () => {
               </span>
             </h2>
             <p className="text-sm sm:text-base md:text-xl text-gray-700 mb-6 sm:mb-8 md:mb-12 max-w-3xl mx-auto leading-relaxed">
-              AI-Powered Planning for Travelers. Streamlined Operations for Tour Operators.
+              AI-Powered Planning for Travelers. Streamlined Operations for Global Tour Operators.
               <br className="hidden sm:block" />
               <span className="font-medium text-orange-700">Experience Africa like never before.</span>
             </p>
@@ -122,7 +123,7 @@ const Index = () => {
           <div className="container mx-auto px-4">
             <h3 className="text-xl sm:text-2xl md:text-4xl font-bold text-center mb-3 sm:mb-4 text-gray-900">How SafiriSmart Works</h3>
             <p className="text-center text-gray-600 mb-6 sm:mb-8 md:mb-16 max-w-2xl mx-auto text-sm sm:text-base">
-              Whether you're a traveler seeking adventure or an operator managing tours, we've got you covered.
+              Whether you're a traveler seeking adventure or a global tour operator promoting Kenya, we've got you covered.
             </p>
             
             <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 md:gap-12 max-w-6xl mx-auto">
@@ -160,8 +161,8 @@ const Index = () => {
                       <span className="text-green-800 font-bold text-xs sm:text-sm">3</span>
                     </div>
                     <div className="min-w-0">
-                      <h5 className="font-semibold text-gray-900 text-sm sm:text-base">Connect with Operators</h5>
-                      <p className="text-gray-600 text-xs sm:text-sm">Get matched with verified local tour operators</p>
+                      <h5 className="font-semibold text-gray-900 text-sm sm:text-base">Connect with Global Operators</h5>
+                      <p className="text-gray-600 text-xs sm:text-sm">Get matched with verified global tour operators promoting Kenya</p>
                     </div>
                   </div>
                 </div>
@@ -173,8 +174,8 @@ const Index = () => {
                   <div className="inline-flex items-center justify-center w-12 h-12 sm:w-16 sm:h-16 bg-orange-100 rounded-full mb-3 sm:mb-4">
                     <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-orange-600" />
                   </div>
-                  <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">For Tour Operators</h4>
-                  <p className="text-gray-600 text-sm sm:text-base">Streamline your operations</p>
+                  <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">For Global Tour Operators</h4>
+                  <p className="text-gray-600 text-sm sm:text-base">Streamline your Kenya safari operations</p>
                 </div>
                 
                 <div className="space-y-3 sm:space-y-4">
@@ -183,8 +184,8 @@ const Index = () => {
                       <span className="text-orange-800 font-bold text-xs sm:text-sm">1</span>
                     </div>
                     <div className="min-w-0">
-                      <h5 className="font-semibold text-gray-900 text-sm sm:text-base">Manage Your Packages</h5>
-                      <p className="text-gray-600 text-xs sm:text-sm">Create and organize your tour offerings</p>
+                      <h5 className="font-semibold text-gray-900 text-sm sm:text-base">Manage Your Kenya Packages</h5>
+                      <p className="text-gray-600 text-xs sm:text-sm">Create and organize your Kenya safari tour offerings</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4 bg-orange-50 rounded-lg">
@@ -235,9 +236,9 @@ const Index = () => {
                 <div className="mx-auto mb-3 sm:mb-4 w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center">
                   <Users className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
                 </div>
-                <CardTitle className="text-base sm:text-lg md:text-xl">Verified Operators</CardTitle>
+                <CardTitle className="text-base sm:text-lg md:text-xl">Verified Global Operators</CardTitle>
                 <CardDescription className="text-xs sm:text-sm md:text-base">
-                  Connect with trusted, locally-verified tour operators across Kenya
+                  Connect with trusted, verified global tour operators promoting Kenya as a safari destination
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -249,7 +250,7 @@ const Index = () => {
                 </div>
                 <CardTitle className="text-base sm:text-lg md:text-xl">Seamless Coordination</CardTitle>
                 <CardDescription className="text-xs sm:text-sm md:text-base">
-                  Streamlined booking and communication between travelers and operators
+                  Streamlined booking and communication between travelers and global operators
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -261,7 +262,7 @@ const Index = () => {
           <div className="container mx-auto px-4 text-center">
             <h3 className="text-xl sm:text-2xl md:text-4xl font-bold mb-3 sm:mb-4">Ready to Start Your Safari Journey?</h3>
             <p className="text-sm sm:text-lg md:text-xl mb-6 sm:mb-8 opacity-90 max-w-2xl mx-auto">
-              Join thousands of travelers and operators who trust SafiriSmart for unforgettable safari experiences
+              Join thousands of travelers and global tour operators who trust SafiriSmart for unforgettable safari experiences
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4">
               <Link to="/safari-guide" className="w-full sm:w-auto" onClick={handleSafariGuideClick}>

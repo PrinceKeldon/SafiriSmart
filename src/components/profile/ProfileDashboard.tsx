@@ -25,9 +25,9 @@ export const ProfileDashboard: React.FC = () => {
   return (
     <div className="w-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6">
       <div className="text-center sm:text-left">
-        <h1 className="text-2xl sm:text-3xl font-bold break-words">Company Profile</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold break-words">Global Operator Profile</h1>
         <p className="text-sm sm:text-base text-muted-foreground mt-1">
-          Manage your company details and compliance documents
+          Manage your company details and compliance documents for Kenya safari operations
         </p>
       </div>
 

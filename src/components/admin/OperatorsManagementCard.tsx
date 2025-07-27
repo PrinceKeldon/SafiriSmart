@@ -37,9 +37,9 @@ export const OperatorsManagementCard: React.FC<OperatorsManagementCardProps> = (
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>Operator Management</CardTitle>
+            <CardTitle>Global Tour Operator Management</CardTitle>
             <CardDescription>
-              Manage tour operators, review proof of trust documents, and approve registrations
+              Manage global tour operators promoting Kenya as a safari destination, review proof of trust documents, and approve registrations
             </CardDescription>
           </div>
           <CreateOperatorDialog
