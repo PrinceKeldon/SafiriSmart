@@ -44,7 +44,7 @@ export const HomePageCounters = () => {
           <span className="font-bold text-orange-600">
             {counters?.tourMasterOperators?.toLocaleString() || '0'}
           </span>
-          {' '}Registered Tour Operators
+          {' '}Active Tour Operators
         </span>
       </div>
     </div>

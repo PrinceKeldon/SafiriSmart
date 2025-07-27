@@ -17,23 +17,25 @@ export const useHomePageCounters = () => {
         console.error('Error fetching visits count:', visitsError);
       }
 
-      // Get ALL operators count (not just active ones)
-      const { count: operatorsCount, error: operatorsError } = await supabase
+      // Get ONLY ACTIVE operators count
+      const { count: activeOperatorsCount, error: operatorsError } = await supabase
         .from('operators')
-        .select('*', { count: 'exact', head: true });
+        .select('*', { count: 'exact', head: true })
+        .eq('is_active', true);
 
       if (operatorsError) {
-        console.error('Error fetching operators count:', operatorsError);
+        console.error('Error fetching active operators count:', operatorsError);
       }
 
       console.log('Visits count:', visitsCount);
-      console.log('Total operators count:', operatorsCount);
+      console.log('Active operators count:', activeOperatorsCount);
 
       return {
         safariGuideVisits: visitsCount || 0,
-        tourMasterOperators: operatorsCount || 0
+        tourMasterOperators: activeOperatorsCount || 0
       };
     },
-    refetchInterval: 60000, // Refresh every minute
+    refetchInterval: 30000, // Refresh every 30 seconds for more frequent updates
+    staleTime: 15000, // Consider data stale after 15 seconds
   });
 };
