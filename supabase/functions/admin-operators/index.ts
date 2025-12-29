@@ -1,208 +1,88 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const authHeader = req.headers.get('Authorization')
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Missing or invalid authorization header'
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      return new Response(JSON.stringify({ success: false, error: "No authorization header" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const token = authHeader.replace('Bearer ', '')
-    
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const token = authHeader.replace("Bearer ", "");
+    const serviceClient = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Verify the JWT token and check admin role
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token)
-
+    const { data: { user }, error: userError } = await serviceClient.auth.getUser(token);
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Invalid token'
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Get current operator details from database to check role
-    const { data: currentOperator, error: currentOperatorError } = await supabase
-      .from('operators')
-      .select('*')
-      .eq('email', user.email)
-      .eq('is_active', true)
-      .single()
-
-    if (currentOperatorError || !currentOperator || currentOperator.role !== 'admin') {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Admin access required'
-        }),
-        {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+    // Check admin role - try has_role first, fallback to operators table
+    const { data: hasAdminRole } = await serviceClient.rpc('has_role', { _user_id: user.id, _role: 'admin' });
+    
+    if (!hasAdminRole) {
+      const { data: operator } = await serviceClient.from("operators").select("role").eq("id", user.id).single();
+      if (operator?.role !== 'admin') {
+        return new Response(JSON.stringify({ success: false, error: "Admin access required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
     }
 
-    // Handle different HTTP methods
-    if (req.method === 'GET') {
-      // List all operators
-      const { data: operators, error: operatorsError } = await supabase
-        .from('operators')
-        .select('id, name, email, company, role, specializations, is_active, created_at')
-        .order('created_at', { ascending: false })
-
-      if (operatorsError) {
-        throw new Error(`Failed to fetch operators: ${operatorsError.message}`)
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: operators
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+    if (req.method === "GET") {
+      const { data: operators, error } = await serviceClient.from("operators").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      return new Response(JSON.stringify({ success: true, data: operators }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (req.method === 'POST') {
-      // Create new operator
-      const { name, email, company, specializations = [] } = await req.json()
-
-      if (!name || !email || !company) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: 'Name, email, and company are required'
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        )
+    if (req.method === "POST") {
+      const { email, password, name, company, role = "operator" } = await req.json();
+      if (!email || !password || !name || !company) {
+        return new Response(JSON.stringify({ success: false, error: "Missing required fields" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Check if operator with email already exists
-      const { data: existingOperator } = await supabase
-        .from('operators')
-        .select('id')
-        .eq('email', email)
-        .single()
+      const { data: authData, error: authError } = await serviceClient.auth.admin.createUser({ email, password, email_confirm: true });
+      if (authError) return new Response(JSON.stringify({ success: false, error: authError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
-      if (existingOperator) {
-        return new Response(
-          JSON.stringify({
-            success: false,
-            message: 'Operator with this email already exists'
-          }),
-          {
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          }
-        )
+      const { data: operator, error: opError } = await serviceClient.from("operators").insert({ id: authData.user.id, email, name, company, role, is_active: true, password_hash: 'managed_by_supabase_auth' }).select().single();
+      if (opError) {
+        await serviceClient.auth.admin.deleteUser(authData.user.id);
+        return new Response(JSON.stringify({ success: false, error: opError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Create user in Supabase Auth first
-      const tempPassword = Math.random().toString(36).slice(-12) + 'A1!'
-      const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true
-      })
-
-      if (authError) {
-        throw new Error(`Failed to create auth user: ${authError.message}`)
-      }
-
-      // Insert operator into operators table
-      const { data: newOperator, error: insertError } = await supabase
-        .from('operators')
-        .insert({
-          name,
-          email,
-          company,
-          role: 'operator',
-          specializations,
-          password_hash: 'managed_by_supabase_auth',
-          is_active: true
-        })
-        .select()
-        .single()
-
-      if (insertError) {
-        // If operator creation fails, clean up the auth user
-        await supabase.auth.admin.deleteUser(authUser.user.id)
-        throw new Error(`Failed to create operator: ${insertError.message}`)
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          data: {
-            ...newOperator,
-            temporary_password: tempPassword,
-            message: 'Operator created successfully. Please share the temporary password with the operator.'
-          }
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+      await serviceClient.from("user_roles").insert({ user_id: authData.user.id, role }).catch(() => {});
+      return new Response(JSON.stringify({ success: true, data: operator }), { status: 201, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Method not allowed'
-      }),
-      {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    if (req.method === "PUT") {
+      const { id, ...updateData } = await req.json();
+      if (!id) return new Response(JSON.stringify({ success: false, error: "ID required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      delete updateData.password_hash;
+      const { data, error } = await serviceClient.from("operators").update(updateData).eq("id", id).select().single();
+      if (error) return new Response(JSON.stringify({ success: false, error: error.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: true, data }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
+    if (req.method === "DELETE") {
+      const id = new URL(req.url).searchParams.get("id");
+      if (!id) return new Response(JSON.stringify({ success: false, error: "ID required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      await serviceClient.from("operators").delete().eq("id", id);
+      await serviceClient.auth.admin.deleteUser(id).catch(() => {});
+      return new Response(JSON.stringify({ success: true }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    return new Response(JSON.stringify({ success: false, error: "Method not allowed" }), { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (error) {
-    console.error('Admin operators error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Internal server error'
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    console.error("Error:", error);
+    return new Response(JSON.stringify({ success: false, error: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-})
+});

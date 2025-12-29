@@ -1,205 +1,57 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting operator signup process...')
-    
-    const { email, password, name, company, specializations = [] } = await req.json()
-    console.log('Received signup request for email:', email)
+    const { email, password, name, company, specializations = [] } = await req.json();
 
     if (!email || !password || !name || !company) {
-      console.error('Missing required fields:', { email: !!email, password: !!password, name: !!name, company: !!company })
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Email, password, name, and company are required'
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+      return new Response(JSON.stringify({ success: false, message: "Email, password, name, and company are required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Initialize Supabase client with service role key for admin operations
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    
-    console.log('Environment check:', {
-      hasSupabaseUrl: !!supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey
-    })
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing environment variables')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Server configuration error'
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+    // Check existing user
+    const { data: existingOp } = await supabase.from("operators").select("id").eq("email", email).single();
+    if (existingOp) {
+      return new Response(JSON.stringify({ success: false, message: "A user with this email already exists" }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-    // Check if user already exists in auth using the correct method
-    console.log('Checking if user already exists...')
-    const { data: { users }, error: listUsersError } = await supabase.auth.admin.listUsers()
-
-    if (listUsersError) {
-      console.error('Error listing users:', listUsersError)
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Error checking for existing user'
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
-    // Check if any user has the same email
-    const existingUser = users?.find(user => user.email === email)
-    
-    if (existingUser) {
-      console.log('User already exists in auth system')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'A user with this email address has already been registered'
-        }),
-        {
-          status: 409,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
-    // Create user in Supabase Auth
-    console.log('Creating user in auth system...')
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true, // Auto-confirm for testing
-      user_metadata: {
-        name,
-        company
-      }
-    })
-
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { name, company } });
     if (authError) {
-      console.error('Auth signup error:', authError)
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: authError.message || 'Failed to create user account'
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+      return new Response(JSON.stringify({ success: false, message: authError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (!authData.user) {
-      console.error('No user returned from auth creation')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Failed to create user'
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+    const { data: operator, error: opError } = await supabase.from("operators").insert({
+      id: authData.user.id, name, email, company, specializations, password_hash: "managed_by_supabase_auth", role: "operator", is_active: true
+    }).select().single();
+
+    if (opError) {
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      return new Response(JSON.stringify({ success: false, message: opError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    console.log('User created in auth, creating operator record...')
+    // Insert role into user_roles table
+    await supabase.from("user_roles").insert({ user_id: authData.user.id, role: "operator" }).catch(() => {});
 
-    // Create operator record
-    const { data: operator, error: operatorError } = await supabase
-      .from('operators')
-      .insert({
-        id: authData.user.id, // Use the same ID as the auth user
-        name,
-        email,
-        company,
-        specializations,
-        password_hash: 'managed_by_supabase_auth',
-        role: 'operator',
-        is_active: true
-      })
-      .select()
-      .single()
-
-    if (operatorError) {
-      console.error('Operator creation error:', operatorError)
-      // Clean up the auth user if operator creation fails
-      await supabase.auth.admin.deleteUser(authData.user.id)
-      
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Failed to create operator profile: ' + operatorError.message
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
-    console.log('Operator signup completed successfully')
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: 'Operator account created successfully',
-        data: {
-          operator: {
-            id: operator.id,
-            name: operator.name,
-            email: operator.email,
-            company: operator.company,
-            role: operator.role,
-            specializations: operator.specializations || []
-          }
-        }
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    return new Response(JSON.stringify({
+      success: true, message: "Operator account created successfully",
+      data: { operator: { id: operator.id, name: operator.name, email: operator.email, company: operator.company, role: "operator", specializations: operator.specializations || [] } }
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
-    console.error('Signup error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error')
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    console.error("Signup error:", error);
+    return new Response(JSON.stringify({ success: false, message: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-})
+});
