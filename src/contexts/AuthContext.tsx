@@ -169,6 +169,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   };
 
   const signup = async (email: string, password: string, name: string, company: string, specializations: string[] = []) => {
+    console.log('🚀 SIGNUP: Starting signup process for:', email);
+    
     try {
       const { data, error } = await supabase.functions.invoke('operator-signup', {
         body: {
@@ -180,18 +182,45 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         }
       });
 
+      console.log('📋 SIGNUP: Edge function response:', { 
+        hasData: !!data, 
+        hasError: !!error,
+        dataSuccess: data?.success,
+        dataMessage: data?.message
+      });
+
       if (error) {
-        console.error('Signup error:', error);
+        console.error('❌ SIGNUP: Edge function error:', error);
+        
+        // Handle specific error cases
+        if (error.message?.includes('Failed to send') || error.message?.includes('FunctionsHttpError')) {
+          return { 
+            success: false, 
+            error: 'Unable to connect to signup service. Please ensure the backend is deployed and try again.' 
+          };
+        }
+        
         return { success: false, error: error.message };
       }
 
-      if (!data.success) {
-        return { success: false, error: data.message || 'Signup failed' };
+      if (!data?.success) {
+        console.error('❌ SIGNUP: Signup failed:', data?.message);
+        return { success: false, error: data?.message || 'Signup failed' };
       }
 
+      console.log('✅ SIGNUP: Signup successful for:', email);
       return { success: true };
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('💥 SIGNUP: Unexpected error:', error);
+      
+      // Handle network/connection errors
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        return { 
+          success: false, 
+          error: 'Network error. Please check your connection and try again.' 
+        };
+      }
+      
       return { 
         success: false, 
         error: error instanceof Error ? error.message : 'Signup failed. Please try again.' 
