@@ -1,1 +1,16 @@
 project_id = "gjhuxgjheaywfwrpctah"
+
+[functions.get-public-operators]
+verify_jwt = false
+
+[functions.create-lead-with-operators]
+verify_jwt = false
+
+[functions.create-lead]
+verify_jwt = false
+
+[functions.operator-signup]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false

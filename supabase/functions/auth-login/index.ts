@@ -1,156 +1,53 @@
-
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Starting login process...')
-    
-    const { email, password } = await req.json()
-    console.log('Login request for email:', email)
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const { email, password } = await req.json();
 
     if (!email || !password) {
-      console.error('Missing email or password')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Email and password are required'
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+      return new Response(JSON.stringify({ success: false, message: "Email and password required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-    
-    console.log('Environment check:', {
-      hasSupabaseUrl: !!supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey
-    })
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    if (!supabaseUrl || !supabaseServiceKey) {
-      console.error('Missing environment variables')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Server configuration error'
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+    const { data: operator } = await supabase.from("operators").select("*").eq("email", email).eq("is_active", true).single();
+    if (!operator) {
+      return new Response(JSON.stringify({ success: false, message: "Invalid email or password" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
-
-    // Check if user exists in operators table first
-    console.log('Checking operator existence...')
-    const { data: operator, error: operatorError } = await supabase
-      .from('operators')
-      .select('*')
-      .eq('email', email)
-      .eq('is_active', true)
-      .single()
-
-    if (operatorError || !operator) {
-      console.error('Operator lookup error:', operatorError)
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Invalid email or password'
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
-
-    console.log('Operator found, attempting authentication...')
-
-    // Authenticate user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({ email, password });
     if (authError) {
-      console.error('Auth error:', authError)
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Invalid email or password'
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
+      return new Response(JSON.stringify({ success: false, message: "Invalid email or password" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (!authData.user || !authData.session) {
-      console.error('No user or session returned from auth')
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: 'Authentication failed'
-        }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      )
-    }
+    // Fetch roles from user_roles table
+    const { data: userRoles } = await supabase.from("user_roles").select("role").eq("user_id", operator.id);
+    const roles = userRoles?.map(r => r.role) || [operator.role || 'operator'];
 
-    console.log('Login successful')
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          access_token: authData.session.access_token,
-          token_type: 'bearer',
-          expires_in: authData.session.expires_in,
-          operator: {
-            id: operator.id,
-            name: operator.name,
-            email: operator.email,
-            company: operator.company,
-            role: operator.role,
-            specializations: operator.specializations || []
-          }
-        }
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    return new Response(JSON.stringify({
+      success: true,
+      data: {
+        access_token: authData.session.access_token,
+        token_type: "bearer",
+        expires_in: authData.session.expires_in,
+        operator: { id: operator.id, name: operator.name, email: operator.email, company: operator.company, role: roles[0], roles, specializations: operator.specializations || [] }
       }
-    )
+    }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
-    console.error('Login error:', error)
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: 'Internal server error: ' + (error instanceof Error ? error.message : 'Unknown error')
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    )
+    console.error("Login error:", error);
+    return new Response(JSON.stringify({ success: false, message: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
-})
+});
