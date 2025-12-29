@@ -1,4 +1,4 @@
-project_id = "gjhuxgjheaywfwrpctah"
+project_id = "kwmohdwibtxlspfqarje"
 
 [functions.get-public-operators]
 verify_jwt = false
