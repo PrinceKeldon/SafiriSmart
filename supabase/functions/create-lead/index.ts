@@ -205,30 +205,33 @@ serve(async (req) => {
         console.log(`Lead visibility created for all ${operators.length} active operators`);
       }
 
-      // Create in-app notifications for all operators
-      const notificationEntries = operators.map(operator => ({
-        recipient_id: operator.id,
-        type: 'new_lead',
-        title: 'New Safari Inquiry',
-        message: `${traveler.name} from ${traveler.country} is interested in a ${preferences.duration}-day safari`,
-        data: { 
-          lead_id: leadData.id, 
-          traveler_name: traveler.name,
-          traveler_country: traveler.country,
-          duration: preferences.duration
-        },
-        read: false
-      }));
+      // Try to create in-app notifications for all operators (non-critical)
+      try {
+        const notificationEntries = operators.map(operator => ({
+          recipient_id: operator.id,
+          type: 'new_lead',
+          title: 'New Safari Inquiry',
+          message: `${traveler.name} from ${traveler.country} is interested in a ${preferences.duration}-day safari`,
+          data: { 
+            lead_id: leadData.id, 
+            traveler_name: traveler.name,
+            traveler_country: traveler.country,
+            duration: preferences.duration
+          },
+          read: false
+        }));
 
-      const { error: notificationError } = await supabaseClient
-        .from('notifications')
-        .insert(notificationEntries);
+        const { error: notificationError } = await supabaseClient
+          .from('notifications')
+          .insert(notificationEntries);
 
-      if (notificationError) {
-        console.error('Error creating notifications:', notificationError);
-        // Don't fail the whole request - notifications are non-critical
-      } else {
-        console.log(`Notifications created for all ${operators.length} active operators`);
+        if (notificationError) {
+          console.warn('Notifications table may not exist yet:', notificationError.message);
+        } else {
+          console.log(`Notifications created for all ${operators.length} active operators`);
+        }
+      } catch (notifErr) {
+        console.warn('Could not create notifications (table may not exist):', notifErr);
       }
     } else {
       console.log('No active operators found');
