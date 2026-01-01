@@ -19,6 +19,7 @@ import SafariGuide from '@/pages/SafariGuide';
 import NewLead from '@/pages/NewLead';
 import NoticeBoard from '@/pages/NoticeBoard';
 import NotFound from '@/pages/NotFound';
+import EdgeFunctionTest from '@/pages/EdgeFunctionTest';
 
 const queryClient = new QueryClient();
 
@@ -123,6 +124,7 @@ function App() {
                     </PrivateRoute>
                   }
                 />
+                <Route path="/test-functions" element={<EdgeFunctionTest />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
