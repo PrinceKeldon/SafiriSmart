@@ -30,10 +30,11 @@ jobs:
       - name: Link Supabase project
         run: supabase link --project-ref $SUPABASE_PROJECT_ID
 
-      - name: Set non-SUPABASE_ Edge Function secrets
+      - name: Set Edge Function secrets
         run: |
           supabase secrets set OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
           supabase secrets set RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+          supabase secrets set SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
       - name: Deploy all Edge Functions
         run: supabase functions deploy --use-api
