@@ -1,4 +1,40 @@
-name: Deploy Supabase Edge Functions
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'supabase/functions/**'
+      - 'supabase/config.toml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_ID: ${{ secrets.SUPABASE_PROJECT_ID }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref $SUPABASE_PROJECT_ID
+
+      - name: Set Edge Function secrets (non-SUPABASE_)
+        run: |
+          supabase secrets set OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+          supabase secrets set RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}
+
+      - name: Deploy all Edge Functions
+        run: supabase functions deploy --use-api
+me: Deploy Supabase Edge Functions
 
 # Trigger on pushes to main or manual workflow dispatch
 on:
