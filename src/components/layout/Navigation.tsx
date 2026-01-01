@@ -10,11 +10,13 @@ import {
   Inbox,
   LogOut,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const Navigation = () => {
   const location = useLocation();
@@ -32,6 +34,11 @@ const Navigation = () => {
       name: 'Lead Inbox',
       href: '/dashboard/notice-board',
       icon: Inbox,
+    },
+    {
+      name: 'Notifications',
+      href: '/notifications',
+      icon: Bell,
     },
     {
       name: 'Kenya Packages',
@@ -86,11 +93,14 @@ const Navigation = () => {
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}>
           <div className="flex flex-col h-full">
-            <div className="p-4 border-b mt-12">
-              <h2 className="text-lg font-bold text-gray-900">TourMaster AI</h2>
-              <p className="text-sm text-gray-600">Global Operator Dashboard</p>
+            <div className="p-4 border-b mt-12 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">TourMaster AI</h2>
+                <p className="text-sm text-gray-600">Operator Dashboard</p>
+              </div>
+              <NotificationBell />
             </div>
-            
+
             <div className="flex-1 px-4 py-4">
               <ul className="space-y-2">
                 {navigationItems.map((item) => {
@@ -136,11 +146,14 @@ const Navigation = () => {
   return (
     <nav className="bg-white shadow-sm border-r fixed left-0 top-0 h-full w-48 lg:w-64 z-30 overflow-y-auto">
       <div className="flex flex-col h-full">
-        <div className="p-4 sm:p-6 border-b">
-          <h2 className="text-lg sm:text-xl font-bold text-gray-900">TourMaster AI</h2>
-          <p className="text-xs sm:text-sm text-gray-600">Global Operator Dashboard</p>
+        <div className="p-4 sm:p-6 border-b flex items-center justify-between">
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-gray-900">TourMaster AI</h2>
+            <p className="text-xs sm:text-sm text-gray-600">Operator Dashboard</p>
+          </div>
+          <NotificationBell />
         </div>
-        
+
         <div className="flex-1 px-2 sm:px-4 py-4">
           <ul className="space-y-2">
             {navigationItems.map((item) => {
