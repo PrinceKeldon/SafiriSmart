@@ -20,6 +20,7 @@ import NewLead from '@/pages/NewLead';
 import NoticeBoard from '@/pages/NoticeBoard';
 import NotFound from '@/pages/NotFound';
 import EdgeFunctionTest from '@/pages/EdgeFunctionTest';
+import Notifications from '@/pages/Notifications';
 
 const queryClient = new QueryClient();
 
@@ -125,6 +126,14 @@ function App() {
                   }
                 />
                 <Route path="/test-functions" element={<EdgeFunctionTest />} />
+                <Route
+                  path="/notifications"
+                  element={
+                    <PrivateRoute>
+                      <Notifications />
+                    </PrivateRoute>
+                  }
+                />
                 <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />

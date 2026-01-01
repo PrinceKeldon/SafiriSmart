@@ -160,6 +160,31 @@ serve(async (req) => {
       }
     }
 
+    // Create in-app notifications for selected operators
+    const notificationEntries = selectedOperatorIds.map((operatorId: string, index: number) => ({
+      recipient_id: operatorId,
+      type: 'new_lead',
+      title: 'New Safari Lead Assigned',
+      message: `${traveler.name} from ${traveler.country} selected you for their ${preferences.duration}-day safari`,
+      data: { 
+        lead_id: createdLeads[index]?.id, 
+        traveler_name: traveler.name,
+        traveler_country: traveler.country,
+        duration: preferences.duration
+      },
+      read: false
+    }));
+
+    const { error: notificationError } = await supabaseClient
+      .from('notifications')
+      .insert(notificationEntries);
+
+    if (notificationError) {
+      console.warn('⚠️ Error creating notifications (non-critical):', notificationError);
+    } else {
+      console.log('✅ Notifications created for all selected operators');
+    }
+
     const response = {
       success: true,
       data: {
