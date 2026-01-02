@@ -20,7 +20,10 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, message: "Email and password required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'public' },
+      auth: { persistSession: false }
+    });
 
     const { data: operator } = await supabase.from("operators").select("*").eq("email", email).eq("is_active", true).single();
     if (!operator) {
