@@ -21,7 +21,10 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      db: { schema: 'public' },
+      auth: { persistSession: false }
+    });
 
     // Check existing user
     const { data: existingOp } = await supabase.from("operators").select("id").eq("email", email).single();
