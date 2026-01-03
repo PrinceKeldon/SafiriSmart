@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { InterestsStep } from './steps/InterestsStep';
+import { DestinationSelectionStep } from './steps/DestinationSelectionStep';
 import { DurationStep } from './steps/DurationStep';
 import { GroupSizeStep } from './steps/GroupSizeStep';
 import { BudgetStep } from './steps/BudgetStep';
@@ -10,7 +10,7 @@ import { TravelScheduleStep } from './steps/TravelScheduleStep';
 import { TravelLogisticsStep } from './steps/TravelLogisticsStep';
 import { DietaryStep } from './steps/DietaryStep';
 import { UserDetailsStep } from './steps/UserDetailsStep';
-import { UserDetails } from './WizardTypes';
+import { UserDetails, DestinationItem } from './WizardTypes';
 
 interface WizardStepsProps {
   currentStep: number;
@@ -19,11 +19,15 @@ interface WizardStepsProps {
   travel: any;
   dietary: any;
   userDetails: UserDetails;
+  aiSuggestedDestinations: DestinationItem[];
+  selectedDestinations: DestinationItem[];
+  customDestinations: string[];
   onPreferenceChange: (key: string, value: any) => void;
   onScheduleChange: (schedule: any) => void;
   onTravelChange: (travel: any) => void;
   onDietaryChange: (dietary: any) => void;
   onUserDetailsChange: (details: UserDetails) => void;
+  onDestinationChange: (destinations: DestinationItem[], customDestinations: string[]) => void;
   onNext: () => void;
   onBack: () => void;
   onComplete: () => void;
@@ -36,11 +40,15 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
   travel,
   dietary,
   userDetails,
+  aiSuggestedDestinations,
+  selectedDestinations,
+  customDestinations,
   onPreferenceChange,
   onScheduleChange,
   onTravelChange,
   onDietaryChange,
   onUserDetailsChange,
+  onDestinationChange,
   onNext,
   onBack,
   onComplete
@@ -59,6 +67,17 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
       );
     case 2:
       return (
+        <DestinationSelectionStep
+          aiSuggestedDestinations={aiSuggestedDestinations}
+          selectedDestinations={selectedDestinations}
+          customDestinations={customDestinations}
+          onChange={onDestinationChange}
+          onNext={onNext}
+          onBack={onBack}
+        />
+      );
+    case 3:
+      return (
         <DurationStep
           value={preferences.duration}
           onChange={(duration) => onPreferenceChange('duration', duration)}
@@ -66,7 +85,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 3:
+    case 4:
       return (
         <GroupSizeStep
           value={preferences.groupSize}
@@ -75,7 +94,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 4:
+    case 5:
       return (
         <BudgetStep
           value={preferences.budgetRange}
@@ -84,7 +103,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 5:
+    case 6:
       return (
         <TravelPaceStep
           value={preferences.travelPace}
@@ -93,7 +112,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 6:
+    case 7:
       return (
         <LanguagesStep
           value={preferences.languages}
@@ -102,7 +121,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 7:
+    case 8:
       return (
         <TravelScheduleStep
           value={schedule}
@@ -111,7 +130,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 8:
+    case 9:
       return (
         <TravelLogisticsStep
           travel={travel}
@@ -120,7 +139,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 9:
+    case 10:
       return (
         <DietaryStep
           dietary={dietary}
@@ -129,7 +148,7 @@ const WizardSteps: React.FC<WizardStepsProps> = ({
           onBack={onBack}
         />
       );
-    case 10:
+    case 11:
       return (
         <UserDetailsStep
           value={userDetails}

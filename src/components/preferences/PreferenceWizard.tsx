@@ -4,7 +4,7 @@ import { WizardProgress } from './WizardProgress';
 import WizardSteps from './WizardSteps';
 import ItineraryDisplay from './ItineraryDisplay';
 import { OperatorSelectionModal } from './OperatorSelectionModal';
-import { UserDetails, steps } from './WizardTypes';
+import { UserDetails, steps, DestinationItem, DestinationSelection } from './WizardTypes';
 
 interface PreferenceWizardProps {
   onComplete: (data: {
@@ -13,6 +13,7 @@ interface PreferenceWizardProps {
     travel: any;
     dietary: any;
     userDetails: UserDetails;
+    destinationSelection?: DestinationSelection;
     fullItinerary?: any;
     costEstimation?: any;
   }) => void;
@@ -51,11 +52,18 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     country: '',
     message: ''
   });
+  
+  // New destination selection state
+  const [aiSuggestedDestinations, setAiSuggestedDestinations] = useState<DestinationItem[]>([]);
+  const [selectedDestinations, setSelectedDestinations] = useState<DestinationItem[]>([]);
+  const [customDestinations, setCustomDestinations] = useState<string[]>([]);
+  const [destinationUserModified, setDestinationUserModified] = useState(false);
+  
   const [showItineraryDisplay, setShowItineraryDisplay] = useState(false);
   const [showOperatorSelection, setShowOperatorSelection] = useState(false);
   const [generatedItinerary, setGeneratedItinerary] = useState(null);
 
-  const totalSteps = 10;
+  const totalSteps = 11;
 
   console.log('PreferenceWizard: Current step:', currentStep, 'showItineraryDisplay:', showItineraryDisplay, 'showOperatorSelection:', showOperatorSelection);
 
@@ -106,17 +114,128 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     setUserDetails(details);
   };
 
+  // Generate AI suggested destinations from interests
+  const generateDestinationsFromInterests = useCallback((interests: string[]) => {
+    const interestDestinations: Record<string, { destinations: string[], activities: string[], notes: string[] }> = {
+      'wildlife-safari': {
+        destinations: ['Masai Mara National Reserve', 'Amboseli National Park', 'Tsavo East National Park'],
+        activities: ['Big Five game drives', 'Wildlife photography', 'Bush walks with guides'],
+        notes: [
+          'Masai Mara offers the Great Migration spectacle (July-October)',
+          'Amboseli provides stunning views of Mount Kilimanjaro',
+          'Tsavo East is famous for its red elephants and diverse landscapes'
+        ]
+      },
+      'beach': {
+        destinations: ['Diani Beach', 'Watamu Marine Park', 'Malindi'],
+        activities: ['Snorkeling and diving', 'Deep sea fishing', 'Beach relaxation', 'Water sports'],
+        notes: [
+          'Diani Beach features pristine white sand and coral reefs',
+          'Watamu is a UNESCO Biosphere Reserve with marine life',
+          'Malindi offers historical sites and beautiful beaches'
+        ]
+      },
+      'cultural': {
+        destinations: ['Masai Mara Community Conservancies', 'Local Maasai Villages', 'Nairobi Cultural Centers'],
+        activities: ['Traditional village visits', 'Cultural dance performances', 'Local craft workshops'],
+        notes: [
+          'Experience authentic Maasai warrior traditions and lifestyle',
+          'Learn about traditional beadwork and local customs',
+          'Participate in community conservation projects'
+        ]
+      },
+      'photography': {
+        destinations: ['Lake Nakuru National Park', 'Samburu National Reserve', 'Hell\'s Gate National Park'],
+        activities: ['Wildlife photography sessions', 'Landscape photography', 'Sunrise/sunset shoots'],
+        notes: [
+          'Lake Nakuru famous for flamingo populations and scenic views',
+          'Samburu offers unique species and dramatic landscapes',
+          'Hell\'s Gate provides walking safaris and geothermal features'
+        ]
+      },
+      'bird-watching': {
+        destinations: ['Lake Naivasha', 'Aberdare National Park', 'Kakamega Forest'],
+        activities: ['Guided bird watching tours', 'Nature walks', 'Bird photography'],
+        notes: [
+          'Lake Naivasha hosts over 400 bird species',
+          'Aberdare offers montane forest birds and wildlife',
+          'Kakamega is Kenya\'s last remaining rainforest'
+        ]
+      },
+      'adventure': {
+        destinations: ['Mount Kenya Region', 'Hell\'s Gate National Park', 'Aberdare Mountains'],
+        activities: ['Mountain climbing', 'Rock climbing', 'Hiking trails', 'Cycling safaris'],
+        notes: [
+          'Mount Kenya offers challenging climbs and scenic routes',
+          'Hell\'s Gate allows walking and cycling among wildlife',
+          'Aberdare provides forest hikes and waterfall treks'
+        ]
+      },
+      'conservation': {
+        destinations: ['Ol Pejeta Conservancy', 'David Sheldrick Elephant Orphanage', 'Giraffe Centre'],
+        activities: ['Conservation project visits', 'Wildlife rehabilitation tours', 'Research participation'],
+        notes: [
+          'Ol Pejeta is home to the last northern white rhinos',
+          'David Sheldrick Orphanage rescues and rehabilitates elephants',
+          'Giraffe Centre focuses on endangered Rothschild giraffe conservation'
+        ]
+      }
+    };
+
+    const destinations: DestinationItem[] = [];
+    const usedDestinations = new Set<string>();
+
+    interests.forEach(interest => {
+      const interestData = interestDestinations[interest];
+      if (interestData) {
+        interestData.destinations.forEach((dest, idx) => {
+          if (!usedDestinations.has(dest)) {
+            destinations.push({
+              name: dest,
+              activities: interestData.activities,
+              note: interestData.notes[idx] || `Experience ${interest.replace('-', ' ')} activities at ${dest}`,
+              sourceInterest: interest,
+              selected: true // Pre-select all by default
+            });
+            usedDestinations.add(dest);
+          }
+        });
+      }
+    });
+
+    return destinations;
+  }, []);
+
+  const handleDestinationChange = (destinations: DestinationItem[], custom: string[]) => {
+    setSelectedDestinations(destinations);
+    setCustomDestinations(custom);
+    
+    // Check if user modified anything
+    const hasDeselected = destinations.some(d => !d.selected);
+    const hasCustom = custom.length > 0;
+    setDestinationUserModified(hasDeselected || hasCustom);
+  };
+
   const handleNext = () => {
     console.log('PreferenceWizard: Moving from step', currentStep);
     
-    if (currentStep < 9) {
+    // When leaving interests step (step 1), generate AI destinations
+    if (currentStep === 1) {
+      const aiDestinations = generateDestinationsFromInterests(preferences.interests);
+      setAiSuggestedDestinations(aiDestinations);
+      setSelectedDestinations(aiDestinations);
+      setCustomDestinations([]);
+      setDestinationUserModified(false);
+    }
+    
+    if (currentStep < 10) {
       setCurrentStep(prev => prev + 1);
-    } else if (currentStep === 9) {
-      // After dietary step (step 9), show itinerary display
+    } else if (currentStep === 10) {
+      // After dietary step (step 10), show itinerary display
       console.log('PreferenceWizard: Moving to itinerary display');
       setShowItineraryDisplay(true);
-    } else if (currentStep === 10) {
-      // After user details step (step 10), show operator selection
+    } else if (currentStep === 11) {
+      // After user details step (step 11), show operator selection
       console.log('PreferenceWizard: Moving from user details to operator selection');
       setShowOperatorSelection(true);
     }
@@ -126,11 +245,11 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
     if (showOperatorSelection) {
       // From operator selection back to user details step
       setShowOperatorSelection(false);
-      setCurrentStep(10);
+      setCurrentStep(11);
     } else if (showItineraryDisplay) {
-      // From itinerary display back to step 9
+      // From itinerary display back to step 10
       setShowItineraryDisplay(false);
-      setCurrentStep(9);
+      setCurrentStep(10);
     } else if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     }
@@ -139,18 +258,27 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   const handleItineraryComplete = () => {
     console.log('PreferenceWizard: Moving from itinerary to user details step');
     setShowItineraryDisplay(false);
-    setCurrentStep(10); // Move to user details step (Step 10)
+    setCurrentStep(11); // Move to user details step (Step 11)
   };
 
   const handleItineraryBack = () => {
     setShowItineraryDisplay(false);
-    setCurrentStep(9); // Go back to dietary step
+    setCurrentStep(10); // Go back to dietary step
   };
 
   const handleUserDetailsComplete = () => {
     console.log('PreferenceWizard: User details collected, showing operator selection');
     setShowOperatorSelection(true);
   };
+
+  const getDestinationSelectionData = useCallback((): DestinationSelection => {
+    return {
+      destinations: selectedDestinations,
+      customDestinations,
+      selectionMode: destinationUserModified ? 'hybrid' : 'ai',
+      userModified: destinationUserModified
+    };
+  }, [selectedDestinations, customDestinations, destinationUserModified]);
 
   const handleOperatorSelectionComplete = (selectedOperatorIds: string[]) => {
     console.log('PreferenceWizard: Operator selection complete with operators:', selectedOperatorIds);
@@ -162,6 +290,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       travel,
       dietary,
       userDetails,
+      destinationSelection: getDestinationSelectionData(),
       fullItinerary: generatedItinerary,
       costEstimation
     });
@@ -169,114 +298,62 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
 
   const handleOperatorSelectionClose = () => {
     setShowOperatorSelection(false);
-    setCurrentStep(10); // Go back to user details step
+    setCurrentStep(11); // Go back to user details step
   };
 
   const generateSmartMockItinerary = useCallback(() => {
     const { interests, duration, groupSize, budgetRange } = preferences;
+    const destinationData = getDestinationSelectionData();
+    
+    // Use user-selected destinations if modified, otherwise use all AI suggestions
+    let finalDestinations: Array<{name: string, activities: string[], note: string}> = [];
+    
+    if (destinationData.selectionMode === 'hybrid') {
+      // User has modified the selection - use only selected destinations
+      finalDestinations = destinationData.destinations
+        .filter(d => d.selected)
+        .map(d => ({
+          name: d.name,
+          activities: d.activities,
+          note: d.note
+        }));
       
-      // Map interests to destinations and activities
-      const interestDestinations: Record<string, { destinations: string[], activities: string[], notes: string[] }> = {
-        'wildlife-safari': {
-          destinations: ['Masai Mara National Reserve', 'Amboseli National Park', 'Tsavo East National Park'],
-          activities: ['Big Five game drives', 'Wildlife photography', 'Bush walks with guides'],
-          notes: [
-            'Masai Mara offers the Great Migration spectacle (July-October)',
-            'Amboseli provides stunning views of Mount Kilimanjaro',
-            'Tsavo East is famous for its red elephants and diverse landscapes'
-          ]
-        },
-        'beach': {
-          destinations: ['Diani Beach', 'Watamu Marine Park', 'Malindi'],
-          activities: ['Snorkeling and diving', 'Deep sea fishing', 'Beach relaxation', 'Water sports'],
-          notes: [
-            'Diani Beach features pristine white sand and coral reefs',
-            'Watamu is a UNESCO Biosphere Reserve with marine life',
-            'Malindi offers historical sites and beautiful beaches'
-          ]
-        },
-        'cultural': {
-          destinations: ['Masai Mara Community Conservancies', 'Local Maasai Villages', 'Nairobi Cultural Centers'],
-          activities: ['Traditional village visits', 'Cultural dance performances', 'Local craft workshops'],
-          notes: [
-            'Experience authentic Maasai warrior traditions and lifestyle',
-            'Learn about traditional beadwork and local customs',
-            'Participate in community conservation projects'
-          ]
-        },
-        'photography': {
-          destinations: ['Lake Nakuru National Park', 'Samburu National Reserve', 'Hell\'s Gate National Park'],
-          activities: ['Wildlife photography sessions', 'Landscape photography', 'Sunrise/sunset shoots'],
-          notes: [
-            'Lake Nakuru famous for flamingo populations and scenic views',
-            'Samburu offers unique species and dramatic landscapes',
-            'Hell\'s Gate provides walking safaris and geothermal features'
-          ]
-        },
-        'bird-watching': {
-          destinations: ['Lake Naivasha', 'Aberdare National Park', 'Kakamega Forest'],
-          activities: ['Guided bird watching tours', 'Nature walks', 'Bird photography'],
-          notes: [
-            'Lake Naivasha hosts over 400 bird species',
-            'Aberdare offers montane forest birds and wildlife',
-            'Kakamega is Kenya\'s last remaining rainforest'
-          ]
-        },
-        'adventure': {
-          destinations: ['Mount Kenya Region', 'Hell\'s Gate National Park', 'Aberdare Mountains'],
-          activities: ['Mountain climbing', 'Rock climbing', 'Hiking trails', 'Cycling safaris'],
-          notes: [
-            'Mount Kenya offers challenging climbs and scenic routes',
-            'Hell\'s Gate allows walking and cycling among wildlife',
-            'Aberdare provides forest hikes and waterfall treks'
-          ]
-        },
-        'conservation': {
-          destinations: ['Ol Pejeta Conservancy', 'David Sheldrick Elephant Orphanage', 'Giraffe Centre'],
-          activities: ['Conservation project visits', 'Wildlife rehabilitation tours', 'Research participation'],
-          notes: [
-            'Ol Pejeta is home to the last northern white rhinos',
-            'David Sheldrick Orphanage rescues and rehabilitates elephants',
-            'Giraffe Centre focuses on endangered Rothschild giraffe conservation'
-          ]
-        }
-      };
-
-      // Select destinations based on user interests
-      const selectedDestinations: Array<{name: string, activities: string[], note: string}> = [];
-      const usedDestinations = new Set<string>();
-
-      interests.forEach(interest => {
-        const interestData = interestDestinations[interest];
-        if (interestData) {
-          interestData.destinations.forEach((dest, idx) => {
-            if (!usedDestinations.has(dest) && selectedDestinations.length < Math.ceil(duration / 2)) {
-              selectedDestinations.push({
-                name: dest,
-                activities: interestData.activities,
-                note: interestData.notes[idx] || `Experience ${interest.replace('-', ' ')} activities at ${dest}`
-              });
-              usedDestinations.add(dest);
-            }
-          });
-        }
-      });
-
-      // Ensure we have at least one destination
-      if (selectedDestinations.length === 0) {
-        selectedDestinations.push({
-          name: 'Masai Mara National Reserve',
-          activities: ['Game drives', 'Wildlife viewing', 'Cultural experiences'],
-          note: 'Kenya\'s most famous safari destination with abundant wildlife'
+      // Add custom destinations with generic activities
+      destinationData.customDestinations.forEach(customDest => {
+        finalDestinations.push({
+          name: customDest,
+          activities: ['Local exploration', 'Cultural experiences', 'Scenic views'],
+          note: `User-requested destination: ${customDest}`
         });
-      }
+      });
+    } else {
+      // AI mode - use all AI suggested destinations
+      finalDestinations = destinationData.destinations.map(d => ({
+        name: d.name,
+        activities: d.activities,
+        note: d.note
+      }));
+    }
+    
+    // Limit destinations based on duration
+    const maxDestinations = Math.ceil(duration / 2);
+    finalDestinations = finalDestinations.slice(0, maxDestinations);
+    
+    // Ensure we have at least one destination
+    if (finalDestinations.length === 0) {
+      finalDestinations.push({
+        name: 'Masai Mara National Reserve',
+        activities: ['Game drives', 'Wildlife viewing', 'Cultural experiences'],
+        note: 'Kenya\'s most famous safari destination with abundant wildlife'
+      });
+    }
 
       // Generate day-by-day itinerary
-      const daysPerDestination = Math.ceil(duration / selectedDestinations.length);
+      const daysPerDestination = Math.ceil(duration / finalDestinations.length);
       const itineraryDetails = Array.from({ length: duration }, (_, i) => {
         const dayNumber = i + 1;
         const destIndex = Math.floor(i / daysPerDestination);
-        const destination = selectedDestinations[destIndex] || selectedDestinations[0];
+        const destination = finalDestinations[destIndex] || finalDestinations[0];
         const dayInDestination = (i % daysPerDestination) + 1;
         
         const isFirstDay = i === 0;
@@ -342,7 +419,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       if (interests.includes('conservation')) contextualInclusions.push('Exclusive conservation project visits', 'Meet with conservation experts', 'Participation in conservation activities');
 
       const smartNotes = [
-        `🎯 This ${duration}-day itinerary is intelligently designed based on your selected interests: ${interests.map(i => i.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())).join(', ')}`,
+        `🎯 This ${duration}-day itinerary is ${destinationData.selectionMode === 'hybrid' ? 'customized based on your destination selections' : 'intelligently designed based on your selected interests'}: ${interests.map(i => i.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())).join(', ')}`,
         '💡 IMPORTANT: This serves as a comprehensive planning guide and conversation starter with tour operators',
         '🤝 Please review, discuss, and customize all details with your chosen operator to match their current offerings and availability',
         `👥 Specifically designed for ${groupSize} traveler${groupSize > 1 ? 's' : ''} with ${budgetRange} budget preferences and ${preferences.travelPace} travel pace`,
@@ -358,10 +435,14 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       if (interests.length > 3) {
         smartNotes.push('🎨 Multi-interest itinerary - operators may suggest focusing on 2-3 primary interests for optimal experience depth');
       }
+      
+      if (destinationData.customDestinations.length > 0) {
+        smartNotes.push(`📍 Custom destinations included: ${destinationData.customDestinations.join(', ')} - operators will provide specific guidance for these locations`);
+      }
 
       return {
         tour_name: `${duration}-Day ${interests.slice(0, 2).map(i => i.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())).join(' & ')} Kenya Safari Experience`,
-        summary: `An intelligently crafted ${duration}-day Kenya safari adventure for ${groupSize} traveler${groupSize > 1 ? 's' : ''}, featuring ${selectedDestinations.map(d => d.name).slice(0, 3).join(', ')} with personalized activities based on your interests: ${interests.map(i => i.replace('-', ' ')).join(', ')}. This ${budgetRange} tier experience serves as your comprehensive planning guide for detailed discussions with verified tour operators.`,
+        summary: `An ${destinationData.selectionMode === 'hybrid' ? 'user-customized' : 'intelligently crafted'} ${duration}-day Kenya safari adventure for ${groupSize} traveler${groupSize > 1 ? 's' : ''}, featuring ${finalDestinations.map(d => d.name).slice(0, 3).join(', ')} with personalized activities based on your interests: ${interests.map(i => i.replace('-', ' ')).join(', ')}. This ${budgetRange} tier experience serves as your comprehensive planning guide for detailed discussions with verified tour operators.`,
         itinerary_details: itineraryDetails,
         inclusions_suggestions: [...baseInclusions, ...contextualInclusions],
         exclusions_suggestions: [
@@ -386,10 +467,12 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
             'Dietary and travel logistics integration',
             'Cultural and conservation elements based on interests'
           ],
-          generation_method: 'enhanced_smart_mock_with_comprehensive_planning'
+          generation_method: destinationData.selectionMode === 'hybrid' ? 'user_customized_with_ai_suggestions' : 'enhanced_smart_mock_with_comprehensive_planning',
+          selection_mode: destinationData.selectionMode,
+          user_modified: destinationData.userModified
         }
       };
-  }, [preferences, schedule, travel, dietary]);
+  }, [preferences, schedule, travel, dietary, getDestinationSelectionData]);
 
   const mockItinerary = useMemo(() => {
     if (showItineraryDisplay && !generatedItinerary) {
@@ -505,11 +588,15 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
             travel={travel}
             dietary={dietary}
             userDetails={userDetails}
+            aiSuggestedDestinations={aiSuggestedDestinations}
+            selectedDestinations={selectedDestinations}
+            customDestinations={customDestinations}
             onPreferenceChange={handlePreferenceChange}
             onScheduleChange={setSchedule}
             onTravelChange={setTravel}
             onDietaryChange={setDietary}
             onUserDetailsChange={handleUserDetailsChange}
+            onDestinationChange={handleDestinationChange}
             onNext={handleNext}
             onBack={handleBack}
             onComplete={handleUserDetailsComplete}
