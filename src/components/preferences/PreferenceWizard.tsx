@@ -487,6 +487,18 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
   if (showOperatorSelection) {
     const costEstimation = calculateCostEstimation();
     
+    const destinationSelection = getDestinationSelectionData();
+    
+    // Build fallback important notes including custom destinations
+    const fallbackImportantNotes = [
+      'This itinerary serves as a planning guide',
+      'All details subject to operator confirmation',
+      'Weather and wildlife movements may affect activities',
+      ...(customDestinations.length > 0 
+        ? [`📍 Custom destinations requested: ${customDestinations.join(', ')} - operators will provide specific guidance for these locations`] 
+        : [])
+    ];
+
     const travelerData = {
       traveler: {
         name: userDetails.name,
@@ -500,6 +512,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
       travel,
       dietary,
       costEstimation,
+      destinationSelection,
       itinerary: generatedItinerary || {
         tour_name: `${preferences.duration}-Day Safari Adventure`,
         summary: `A personalized ${preferences.duration}-day safari experience for ${preferences.groupSize} travelers`,
@@ -536,11 +549,7 @@ const PreferenceWizard: React.FC<PreferenceWizardProps> = ({ onComplete }) => {
           'Personal expenses',
           'Gratuities'
         ],
-        important_notes: generatedItinerary?.important_notes || [
-          'This itinerary serves as a planning guide',
-          'All details subject to operator confirmation',
-          'Weather and wildlife movements may affect activities'
-        ]
+        important_notes: generatedItinerary?.important_notes || fallbackImportantNotes
       }
     };
 
