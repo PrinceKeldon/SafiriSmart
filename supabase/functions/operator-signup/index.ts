@@ -46,8 +46,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ success: false, message: opError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Insert role into user_roles table
-    await supabase.from("user_roles").insert({ user_id: authData.user.id, role: "operator" }).catch(() => {});
+    // Insert role into user_roles table (ignore errors if table doesn't exist or role already exists)
+    const { error: roleError } = await supabase.from("user_roles").insert({ 
+      user_id: authData.user.id, 
+      role: "operator" 
+    });
+    if (roleError) {
+      console.log("Note: Could not insert user role (may already exist):", roleError.message);
+    }
 
     return new Response(JSON.stringify({
       success: true, message: "Operator account created successfully",
