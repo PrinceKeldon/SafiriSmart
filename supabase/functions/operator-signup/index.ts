@@ -1,4 +1,4 @@
-// Operator Signup Edge Function - v1.1
+// Operator Signup Edge Function - v1.2
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -12,10 +12,13 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  console.log("operator-signup v1.2 - Request received:", new Date().toISOString());
+
   try {
     const { email, password, name, company, specializations = [] } = await req.json();
 
     if (!email || !password || !name || !company) {
+      console.log("operator-signup v1.2 - Validation failed: missing required fields");
       return new Response(JSON.stringify({ success: false, message: "Email, password, name, and company are required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -29,11 +32,13 @@ serve(async (req) => {
     // Check existing user
     const { data: existingOp } = await supabase.from("operators").select("id").eq("email", email).single();
     if (existingOp) {
+      console.log("operator-signup v1.2 - User already exists:", email);
       return new Response(JSON.stringify({ success: false, message: "A user with this email already exists" }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { name, company } });
     if (authError) {
+      console.log("operator-signup v1.2 - Auth error:", authError.message);
       return new Response(JSON.stringify({ success: false, message: authError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -42,6 +47,7 @@ serve(async (req) => {
     }).select().single();
 
     if (opError) {
+      console.log("operator-signup v1.2 - Operator insert error:", opError.message);
       await supabase.auth.admin.deleteUser(authData.user.id);
       return new Response(JSON.stringify({ success: false, message: opError.message }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -52,16 +58,17 @@ serve(async (req) => {
       role: "operator" 
     });
     if (roleError) {
-      console.log("Note: Could not insert user role (may already exist):", roleError.message);
+      console.log("operator-signup v1.2 - Note: Could not insert user role:", roleError.message);
     }
 
+    console.log("operator-signup v1.2 - Success! Operator created:", operator.email);
     return new Response(JSON.stringify({
       success: true, message: "Operator account created successfully",
       data: { operator: { id: operator.id, name: operator.name, email: operator.email, company: operator.company, role: "operator", specializations: operator.specializations || [] } }
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (error) {
-    console.error("Signup error:", error);
+    console.error("operator-signup v1.2 - Unexpected error:", error);
     return new Response(JSON.stringify({ success: false, message: "Internal server error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
