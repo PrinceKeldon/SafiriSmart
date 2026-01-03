@@ -102,8 +102,21 @@ const EdgeFunctionTest = () => {
         }
       });
       console.log('operator-signup response:', data, error);
-      if (error) throw error;
-      return { status: 'success', message: 'Function responded successfully' };
+      
+      if (error) {
+        const response = await extractFunctionResponse(error);
+        // 409 = user exists, 400 = validation error - these mean function works
+        if (response.status === 409 || response.status === 400) {
+          return { status: 'expected', message: response.message || 'Signup rejected (expected)' };
+        }
+        // Check if it's a known error message
+        if (response.message?.includes('exists') || response.message?.includes('required')) {
+          return { status: 'expected', message: response.message };
+        }
+        throw error;
+      }
+      
+      return { status: 'success', message: data?.message || 'Operator created successfully' };
     });
 
     // Test generate-description
