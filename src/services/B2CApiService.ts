@@ -116,6 +116,12 @@ class B2CApiService {
       allergies?: string;
       specialRequirements?: string;
     };
+    destinationSelection?: {
+      destinations: Array<{name: string; activities: string[]; note: string; selected: boolean}>;
+      customDestinations: string[];
+      selectionMode: 'ai' | 'hybrid';
+      userModified: boolean;
+    };
     itinerary?: any;
     selectedOperatorIds: string[];
   }): Promise<any> {

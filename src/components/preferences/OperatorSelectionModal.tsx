@@ -35,6 +35,12 @@ interface OperatorSelectionModalProps {
     schedule: any;
     travel: any;
     dietary: any;
+    destinationSelection?: {
+      destinations: Array<{name: string; activities: string[]; note: string; selected: boolean}>;
+      customDestinations: string[];
+      selectionMode: 'ai' | 'hybrid';
+      userModified: boolean;
+    };
     itinerary: any;
   };
 }
