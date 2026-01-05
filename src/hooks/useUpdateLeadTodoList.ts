@@ -66,33 +66,16 @@ export const useUpdateLeadTodoList = () => {
       const allTasksCompleted = todoChecklist.every(item => item.completed);
       
       // Calculate new status based on checklist completion
-      let newStatus = 'claimed'; // default status
+      let newStatus = 'claimed'; // default status - stays claimed while being worked on
       
       if (allTasksCompleted) {
         // All tasks complete = lead is converted/completed
         newStatus = 'completed';
-      } else {
-        // Check items in priority order (most advanced first)
-        const confirmBookingTask = todoChecklist.find(item => item.id === 'task-6');
-        const followUpTask = todoChecklist.find(item => item.id === 'task-5');
-        const sendQuoteTask = todoChecklist.find(item => item.id === 'task-4');
-        const contactEmailTask = todoChecklist.find(item => item.id === 'task-2');
-        const reviewTask = todoChecklist.find(item => item.id === 'task-1');
-        
-        if (confirmBookingTask?.completed) {
-          newStatus = 'confirmed';
-        } else if (followUpTask?.completed) {
-          newStatus = 'contacted';
-        } else if (sendQuoteTask?.completed) {
-          newStatus = 'quoted';
-        } else if (contactEmailTask?.completed) {
-          newStatus = 'contacted';
-        } else if (reviewTask?.completed) {
-          newStatus = 'claimed';
-        }
       }
+      // Note: We keep status as 'claimed' for any partial completion
+      // This ensures leads being worked on count as "claimed" leads
       
-      console.log('📊 Calculated new status based on checklist:', newStatus);
+      console.log('📊 Calculated new status based on checklist:', newStatus, '(all completed:', allTasksCompleted, ')');
       
       const { data, error } = await supabase
         .from('leads')

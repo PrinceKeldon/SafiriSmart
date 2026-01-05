@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { CalendarDays, DollarSign, MapPin, Users, Phone, Mail, Eye } from 'lucide-react';
+import { CalendarDays, DollarSign, MapPin, Users, Phone, Mail, Eye, CheckCircle2 } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -67,17 +67,33 @@ export const LeadCard = ({ lead, onViewDetails, onUpdateStatus }: LeadCardProps)
   const interests = preferences.interests || [];
   const schedule = preferences.schedule || {};
 
+  // Calculate checklist progress
+  const checklistProgress = lead.todo_checklist && lead.todo_checklist.length > 0
+    ? {
+        completed: lead.todo_checklist.filter(t => t.completed).length,
+        total: lead.todo_checklist.length
+      }
+    : null;
+
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div className="min-w-0 flex-1">
             <h3 className="font-semibold text-base sm:text-lg truncate">{lead.traveler_name}</h3>
-            <p className="text-xs sm:text-sm text-gray-600 truncate">{lead.traveler_country || 'Unknown'}</p>
+            <p className="text-xs sm:text-sm text-muted-foreground truncate">{lead.traveler_country || 'Unknown'}</p>
           </div>
-          <Badge className={`${statusColors[lead.status]} text-xs whitespace-nowrap ml-2`}>
-            {statusLabels[lead.status]}
-          </Badge>
+          <div className="flex flex-col items-end gap-1 ml-2">
+            <Badge className={`${statusColors[lead.status]} text-xs whitespace-nowrap`}>
+              {statusLabels[lead.status]}
+            </Badge>
+            {checklistProgress && (
+              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <CheckCircle2 className="h-3 w-3" />
+                <span>{checklistProgress.completed}/{checklistProgress.total} tasks</span>
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
       
