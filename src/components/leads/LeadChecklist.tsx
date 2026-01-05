@@ -149,7 +149,10 @@ export const LeadChecklist: React.FC<LeadChecklistProps> = ({
         {progressPercentage === 100 && (
           <div className="mt-4 p-3 bg-green-100 border border-green-200 rounded-lg">
             <p className="text-green-800 text-sm font-medium">
-              🎉 Congratulations! You've completed all tasks for this lead.
+              🎉 Congratulations! You've successfully converted this lead.
+            </p>
+            <p className="text-green-700 text-xs mt-1">
+              This conversion has been recorded and added to your statistics.
             </p>
           </div>
         )}
