@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Eye, CheckCircle, Clock } from 'lucide-react';
@@ -6,19 +5,25 @@ import { Lead } from '@/types/lead';
 
 interface DashboardStatsProps {
   leads: Lead[];
+  completedLeadsCount?: number;
 }
 
-export const DashboardStats = ({ leads }: DashboardStatsProps) => {
+export const DashboardStats = ({ leads, completedLeadsCount = 0 }: DashboardStatsProps) => {
+  // Include completed leads in total count for accurate conversion rate
+  const totalLeads = leads.length + completedLeadsCount;
+  
   const stats = {
-    total: leads.length,
+    total: totalLeads,
     unclaimed: leads.filter(lead => lead.status === 'unclaimed').length,
     claimed: leads.filter(lead => lead.status === 'claimed').length,
     contacted: leads.filter(lead => lead.status === 'contacted').length,
     quoted: leads.filter(lead => lead.status === 'quoted').length,
     confirmed: leads.filter(lead => lead.status === 'confirmed').length,
+    converted: completedLeadsCount,
   };
 
-  const conversionRate = stats.total > 0 ? ((stats.confirmed / stats.total) * 100).toFixed(1) : '0';
+  // Conversion rate based on completed leads (actual conversions)
+  const conversionRate = stats.total > 0 ? ((stats.converted / stats.total) * 100).toFixed(1) : '0';
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -69,7 +74,7 @@ export const DashboardStats = ({ leads }: DashboardStatsProps) => {
         <CardContent>
           <div className="text-xl sm:text-2xl font-bold text-green-600">{conversionRate}%</div>
           <p className="text-xs text-muted-foreground">
-            Leads to confirmations
+            {stats.converted} converted of {stats.total}
           </p>
         </CardContent>
       </Card>

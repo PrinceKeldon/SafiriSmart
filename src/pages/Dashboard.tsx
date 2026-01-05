@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
@@ -9,6 +8,7 @@ import { LeadsGrid } from '@/components/dashboard/LeadsGrid';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
 import { useLeads, useUpdateLeadStatus } from '@/hooks/useLeads';
+import { useCompletedLeads } from '@/hooks/useCompletedLeads';
 import { Lead } from '@/types/lead';
 import { toast } from 'sonner';
 
@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   
   const { data: leadsData, isLoading, error, refetch } = useLeads();
+  const { data: completedLeads } = useCompletedLeads();
   const updateLeadStatusMutation = useUpdateLeadStatus();
 
   // Handle different response formats from the API
@@ -91,7 +92,7 @@ const Dashboard = () => {
 
         <div className="space-y-6 sm:space-y-8">
           {/* Stats Section */}
-          <DashboardStats leads={leads} />
+          <DashboardStats leads={leads} completedLeadsCount={completedLeads?.length || 0} />
 
           {/* Leads Section */}
           <div>
