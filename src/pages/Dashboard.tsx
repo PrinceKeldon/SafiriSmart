@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeadsGrid } from '@/components/dashboard/LeadsGrid';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
+import { CompletedLeadsGrid } from '@/components/dashboard/CompletedLeadsGrid';
 import { LeadDetailModal } from '@/components/leads/LeadDetailModal';
 import { useLeads, useUpdateLeadStatus } from '@/hooks/useLeads';
 import { useCompletedLeads } from '@/hooks/useCompletedLeads';
@@ -17,7 +19,7 @@ const Dashboard = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   
   const { data: leadsData, isLoading, error, refetch } = useLeads();
-  const { data: completedLeads } = useCompletedLeads();
+  const { data: completedLeads, isLoading: isLoadingCompleted } = useCompletedLeads();
   const updateLeadStatusMutation = useUpdateLeadStatus();
 
   // Handle different response formats from the API
@@ -37,7 +39,7 @@ const Dashboard = () => {
     try {
       await updateLeadStatusMutation.mutateAsync({ leadId, status: newStatus });
       toast.success('Lead status updated successfully');
-      refetch(); // Refresh the leads data
+      refetch();
     } catch (error) {
       console.error('Error updating lead status:', error);
       toast.error('Failed to update lead status');
@@ -94,32 +96,62 @@ const Dashboard = () => {
           {/* Stats Section */}
           <DashboardStats leads={leads} completedLeadsCount={completedLeads?.length || 0} />
 
-          {/* Leads Section */}
-          <div>
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6">Recent Leads</h2>
-            {leads.length === 0 ? (
-              <Card>
-                <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2">No leads yet</h3>
-                  <p className="text-gray-500 text-center mb-4 px-4">
-                    Start by creating your first lead to see them appear here
-                  </p>
-                  <Link to="/new-lead" className="w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto">
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create First Lead
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ) : (
-              <LeadsGrid
-                leads={leads}
-                onViewDetails={handleViewDetails}
-                onUpdateStatus={handleUpdateStatus}
-              />
-            )}
-          </div>
+          {/* Leads Tabs Section */}
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="active" className="flex items-center gap-2">
+                Active Leads
+                {leads.length > 0 && (
+                  <span className="bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+                    {leads.length}
+                  </span>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="flex items-center gap-2">
+                Completed
+                {(completedLeads?.length || 0) > 0 && (
+                  <span className="bg-green-100 text-green-700 text-xs px-2 py-0.5 rounded-full">
+                    {completedLeads?.length || 0}
+                  </span>
+                )}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-6">
+              {leads.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-8 sm:py-12">
+                    <h3 className="text-lg sm:text-xl font-semibold mb-2">No active leads</h3>
+                    <p className="text-gray-500 text-center mb-4 px-4">
+                      Start by creating your first lead to see them appear here
+                    </p>
+                    <Link to="/new-lead" className="w-full sm:w-auto">
+                      <Button className="w-full sm:w-auto">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create First Lead
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              ) : (
+                <LeadsGrid
+                  leads={leads}
+                  onViewDetails={handleViewDetails}
+                  onUpdateStatus={handleUpdateStatus}
+                />
+              )}
+            </TabsContent>
+
+            <TabsContent value="completed" className="mt-6">
+              {isLoadingCompleted ? (
+                <div className="flex justify-center items-center h-32">
+                  <p className="text-muted-foreground">Loading completed leads...</p>
+                </div>
+              ) : (
+                <CompletedLeadsGrid completedLeads={completedLeads || []} />
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
 
         {/* Lead Detail Modal */}
