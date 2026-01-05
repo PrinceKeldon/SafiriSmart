@@ -6,6 +6,22 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { MapPin, Plus, X, Sparkles, Info } from 'lucide-react';
 import { DestinationItem } from '../WizardTypes';
+import { SafariImage } from '@/components/common/SafariImage';
+
+// Destination image mapping
+const destinationImages: Record<string, string> = {
+  'Masai Mara': '/images/destinations/masai-mara.jpg',
+  'Maasai Mara': '/images/destinations/masai-mara.jpg',
+  'Amboseli': '/images/destinations/amboseli.jpg',
+  'Tsavo': '/images/destinations/tsavo.jpg',
+  'Tsavo East': '/images/destinations/tsavo.jpg',
+  'Tsavo West': '/images/destinations/tsavo.jpg',
+  'Diani Beach': '/images/destinations/diani-beach.jpg',
+  'Diani': '/images/destinations/diani-beach.jpg',
+  'Lake Nakuru': '/images/destinations/lake-nakuru.jpg',
+  'Nakuru': '/images/destinations/lake-nakuru.jpg',
+  'Samburu': '/images/destinations/samburu.jpg',
+};
 
 interface DestinationSelectionStepProps {
   aiSuggestedDestinations: DestinationItem[];
@@ -104,45 +120,65 @@ export const DestinationSelectionStep: React.FC<DestinationSelectionStepProps> =
           Suggested Destinations
         </h3>
         <div className="grid gap-3">
-          {selectedDestinations.map((destination) => (
-            <Card 
-              key={destination.name}
-              className={`cursor-pointer transition-all duration-200 ${
-                destination.selected 
-                  ? 'border-primary bg-primary/5 shadow-sm' 
-                  : 'border-border hover:border-muted-foreground/30 opacity-60'
-              }`}
-              onClick={() => toggleDestination(destination.name)}
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Checkbox 
-                    checked={destination.selected}
-                    onCheckedChange={() => toggleDestination(destination.name)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="font-semibold text-foreground">{destination.name}</h4>
-                      <Badge variant="outline" className="text-xs">
-                        {destination.sourceInterest.replace('-', ' ')}
-                      </Badge>
+          {selectedDestinations.map((destination) => {
+            const imageUrl = destinationImages[destination.name] || '/images/destinations/default-safari.jpg';
+            
+            return (
+              <Card 
+                key={destination.name}
+                className={`cursor-pointer transition-all duration-300 overflow-hidden group ${
+                  destination.selected 
+                    ? 'border-primary bg-primary/5 shadow-md ring-1 ring-primary/20' 
+                    : 'border-border hover:border-muted-foreground/30 opacity-70 hover:opacity-100'
+                }`}
+                onClick={() => toggleDestination(destination.name)}
+              >
+                <CardContent className="p-0">
+                  <div className="flex">
+                    {/* Destination Image */}
+                    <div className="relative w-24 sm:w-32 h-24 sm:h-32 flex-shrink-0 overflow-hidden">
+                      <SafariImage 
+                        src={imageUrl}
+                        alt={destination.name}
+                        className="w-full h-full"
+                        overlay={true}
+                      />
+                      <Checkbox 
+                        checked={destination.selected}
+                        onCheckedChange={() => toggleDestination(destination.name)}
+                        className="absolute top-2 left-2 bg-card/90 border-2"
+                      />
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                      {destination.note}
-                    </p>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      {destination.activities.slice(0, 3).map((activity, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
-                          {activity}
+                    
+                    {/* Destination Info */}
+                    <div className="flex-1 p-3 sm:p-4 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <h4 className="font-semibold text-foreground">{destination.name}</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {destination.sourceInterest.replace('-', ' ')}
                         </Badge>
-                      ))}
+                      </div>
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
+                        {destination.note}
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {destination.activities.slice(0, 3).map((activity, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {activity}
+                          </Badge>
+                        ))}
+                        {destination.activities.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{destination.activities.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 
