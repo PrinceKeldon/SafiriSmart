@@ -1,0 +1,241 @@
+
+# Operator Onboarding Freeze (Demo Mode)
+
+## Overview
+
+SafiriSmart is live and actively used for **guided demonstrations** with institutional stakeholders such as **Kenya Tourism Board (KTB)** and **Magical Kenya**.
+
+To support these demos while maintaining platform stability, we introduce a **database-driven feature toggle** that:
+
+* ✅ Freezes **new operator onboarding**
+* ✅ Keeps **existing demo operators fully functional**
+* ✅ Can be toggled by **admins only**
+* ✅ Is **instantly reversible** without redeploying code
+* ✅ Is safe for production and pilot environments
+
+This mechanism allows SafiriSmart to operate in **Demo Mode** while remaining a live, referenceable platform.
+
+---
+
+## Goals
+
+* Prevent new operator signups during guided demos
+* Preserve all existing operator accounts and workflows
+* Centralize control via Admin Dashboard
+* Avoid environment-variable or hardcoded logic
+* Enable future feature flags using the same system
+
+---
+
+## Design Approach
+
+We use a **global application settings table** (`app_settings`) to manage feature flags.
+
+This is a common SaaS pattern used by platforms like Stripe, Notion, and Shopify.
+
+---
+
+## Database Schema
+
+### Table: `app_settings`
+
+```sql
+create table if not exists public.app_settings (
+  key text primary key,
+  value boolean not null,
+  description text,
+  updated_at timestamptz default now(),
+  updated_by uuid
+);
+```
+
+### Why this schema?
+
+| Field         | Purpose                            |
+| ------------- | ---------------------------------- |
+| `key`         | Human-readable feature flag name   |
+| `value`       | Boolean toggle                     |
+| `description` | Admin clarity                      |
+| `updated_at`  | Change tracking                    |
+| `updated_by`  | Audit trail (admin accountability) |
+
+---
+
+## Initial Seed Value
+
+Insert the operator onboarding toggle:
+
+```sql
+insert into public.app_settings (key, value, description)
+values (
+  'operator_onboarding_enabled',
+  false,
+  'Controls whether new operator sign-ups are allowed'
+)
+on conflict (key) do nothing;
+```
+
+* `false` = onboarding disabled (demo mode)
+* `true` = onboarding enabled (normal operation)
+
+---
+
+## Row Level Security (RLS)
+
+### Enable RLS
+
+```sql
+alter table public.app_settings enable row level security;
+```
+
+### Read Access (All Services)
+
+```sql
+create policy "Allow read access to app settings"
+on public.app_settings
+for select
+using (true);
+```
+
+> Required for frontend and Edge Functions to read feature flags.
+
+---
+
+### Write Access (Admins Only)
+
+```sql
+create policy "Admins can update app settings"
+on public.app_settings
+for update
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role = 'admin'
+  )
+);
+```
+
+> Adjust role logic if admin roles live in a different table.
+
+---
+
+## Backend Enforcement (Edge Functions)
+
+### Reading the toggle
+
+```ts
+const { data } = await supabase
+  .from('app_settings')
+  .select('value')
+  .eq('key', 'operator_onboarding_enabled')
+  .single();
+
+const operatorOnboardingEnabled = data?.value ?? false;
+```
+
+### Guarding operator signup
+
+```ts
+if (!operatorOnboardingEnabled) {
+  return new Response(
+    JSON.stringify({
+      error: 'Operator onboarding is temporarily disabled'
+    }),
+    { status: 403 }
+  );
+}
+```
+
+This logic should be added to:
+
+* `operator-signup` edge function
+* Any API route that creates new operators
+
+---
+
+## Frontend Enforcement (Optional but Recommended)
+
+* Disable or hide “Register as Operator” CTA
+* Show message:
+
+  > “Operator onboarding is temporarily closed during a guided demo period.”
+
+Frontend checks should **mirror backend enforcement**, not replace it.
+
+---
+
+## Admin Dashboard Integration
+
+### Admin Capability
+
+Admins can toggle onboarding via a simple switch:
+
+* **ON** → new operators allowed
+* **OFF** → demo mode (existing operators only)
+
+### Suggested UI Copy
+
+> **Operator Onboarding**
+>
+> Disable new operator registrations while keeping existing demo operators active.
+
+### Audit Expectations
+
+* Update `updated_by = auth.uid()`
+* Update `updated_at` automatically
+
+---
+
+## Reversibility & Safety
+
+| Concern         | Solution     |
+| --------------- | ------------ |
+| Undo changes    | Toggle value |
+| No redeploy     | DB-driven    |
+| Demo-safe       | Default OFF  |
+| Production-safe | RLS enforced |
+| Extensible      | Reuse table  |
+
+---
+
+## Future Feature Flags (Same Table)
+
+This system is intentionally reusable.
+
+Possible future keys:
+
+```text
+demo_mode_enabled
+payments_enabled
+ai_chat_enabled
+pwa_offline_enabled
+operator_reviews_public
+```
+
+No schema changes required.
+
+---
+
+## Summary
+
+This implementation ensures SafiriSmart can:
+
+* Operate as a **live demo platform**
+* Meet **institutional expectations**
+* Preserve **engineering discipline**
+* Scale feature control cleanly over time
+
+This approach aligns with enterprise-grade SaaS standards and supports SafiriSmart’s positioning as a **serious innovation partner** for Kenya’s tourism ecosystem.
+
+---
+
+## Related Files
+
+* `/supabase/migrations/*`
+* `/supabase/functions/operator-signup/*`
+* `/src/pages/admin/*`
+* `/src/components/admin/*`
+
+
