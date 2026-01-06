@@ -12,9 +12,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2, ArrowLeft, Shield } from 'lucide-react';
+import { Loader2, ArrowLeft, Shield, AlertTriangle } from 'lucide-react';
 import { PasswordInput } from '@/components/auth/PasswordInput';
 import { ForgotPasswordForm } from '@/components/auth/ForgotPasswordForm';
+import { useAppSettings } from '@/hooks/useAppSettings';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -38,6 +39,7 @@ const Login = () => {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, signup, user, isAdmin, logout } = useAuth();
+  const { isOnboardingEnabled, loading: settingsLoading } = useAppSettings();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -186,7 +188,13 @@ const Login = () => {
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">Sign In</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger 
+                  value="signup" 
+                  disabled={!isOnboardingEnabled && !settingsLoading}
+                  className={!isOnboardingEnabled && !settingsLoading ? 'opacity-50 cursor-not-allowed' : ''}
+                >
+                  Sign Up {!isOnboardingEnabled && !settingsLoading && '(Closed)'}
+                </TabsTrigger>
               </TabsList>
               
               <TabsContent value="login">
@@ -256,6 +264,15 @@ const Login = () => {
               </TabsContent>
 
               <TabsContent value="signup">
+                {!isOnboardingEnabled && !settingsLoading ? (
+                  <Alert className="border-amber-200 bg-amber-50">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    <AlertDescription className="text-amber-800">
+                      Operator registration is temporarily closed during our guided demo period. 
+                      Existing operators can still sign in. Please contact support for more information.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
                 <form onSubmit={signupForm.handleSubmit(onSignup)} className="space-y-4">
                   {(error || successMessage) && (
                     <Alert variant={error ? "destructive" : "default"}>
@@ -345,6 +362,7 @@ const Login = () => {
                     )}
                   </Button>
                 </form>
+                )}
               </TabsContent>
             </Tabs>
 
