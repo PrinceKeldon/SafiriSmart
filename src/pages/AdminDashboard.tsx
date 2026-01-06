@@ -9,6 +9,7 @@ import { AdminStatsCards } from '@/components/admin/AdminStatsCards';
 import { OperatorsManagementCard } from '@/components/admin/OperatorsManagementCard';
 import { SystemConfigurationCard } from '@/components/admin/SystemConfigurationCard';
 import { ErrorDisplay } from '@/components/admin/ErrorDisplay';
+import { DemoModeToggle } from '@/components/admin/DemoModeToggle';
 
 type Operator = Tables<'operators'>;
 
@@ -125,6 +126,11 @@ const AdminDashboard = () => {
               onDismiss={() => setError(null)} 
             />
           )}
+
+          {/* Demo Mode Toggle */}
+          <div className="mb-6">
+            <DemoModeToggle />
+          </div>
 
           <OperatorsManagementCard
             operators={operators}

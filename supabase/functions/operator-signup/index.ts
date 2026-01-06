@@ -1,4 +1,4 @@
-// Operator Signup Edge Function - v1.2
+// Operator Signup Edge Function - v1.3 (with Demo Mode support)
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
@@ -12,27 +12,46 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("operator-signup v1.2 - Request received:", new Date().toISOString());
+  console.log("operator-signup v1.3 - Request received:", new Date().toISOString());
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+    db: { schema: 'public' },
+    auth: { persistSession: false }
+  });
 
   try {
+    // Check if operator onboarding is enabled (Demo Mode check)
+    const { data: settingData, error: settingError } = await supabase
+      .from('app_settings')
+      .select('value')
+      .eq('key', 'operator_onboarding_enabled')
+      .single();
+
+    // If setting exists and is false, block signups
+    if (!settingError && settingData && settingData.value === false) {
+      console.log("operator-signup v1.3 - Onboarding is disabled (Demo Mode)");
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: "Operator registration is temporarily closed during our demo period. Please contact support for more information." 
+        }), 
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { email, password, name, company, specializations = [] } = await req.json();
 
     if (!email || !password || !name || !company) {
-      console.log("operator-signup v1.2 - Validation failed: missing required fields");
+      console.log("operator-signup v1.3 - Validation failed: missing required fields");
       return new Response(JSON.stringify({ success: false, message: "Email, password, name, and company are required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      db: { schema: 'public' },
-      auth: { persistSession: false }
-    });
 
     // Check existing user
     const { data: existingOp } = await supabase.from("operators").select("id").eq("email", email).single();
     if (existingOp) {
-      console.log("operator-signup v1.2 - User already exists:", email);
+      console.log("operator-signup v1.3 - User already exists:", email);
       return new Response(JSON.stringify({ success: false, message: "A user with this email already exists" }), { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
