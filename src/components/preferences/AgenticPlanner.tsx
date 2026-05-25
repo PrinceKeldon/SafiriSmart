@@ -269,8 +269,10 @@ export function AgenticPlanner() {
         reply += wildlife.signal_summary;
       } else if (errors.length > 0) {
         reply = `Error: ${errors[0]}`;
+      } else if (itin) {
+        reply = "The planning service returned an itinerary shell but no day-by-day plan. Try a prompt with destination, month, duration, group size, and budget.";
       } else {
-        reply = "Here's your personalised Kenya itinerary:";
+        reply = "The planning service responded, but no itinerary was included in the response.";
       }
       addMessage("ai", reply);
       if (itin) setLatestPlan(result);

@@ -42,7 +42,7 @@ def get_llm(temperature: float = 0, max_tokens: int = 4000) -> BaseChatModel:
     else:  # default: anthropic
         from langchain_anthropic import ChatAnthropic
         return ChatAnthropic(
-            model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-20250514"),
+            model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6"),
             api_key=_required_env("ANTHROPIC_API_KEY"),
             max_tokens=max_tokens,
             temperature=temperature,

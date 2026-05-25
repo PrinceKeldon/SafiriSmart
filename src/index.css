@@ -45,6 +45,17 @@ All colors MUST be HSL.
     --safari-sunset: 15 80% 55%;
     --safari-savanna: 142 35% 45%;
 
+    /* SafariGuideAI design tokens */
+    --color-background-primary:   #ffffff;
+    --color-background-secondary: hsl(40, 30%, 96%);
+    --color-background-tertiary:  hsl(40, 20%, 97%);
+    --color-text-primary:         hsl(222, 47%, 11%);
+    --color-text-secondary:       hsl(25, 15%, 40%);
+    --color-text-tertiary:        hsl(25, 10%, 58%);
+    --color-border-secondary:     hsl(30, 25%, 84%);
+    --color-border-tertiary:      hsl(30, 25%, 90%);
+    --font-serif:                 Georgia, 'Times New Roman', serif;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 24 95% 53%;
@@ -89,6 +100,17 @@ All colors MUST be HSL.
     --safari-earth: 30 45% 45%;
     --safari-sunset: 15 80% 60%;
     --safari-savanna: 142 40% 50%;
+
+    /* SafariGuideAI design tokens (dark) */
+    --color-background-primary:   hsl(20, 15%, 10%);
+    --color-background-secondary: hsl(20, 20%, 15%);
+    --color-background-tertiary:  hsl(20, 15%, 8%);
+    --color-text-primary:         hsl(40, 30%, 94%);
+    --color-text-secondary:       hsl(30, 20%, 60%);
+    --color-text-tertiary:        hsl(30, 15%, 44%);
+    --color-border-secondary:     hsl(20, 18%, 26%);
+    --color-border-tertiary:      hsl(20, 18%, 20%);
+    --font-serif:                 Georgia, 'Times New Roman', serif;
 
     --sidebar-background: 20 15% 10%;
     --sidebar-foreground: 40 30% 96%;

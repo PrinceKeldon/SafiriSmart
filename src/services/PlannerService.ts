@@ -73,7 +73,7 @@ export interface PlanResponse {
 }
 
 type RawPlanResponse = Partial<PlanResponse> & {
-  plan?: Record<string, unknown>;
+  plan?: Partial<PlanResponse>;
   error?: string;
   detail?: string;
 };
@@ -87,15 +87,17 @@ function normalizePlanResponse(data: RawPlanResponse | null): PlanResponse {
     throw new Error(data.detail ? `${data.error}: ${data.detail}` : data.error);
   }
 
+  const source = data.plan || data;
+
   return {
-    session_id: data.session_id || '',
-    completed_agents: Array.isArray(data.completed_agents) ? data.completed_agents : [],
-    traveler_profile: data.traveler_profile || null,
-    wildlife_context: data.wildlife_context || null,
-    itinerary: data.itinerary || null,
-    errors: Array.isArray(data.errors) ? data.errors : [],
-    processing_ms: data.processing_ms || {},
-    cached: Boolean(data.cached),
+    session_id: source.session_id || data.session_id || '',
+    completed_agents: Array.isArray(source.completed_agents) ? source.completed_agents : [],
+    traveler_profile: source.traveler_profile || null,
+    wildlife_context: source.wildlife_context || null,
+    itinerary: source.itinerary || null,
+    errors: Array.isArray(source.errors) ? source.errors : [],
+    processing_ms: source.processing_ms || {},
+    cached: Boolean(source.cached ?? data.cached),
   };
 }
 
