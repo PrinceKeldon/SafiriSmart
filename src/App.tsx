@@ -21,6 +21,7 @@ import NoticeBoard from '@/pages/NoticeBoard';
 import NotFound from '@/pages/NotFound';
 import EdgeFunctionTest from '@/pages/EdgeFunctionTest';
 import Notifications from '@/pages/Notifications';
+import AgenticPlanner from '@/components/preferences/AgenticPlanner';
 
 const queryClient = new QueryClient();
 
