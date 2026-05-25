@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  # Supabase PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: supabase_db
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Supabase Auth Service (Optional for local development)
+  supabase-auth:
+    image: supabase/auth:latest
+    container_name: supabase_auth
+    depends_on:
+      - postgres
+    environment:
+      GOTRUE_JWT_SECRET: "super-secret-jwt-token-with-at-least-32-characters-long"
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_DB_DRIVER: postgres
+      DB_NAMESPACE: auth
+      GOTRUE_DB_DATABASE_URL: "postgres://postgres:postgres@postgres:5432/postgres"
+      GOTRUE_SITE_URL: "http://localhost:5173"
+      GOTRUE_URI_ALLOW_LIST: "localhost:5173"
+    ports:
+      - "9999:9999"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Redis for caching (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: safiri_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # B2B Backend Service (when available)
+  # b2b-backend:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.b2b
+  #   container_name: safiri_b2b
+  #   environment:
+  #     SUPABASE_URL: http://postgres:5432
+  #     JWT_SECRET: "your-jwt-secret"
+  #     OPENAI_API_KEY: "${OPENAI_API_KEY}"
+  #   ports:
+  #     - "8001:8001"
+  #   depends_on:
+  #     - postgres
+  #   volumes:
+  #     - ./b2b-backend:/app
+
+  # AI Core Service (when available)
+  # ai-core:
+  #   build:
+  #     context: .
+  #     dockerfile: docker/Dockerfile.ai-core
+  #   container_name: safiri_ai
+  #   environment:
+  #     OPENAI_API_KEY: "${OPENAI_API_KEY}"
+  #   ports:
+  #     - "8000:8000"
+  #   volumes:
+  #     - ./ai-core:/app
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: safiri_network
