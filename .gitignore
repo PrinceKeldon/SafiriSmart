@@ -33,3 +33,6 @@ venv/
 .env
 .env.local
 .env.deployment
+.env
+.env.local
+.env.deployment
