@@ -7,13 +7,99 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          description: string | null
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: boolean
+        }
+        Insert: {
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: boolean
+        }
+        Update: {
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: boolean
+        }
+        Relationships: []
+      }
+      completed_leads: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          destinations: string[] | null
+          group_size: number | null
+          id: string
+          itinerary_summary: Json | null
+          operator_id: string
+          original_lead_id: string
+          quoted_currency: string | null
+          quoted_price: number | null
+          travel_dates: Json | null
+          traveler_country: string | null
+          traveler_email: string
+          traveler_name: string
+          traveler_phone: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          destinations?: string[] | null
+          group_size?: number | null
+          id?: string
+          itinerary_summary?: Json | null
+          operator_id: string
+          original_lead_id: string
+          quoted_currency?: string | null
+          quoted_price?: number | null
+          travel_dates?: Json | null
+          traveler_country?: string | null
+          traveler_email: string
+          traveler_name: string
+          traveler_phone?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          destinations?: string[] | null
+          group_size?: number | null
+          id?: string
+          itinerary_summary?: Json | null
+          operator_id?: string
+          original_lead_id?: string
+          quoted_currency?: string | null
+          quoted_price?: number | null
+          travel_dates?: Json | null
+          traveler_country?: string | null
+          traveler_email?: string
+          traveler_name?: string
+          traveler_phone?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "completed_leads_operator_id_fkey"
+            columns: ["operator_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_notes: {
         Row: {
           created_at: string | null
@@ -55,19 +141,19 @@ export type Database = {
       }
       lead_selected_packages: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           lead_id: string
           package_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           lead_id: string
           package_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           lead_id?: string
           package_id?: string
@@ -91,19 +177,19 @@ export type Database = {
       }
       lead_visibility: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
           lead_id: string
           operator_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           lead_id: string
           operator_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
           lead_id?: string
           operator_id?: string
@@ -127,7 +213,7 @@ export type Database = {
       }
       leads: {
         Row: {
-          archived: boolean
+          archived: boolean | null
           assigned_operator_id: string | null
           created_at: string | null
           id: string
@@ -136,7 +222,7 @@ export type Database = {
           quoted_currency: string | null
           quoted_price: number | null
           selection_type: string | null
-          status: string
+          status: string | null
           todo_checklist: Json | null
           traveler_country: string | null
           traveler_email: string
@@ -145,7 +231,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          archived?: boolean
+          archived?: boolean | null
           assigned_operator_id?: string | null
           created_at?: string | null
           id?: string
@@ -154,7 +240,7 @@ export type Database = {
           quoted_currency?: string | null
           quoted_price?: number | null
           selection_type?: string | null
-          status?: string
+          status?: string | null
           todo_checklist?: Json | null
           traveler_country?: string | null
           traveler_email: string
@@ -163,7 +249,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          archived?: boolean
+          archived?: boolean | null
           assigned_operator_id?: string | null
           created_at?: string | null
           id?: string
@@ -172,7 +258,7 @@ export type Database = {
           quoted_currency?: string | null
           quoted_price?: number | null
           selection_type?: string | null
-          status?: string
+          status?: string | null
           todo_checklist?: Json | null
           traveler_country?: string | null
           traveler_email?: string
@@ -190,10 +276,51 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          data: Json | null
+          id: string
+          message: string
+          read: boolean | null
+          recipient_id: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message: string
+          read?: boolean | null
+          recipient_id: string
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          recipient_id?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "operators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operator_packages: {
         Row: {
           budget_tier: string
-          created_at: string
+          created_at: string | null
           description: string | null
           estimated_cost_per_person_per_day: number
           id: string
@@ -205,11 +332,11 @@ export type Database = {
           min_group_size: number
           operator_id: string
           package_name: string
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           budget_tier: string
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           estimated_cost_per_person_per_day: number
           id?: string
@@ -221,11 +348,11 @@ export type Database = {
           min_group_size: number
           operator_id: string
           package_name: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           budget_tier?: string
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           estimated_cost_per_person_per_day?: number
           id?: string
@@ -237,7 +364,7 @@ export type Database = {
           min_group_size?: number
           operator_id?: string
           package_name?: string
-          updated_at?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -252,6 +379,7 @@ export type Database = {
       operators: {
         Row: {
           address: string | null
+          avatar_url: string | null
           business_permit_url: string | null
           certificate_of_incorporation_url: string | null
           city: string | null
@@ -271,17 +399,21 @@ export type Database = {
           id: string
           is_active: boolean | null
           kato_membership_url: string | null
+          location: string | null
           name: string
           password_hash: string
+          rating: number | null
           registration_number: string | null
-          role: string
+          role: string | null
           services_offered: Json | null
           specializations: string[] | null
+          specialties: string[] | null
           updated_at: string | null
           website_url: string | null
         }
         Insert: {
           address?: string | null
+          avatar_url?: string | null
           business_permit_url?: string | null
           certificate_of_incorporation_url?: string | null
           city?: string | null
@@ -301,17 +433,21 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           kato_membership_url?: string | null
+          location?: string | null
           name: string
           password_hash: string
+          rating?: number | null
           registration_number?: string | null
-          role?: string
+          role?: string | null
           services_offered?: Json | null
           specializations?: string[] | null
+          specialties?: string[] | null
           updated_at?: string | null
           website_url?: string | null
         }
         Update: {
           address?: string | null
+          avatar_url?: string | null
           business_permit_url?: string | null
           certificate_of_incorporation_url?: string | null
           city?: string | null
@@ -331,12 +467,15 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           kato_membership_url?: string | null
+          location?: string | null
           name?: string
           password_hash?: string
+          rating?: number | null
           registration_number?: string | null
-          role?: string
+          role?: string | null
           services_offered?: Json | null
           specializations?: string[] | null
+          specialties?: string[] | null
           updated_at?: string | null
           website_url?: string | null
         }
@@ -356,21 +495,42 @@ export type Database = {
           ip_address: string | null
           user_agent: string | null
           user_session: string | null
-          visited_at: string
+          visited_at: string | null
         }
         Insert: {
           id?: string
           ip_address?: string | null
           user_agent?: string | null
           user_session?: string | null
-          visited_at?: string
+          visited_at?: string | null
         }
         Update: {
           id?: string
           ip_address?: string | null
           user_agent?: string | null
           user_session?: string | null
-          visited_at?: string
+          visited_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -379,13 +539,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_admin_user: {
-        Args: Record<PropertyKey, never>
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
         Returns: boolean
       }
+      is_admin_user: { Args: never; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "operator" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -512,6 +676,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "operator", "user"],
+    },
   },
 } as const
