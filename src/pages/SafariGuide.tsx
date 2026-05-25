@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Compass, Bug } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { OperatorSelectionDebugger } from '@/components/preferences/OperatorSelectionDebugger';
+import { MigrationBanner } from '@/components/migration/MigrationBanner';
 import { useState } from 'react';
 import { PageSEO } from '@/components/seo/PageSEO';
 import { createServiceSchema, createBreadcrumbSchema } from '@/utils/structuredData';
@@ -84,6 +85,7 @@ const SafariGuide = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-4 py-6 sm:py-8">
+          <MigrationBanner />
           {showDebugger ? (
             <div className="space-y-6 sm:space-y-8">
               <div className="text-center">
