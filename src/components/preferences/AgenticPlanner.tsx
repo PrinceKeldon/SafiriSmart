@@ -128,6 +128,7 @@ function ItineraryResult({ plan }: { plan: PlanResponse }) {
   const { itinerary, wildlife_context, traveler_profile } = plan;
   if (!itinerary) return null;
 
+  const days = Array.isArray(itinerary.days) ? itinerary.days : [];
   const windowScore = wildlife_context?.travel_window_score ?? 0;
   const windowLabel = wildlife_context?.travel_window_label ?? "";
   const isHot = windowScore >= 60;
@@ -136,7 +137,7 @@ function ItineraryResult({ plan }: { plan: PlanResponse }) {
     <div className="mt-4 space-y-4">
       <div className="rounded-xl border bg-card p-5">
         <h3 className="font-semibold text-lg mb-1">
-          {itinerary.days.length}-Day Kenya Safari
+          {days.length}-Day Kenya Safari
         </h3>
         <p className="text-sm text-muted-foreground mb-3">{itinerary.summary}</p>
 
@@ -150,7 +151,7 @@ function ItineraryResult({ plan }: { plan: PlanResponse }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
           {[
             { icon: DollarSign, val: `$${Math.round(itinerary.total_cost_usd).toLocaleString()}`, lbl: "Total est." },
-            { icon: Calendar, val: `${itinerary.days.length} days`, lbl: "Duration" },
+            { icon: Calendar, val: `${days.length} days`, lbl: "Duration" },
             { icon: Users, val: `${traveler_profile?.group_size ?? 1}`, lbl: "Travellers" },
             { icon: MapPin, val: `${Math.round(windowScore)}/100`, lbl: "Migration score" },
           ].map(({ icon: Icon, val, lbl }) => (
@@ -169,7 +170,7 @@ function ItineraryResult({ plan }: { plan: PlanResponse }) {
         <p className="text-xs font-mono text-muted-foreground uppercase tracking-widest">
           Day-by-Day Itinerary
         </p>
-        {itinerary.days.map((day) => (
+        {days.map((day) => (
           <DayCard key={day.day} day={day} />
         ))}
       </div>
@@ -257,15 +258,17 @@ export function AgenticPlanner() {
       setSessionId(result.session_id);
       const wildlife = result.wildlife_context;
       const itin = result.itinerary;
+      const days = Array.isArray(itin?.days) ? itin.days : [];
+      const errors = Array.isArray(result.errors) ? result.errors : [];
       let reply = "";
-      if (wildlife && itin) {
-        reply = `Built your ${itin.days.length}-day itinerary. Travel window: **${Math.round(wildlife.travel_window_score)}/100** — ${wildlife.travel_window_label}. `;
+      if (wildlife && itin && days.length > 0) {
+        reply = `Built your ${days.length}-day itinerary. Travel window: **${Math.round(wildlife.travel_window_score)}/100** — ${wildlife.travel_window_label}. `;
         reply += wildlife.days_to_peak <= 0
           ? "Peak crossing window is open now. "
           : `${wildlife.days_to_peak} days to peak. `;
         reply += wildlife.signal_summary;
-      } else if (result.errors.length > 0) {
-        reply = `Error: ${result.errors[0]}`;
+      } else if (errors.length > 0) {
+        reply = `Error: ${errors[0]}`;
       } else {
         reply = "Here's your personalised Kenya itinerary:";
       }

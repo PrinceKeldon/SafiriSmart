@@ -72,6 +72,33 @@ export interface PlanResponse {
   cached: boolean;
 }
 
+type RawPlanResponse = Partial<PlanResponse> & {
+  plan?: Record<string, unknown>;
+  error?: string;
+  detail?: string;
+};
+
+function normalizePlanResponse(data: RawPlanResponse | null): PlanResponse {
+  if (!data) {
+    throw new Error('Planning service returned an empty response');
+  }
+
+  if (data.error && !data.itinerary && !data.plan) {
+    throw new Error(data.detail ? `${data.error}: ${data.detail}` : data.error);
+  }
+
+  return {
+    session_id: data.session_id || '',
+    completed_agents: Array.isArray(data.completed_agents) ? data.completed_agents : [],
+    traveler_profile: data.traveler_profile || null,
+    wildlife_context: data.wildlife_context || null,
+    itinerary: data.itinerary || null,
+    errors: Array.isArray(data.errors) ? data.errors : [],
+    processing_ms: data.processing_ms || {},
+    cached: Boolean(data.cached),
+  };
+}
+
 class PlannerServiceClass {
   async plan(request: PlanRequest): Promise<PlanResponse> {
     const { data, error } = await supabase.functions.invoke('plan', {
@@ -79,7 +106,7 @@ class PlannerServiceClass {
     });
 
     if (error) throw error;
-    return data as PlanResponse;
+    return normalizePlanResponse(data as RawPlanResponse | null);
   }
 
   async getPlan(sessionId: string): Promise<PlanResponse> {
@@ -89,7 +116,7 @@ class PlannerServiceClass {
     });
 
     if (error) throw error;
-    return data as PlanResponse;
+    return normalizePlanResponse(data as RawPlanResponse | null);
   }
 }
 
