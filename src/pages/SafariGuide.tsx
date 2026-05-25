@@ -85,6 +85,7 @@ const SafariGuide = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-4 py-6 sm:py-8">
+          <MigrationBanner />
           {showDebugger ? (
             <div className="space-y-6 sm:space-y-8">
               <div className="text-center">
