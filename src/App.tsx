@@ -127,6 +127,7 @@ function App() {
                   }
                 />
                 <Route path="/test-functions" element={<EdgeFunctionTest />} />
+                <Route path="/plan" element={<AgenticPlanner />} />
                 <Route
                   path="/notifications"
                   element={
