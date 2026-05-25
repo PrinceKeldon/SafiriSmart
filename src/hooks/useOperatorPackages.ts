@@ -56,10 +56,11 @@ export const useCreateOperatorPackage = () => {
         throw new Error('User not authenticated');
       }
 
+      const { contact_person: _cp, ...rest } = packageData as any;
       const { data, error } = await supabase
         .from('operator_packages')
         .insert({
-          ...packageData,
+          ...rest,
           operator_id: user.id
         })
         .select()
@@ -86,10 +87,11 @@ export const useUpdateOperatorPackage = () => {
     mutationFn: async ({ id, ...packageData }: Partial<OperatorPackage> & { id: string }) => {
       console.log('Updating operator package:', { id, packageData });
       
+      const { contact_person: _cp, ...rest } = packageData as any;
       const { data, error } = await supabase
         .from('operator_packages')
         .update({
-          ...packageData,
+          ...rest,
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
