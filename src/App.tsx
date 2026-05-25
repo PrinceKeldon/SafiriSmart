@@ -22,6 +22,7 @@ const NewLead = lazy(() => import('@/pages/NewLead'));
 const NoticeBoard = lazy(() => import('@/pages/NoticeBoard'));
 const EdgeFunctionTest = lazy(() => import('@/pages/EdgeFunctionTest'));
 const Notifications = lazy(() => import('@/pages/Notifications'));
+const MigrationPage = lazy(() => import('@/pages/Migration'));
 const AgenticPlannerPage = lazy(() =>
   import('@/components/preferences/AgenticPlanner').then((m) => ({ default: m.AgenticPlanner }))
 );
@@ -51,6 +52,7 @@ function App() {
                   <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/safari-guide" element={<SafariGuide />} />
                   <Route path="/plan" element={<AgenticPlannerPage />} />
+                  <Route path="/migration" element={<MigrationPage />} />
                   <Route
                     path="/dashboard"
                     element={

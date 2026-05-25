@@ -11,12 +11,14 @@ import {
   LogOut,
   Menu,
   X,
-  Bell
+  Bell,
+  Activity
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { MigrationSidebarCard } from '@/components/migration/MigrationSidebarCard';
 
 const Navigation = () => {
   const location = useLocation();
@@ -39,6 +41,11 @@ const Navigation = () => {
       name: 'Notifications',
       href: '/notifications',
       icon: Bell,
+    },
+    {
+      name: 'Migration Tracker',
+      href: '/migration',
+      icon: Activity,
     },
     {
       name: 'Kenya Packages',
@@ -102,6 +109,9 @@ const Navigation = () => {
             </div>
 
             <div className="flex-1 px-4 py-4">
+              <div className="mb-4">
+                <MigrationSidebarCard />
+              </div>
               <ul className="space-y-2">
                 {navigationItems.map((item) => {
                   const isActive = location.pathname === item.href;
@@ -155,6 +165,9 @@ const Navigation = () => {
         </div>
 
         <div className="flex-1 px-2 sm:px-4 py-4">
+          <div className="mb-4 px-1 sm:px-0">
+            <MigrationSidebarCard />
+          </div>
           <ul className="space-y-2">
             {navigationItems.map((item) => {
               const isActive = location.pathname === item.href;

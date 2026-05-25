@@ -14,13 +14,11 @@ import calendar
 import re
 import time
 import logging
-import os
 import uuid
 from datetime import date
-
-from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 
+from safirismart.agents.llm_factory import get_llm
 from safirismart.orchestrator.state import OrchestratorState, TravelerProfile, DateRange, BudgetRange
 
 logger = logging.getLogger(__name__)
@@ -140,13 +138,7 @@ def run_intent_agent(state: OrchestratorState) -> OrchestratorState:
     session_id = state.get("session_id") or str(uuid.uuid4())
 
     try:
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise RuntimeError("ANTHROPIC_API_KEY is not configured")
-
-        llm = ChatAnthropic(
-            model="claude-sonnet-4-20250514",
-            api_key=api_key,
+        llm = get_llm(
             max_tokens=800,
             temperature=0,
         )

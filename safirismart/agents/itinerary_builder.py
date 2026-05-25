@@ -12,10 +12,8 @@ Output: state["itinerary"]
 import json
 import time
 import logging
-import os
 from datetime import date, timedelta
-
-from langchain_anthropic import ChatAnthropic
+from safirismart.agents.llm_factory import get_llm
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from safirismart.migration_engine.app.scoring import _historical_prior_score
@@ -204,13 +202,7 @@ Build the itinerary to maximise wildlife quality given these signals.
 Start date for day 1: {start_date.isoformat() if start_date else 'not specified'}
 """
 
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key:
-            raise RuntimeError("ANTHROPIC_API_KEY is not configured")
-
-        llm = ChatAnthropic(
-            model   = "claude-sonnet-4-20250514",
-            api_key = api_key,
+        llm = get_llm(
             max_tokens = 4000,
             temperature = 0.3,
         )
