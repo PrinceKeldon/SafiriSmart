@@ -1,0 +1,17 @@
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# Install dependencies first (cached layer)
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy Python source
+COPY safirismart/ ./safirismart/
+
+ENV PYTHONPATH=/app
+ENV PORT=8000
+
+EXPOSE 8000
+
+CMD ["sh", "-c", "uvicorn safirismart.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

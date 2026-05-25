@@ -1,0 +1,1 @@
+"""Unified SafiriSmart FastAPI gateway."""

@@ -14,10 +14,37 @@ export interface Notification {
   created_at: string;
 }
 
+type SupabaseError = {
+  code?: string;
+  message: string;
+};
+
+type SupabaseResult<T> = {
+  data: T | null;
+  error: SupabaseError | null;
+};
+
+type NotificationFilterQuery<T> = PromiseLike<SupabaseResult<T>> & {
+  eq: (column: string, value: string | boolean) => NotificationFilterQuery<T>;
+  order: (column: string, options: { ascending: boolean }) => NotificationFilterQuery<T>;
+  limit: (count: number) => NotificationFilterQuery<T>;
+};
+
+type NotificationTableClient = {
+  select: (columns: string) => NotificationFilterQuery<Notification[]>;
+  update: (values: Partial<Notification>) => NotificationFilterQuery<null>;
+  delete: () => NotificationFilterQuery<null>;
+};
+
+type NotificationsSupabaseClient = {
+  from: (table: 'notifications') => NotificationTableClient;
+};
+
 export const useNotifications = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [realtimeEnabled, setRealtimeEnabled] = useState(false);
+  const notificationsDb = supabase as unknown as NotificationsSupabaseClient;
 
   // Fetch notifications for current user - using any to bypass type checking since table is new
   const { data: notifications = [], isLoading, error } = useQuery({
@@ -26,7 +53,7 @@ export const useNotifications = () => {
       if (!user?.id) return [];
       
       // Use rpc or raw query since table might not be in generated types yet
-      const { data, error } = await (supabase as any)
+      const { data, error } = await notificationsDb
         .from('notifications')
         .select('*')
         .eq('recipient_id', user.id)
@@ -49,7 +76,9 @@ export const useNotifications = () => {
     if (!user?.id || realtimeEnabled) return;
 
     const channel = supabase
-      .channel('notifications-changes')
+      .channel(`notifications:${user.id}`, {
+        config: { private: true },
+      })
       .on(
         'postgres_changes',
         {
@@ -90,7 +119,7 @@ export const useNotifications = () => {
   // Mark single notification as read
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await notificationsDb
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
@@ -107,7 +136,7 @@ export const useNotifications = () => {
     mutationFn: async () => {
       if (!user?.id) return;
       
-      const { error } = await (supabase as any)
+      const { error } = await notificationsDb
         .from('notifications')
         .update({ read: true })
         .eq('recipient_id', user.id)
@@ -123,7 +152,7 @@ export const useNotifications = () => {
   // Delete notification
   const deleteNotificationMutation = useMutation({
     mutationFn: async (notificationId: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await notificationsDb
         .from('notifications')
         .delete()
         .eq('id', notificationId);

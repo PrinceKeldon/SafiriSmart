@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Supabase PostgreSQL Database
   postgres:
@@ -23,8 +21,6 @@ services:
   supabase-auth:
     image: supabase/auth:latest
     container_name: supabase_auth
-    depends_on:
-      - postgres
     environment:
       GOTRUE_JWT_SECRET: "super-secret-jwt-token-with-at-least-32-characters-long"
       GOTRUE_JWT_EXP: 3600
@@ -48,35 +44,31 @@ services:
     volumes:
       - redis_data:/data
 
-  # B2B Backend Service (when available)
-  # b2b-backend:
-  #   build:
-  #     context: .
-  #     dockerfile: docker/Dockerfile.b2b
-  #   container_name: safiri_b2b
-  #   environment:
-  #     SUPABASE_URL: http://postgres:5432
-  #     JWT_SECRET: "your-jwt-secret"
-  #     OPENAI_API_KEY: "${OPENAI_API_KEY}"
-  #   ports:
-  #     - "8001:8001"
-  #   depends_on:
-  #     - postgres
-  #   volumes:
-  #     - ./b2b-backend:/app
-
-  # AI Core Service (when available)
-  # ai-core:
-  #   build:
-  #     context: .
-  #     dockerfile: docker/Dockerfile.ai-core
-  #   container_name: safiri_ai
-  #   environment:
-  #     OPENAI_API_KEY: "${OPENAI_API_KEY}"
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - ./ai-core:/app
+  # SafiriSmart AI Core: migration engine + LangGraph planning pipeline
+  ai-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.ai-core
+    container_name: safiri_ai
+    environment:
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+      SUPABASE_URL: "${VITE_SUPABASE_URL}"
+      SUPABASE_SERVICE_ROLE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
+      MIGRATION_SERVICE_KEY: "${MIGRATION_SERVICE_KEY:-dev-key-change-me}"
+      PYTHONPATH: "/app"
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+    volumes:
+      - ./safirismart:/app/safirismart
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
   postgres_data:
