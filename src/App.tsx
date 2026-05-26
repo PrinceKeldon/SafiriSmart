@@ -17,7 +17,7 @@ const AdminDashboard = lazy(() => import('@/pages/AdminDashboard'));
 const LeadInbox = lazy(() => import('@/pages/LeadInbox'));
 const Profile = lazy(() => import('@/pages/Profile'));
 const Packages = lazy(() => import('@/pages/Packages'));
-const SafariGuide = lazy(() => import('@/pages/SafariGuide'));
+const SafariGuide = lazy(() => import('@/pages/SafariGuideAI'));
 const NewLead = lazy(() => import('@/pages/NewLead'));
 const NoticeBoard = lazy(() => import('@/pages/NoticeBoard'));
 const EdgeFunctionTest = lazy(() => import('@/pages/EdgeFunctionTest'));
