@@ -85,7 +85,8 @@ function LiveDot({ color = AMBER_400 }: { color?: string }) {
 }
 
 function MigrationScoreHero({ score }: { score: MigrationScore }) {
-  const pct = Math.round(score.probability_score);
+  const raw = Number(score?.probability_score);
+  const pct = Number.isFinite(raw) ? Math.max(0, Math.min(100, Math.round(raw))) : 0;
   const isHot = pct >= 60;
   const barColor   = isHot ? AMBER_400 : TEAL_400;
   const scoreColor = isHot ? AMBER_400 : TEAL_400;
